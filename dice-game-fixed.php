@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Das Würfelspiel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+        
+        h1, h2 {
+            color: #f0f0f0;
+            text-align: center;
+        }
+        
+        .game-container {
+            background-color: #2a2a2a;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        .dice-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .dice {
+            width: 80px;
+            height: 80px;
+            background-color: #3a3a3a;
+            border: 2px solid #555;
+            border-radius: 10px;
+            margin: 0 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: #f0f0f0;
+            transition: transform 0.5s, opacity 0.3s;
+        }
+        
+        .single-dice {
+            width: 80px;
+            height: 80px;
+            background-color: #3a3a3a;
+            border: 2px solid #555;
+            border-radius: 10px;
+            margin: 15px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: #f0f0f0;
+            transition: transform 0.5s, opacity 0.3s;
+        }
+        
+        .dice-rolling {
+            animation: diceRoll 0.5s ease-in-out;
+        }
+        
+        @keyframes diceRoll {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.2); }
+            50% { transform: rotate(180deg) scale(1); }
+            75% { transform: rotate(270deg) scale(1.2); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        
+        .button {
+            background-color: #8e44ad;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .button-container {
+            text-align: center;
+        }
+        
+        .result-container {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #3a3a3a;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .timer-container {
+            margin-top: 30px;
+        }
+        
+        .timer {
+            background-color: #333;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .timer-running {
+            background-color: #2c3540;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .timer-expired {
+            background-color: #3d2c2e;
+            border-left: 4px solid #f44336;
+            animation: pulseExpired 2s infinite;
+        }
+        
+        @keyframes pulseExpired {
+            0% { background-color: #3d2c2e; }
+            50% { background-color: #5e3a3c; }
+            100% { background-color: #3d2c2e; }
+        }
+        
+        .item-editor {
+            margin-top: 30px;
+        }
+        
+        .item-row {
+            display: flex;
+            margin: 10px 0;
+            align-items: center;
+        }
+        
+        .item-number {
+            width: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+            color: #e0e0e0;
+        }
+        
+        .item-name {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: #3a3a3a;
+            color: #e0e0e0;
+        }
+        
+        .unit-select {
+            margin-left: 10px;
+            padding: 8px;
+            background-color: #3a3a3a;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            border-radius: 4px;
+        }
+        
+        .tab {
+            overflow: hidden;
+            border: 1px solid #444;
+            background-color: #333;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 16px;
+            color: #e0e0e0;
+        }
+        
+        .tab button:hover {
+            background-color: #444;
+        }
+        
+        .tab button.active {
+            background-color: #8e44ad;
+            color: white;
+        }
+        
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #444;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            animation: fadeEffect 1s;
+            background-color: #2a2a2a;
+        }
+        
+        @keyframes fadeEffect {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+        
+        @keyframes resultAnimation {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .animated-result {
+            animation: resultAnimation 0.6s ease-out forwards;
+        }
+    </style>
+</head>
+<body>
+    <h1>Das Würfelspiel</h1>
+    
+    <div class="tab">
+        <button class="tablinks active" onclick="openTab(event, 'Game')">Spiel</button>
+        <button class="tablinks" onclick="openTab(event, 'Timers')">Timer</button>
+        <button class="tablinks" onclick="openTab(event, 'Settings')">Einstellungen</button>
+    </div>
+    
+    <div id="Game" class="tabcontent" style="display: block;">
+        <div class="game-container">
+            <h2>Würfeln</h2>
+            
+            <div class="dice-container">
+                <div class="dice" id="dice1">?</div>
+                <div class="dice" id="dice2">?</div>
+            </div>
+            
+            <div class="button-container">
+                <button class="button" id="rollDiceBtn" onclick="rollDice()">Würfeln</button>
+            </div>
+            
+            <div class="result-container" id="result">
+                <p>Würfle, um zu bestimmen, welchen Gegenstand du benutzen sollst und für wie lange.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="Timers" class="tabcontent">
+        <div class="game-container">
+            <h2>Timer</h2>
+            <div class="timer-container">
+                <div id="timerContainer">
+                    <p id="noTimers">Keine aktiven Timer.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="Settings" class="tabcontent">
+        <div class="game-container">
+            <h2>Gegenstände anpassen</h2>
+            <p>Bearbeite die Gegenstände für jeden Würfelwurf und wähle die Zeiteinheit:</p>
+            
+            <div class="item-editor" id="itemEditor">
+              
+            </div>
+            
+            <div class="button-container">
+                <button class="button" onclick="saveItems()">Speichern</button>
+                <button class="button" onclick="resetItems()">Auf Standard zurücksetzen</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Standardgegenstände
+        var defaultItems = {
+            2: "Nippelklemmen",
+            3: "Windel",
+            4: "Keuschheitsvorrichtung",
+            5: "Knebel",
+            6: "Gasmaske",
+            7: "BDSM-Maske",
+            8: "Halsband",
+            9: "Handschellen/Fesseln",
+            10: "Buttplug/Dildo",
+            11: "Triskele",
+            "pasch": "Peitsche/Paddle/Flogger"
+        };
+        
+        // Standardzeiteinheiten (Stunden oder Tage)
+        var defaultTimeUnits = {};
+        for (var i = 2; i <= 12; i++) {
+            defaultTimeUnits[i] = "hours";
+        }
+        defaultTimeUnits["pasch"] = "hours";
+        
+        // Aktuelle Gegenstände und Zeiteinheiten speichern
+        var items = Object.assign({}, defaultItems);
+        var timeUnits = Object.assign({}, defaultTimeUnits);
+        
+        // Timer speichern (nur im Speicher)
+        var activeTimers = [];
+        
+        // Aktuelles Würfelergebnis
+        var currentRoll = null;
+        
+        // Triskele-Gegenstände speichern
+        var triskeleItems = [];
+        
+        // Einstellung für Auto-Tab-Wechsel
+        var autoSwitchToTimers = true; // Standardmäßig aktiviert
+        
+        // Spiel initialisieren
+        window.onload = function() {
+            populateSettingsPage();
+            updateTimersDisplay();
+            
+            // Intervall für Timer-Aktualisierung setzen
+            setInterval(updateTimers, 1000);
+        };
+        
+        // Button-Status verwalten
+        function toggleRollButton(enable) {
+            var rollButton = document.getElementById('rollDiceBtn');
+            rollButton.disabled = !enable;
+        }
+        
+        // Gegenstand-Editor befüllen
+        function populateItemEditor() {
+            var editor = document.getElementById('itemEditor');
+            editor.innerHTML = '';
+            
+            // Normale Werte 2-10 (Pasch und Triskele nicht anzeigen)
+            for (var i = 2; i <= 10; i++) {
+                var row = document.createElement('div');
+                row.className = 'item-row';
+                
+                var numberSpan = document.createElement('span');
+                numberSpan.className = 'item-number';
+                numberSpan.textContent = i + ':';
+                
+                var input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'item-name';
+                input.id = 'item-' + i;
+                input.value = items[i] || '';
+                
+                var select = document.createElement('select');
+                select.className = 'unit-select';
+                select.id = 'unit-' + i;
+                
+                var hourOption = document.createElement('option');
+                hourOption.value = 'hours';
+                hourOption.textContent = 'Stunden';
+                hourOption.selected = timeUnits[i] === 'hours';
+                
+                var dayOption = document.createElement('option');
+                dayOption.value = 'days';
+                dayOption.textContent = 'Tage';
+                dayOption.selected = timeUnits[i] === 'days';
+                
+                select.appendChild(hourOption);
+                select.appendChild(dayOption);
+                
+                row.appendChild(numberSpan);
+                row.appendChild(input);
+                row.appendChild(select);
+                editor.appendChild(row);
+            }
+
+            // Spezielle Einträge für Triskele und Pasch hinzufügen
+            var specialItems = [
+                { key: 11, name: "Triskele" },
+                { key: "pasch", name: "Pasch" }
+            ];
+
+            specialItems.forEach(function(item) {
+                var row = document.createElement('div');
+                row.className = 'item-row';
+                
+                var numberSpan = document.createElement('span');
+                numberSpan.className = 'item-number';
+                numberSpan.textContent = item.name + ':';
+                
+                var input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'item-name';
+                input.id = 'item-' + item.key;
+                input.value = items[item.key] || '';
+                
+                var select = document.createElement('select');
+                select.className = 'unit-select';
+                select.id = 'unit-' + item.key;
+                
+                var hourOption = document.createElement('option');
+                hourOption.value = 'hours';
+                hourOption.textContent = 'Stunden';
+                hourOption.selected = timeUnits[item.key] === 'hours';
+                
+                var dayOption = document.createElement('option');
+                dayOption.value = 'days';
+                dayOption.textContent = 'Tage';
+                dayOption.selected = timeUnits[item.key] === 'days';
+                
+                select.appendChild(hourOption);
+                select.appendChild(dayOption);
+                
+                row.appendChild(numberSpan);
+                row.appendChild(input);
+                row.appendChild(select);
+                editor.appendChild(row);
+            });
+        }
+        
+        // Benutzerdefinierte Gegenstände speichern
+        function saveItems() {
+            // Normale Einträge 2-10
+            for (var i = 2; i <= 10; i++) {
+                var input = document.getElementById('item-' + i);
+                var select = document.getElementById('unit-' + i);
+                if (input && select) {
+                    items[i] = input.value.trim() || defaultItems[i];
+                    timeUnits[i] = select.value;
+                }
+            }
+            
+            // Spezielle Einträge
+            var specialKeys = [11, "pasch"];
+            specialKeys.forEach(function(key) {
+                var input = document.getElementById('item-' + key);
+                var select = document.getElementById('unit-' + key);
+                if (input && select) {
+                    items[key] = input.value.trim() || defaultItems[key];
+                    timeUnits[key] = select.value;
+                }
+            });
+            
+            alert('Gegenstände erfolgreich gespeichert!');
+        }
+        
+        // Gegenstände auf Standard zurücksetzen
+        function resetItems() {
+            items = Object.assign({}, defaultItems);
+            timeUnits = Object.assign({}, defaultTimeUnits);
+            populateItemEditor();
+            alert('Gegenstände auf Standard zurückgesetzt!');
+        }
+        
+        // Würfeln
+        function rollDice() {
+            // Würfelbutton deaktivieren
+            toggleRollButton(false);
+            
+            // Würfel-Animation hinzufügen
+            var dice1Element = document.getElementById('dice1');
+            var dice2Element = document.getElementById('dice2');
+            
+            dice1Element.classList.add('dice-rolling');
+            dice2Element.classList.add('dice-rolling');
+            
+            setTimeout(function() {
+                var dice1 = Math.floor(Math.random() * 6) + 1;
+                var dice2 = Math.floor(Math.random() * 6) + 1;
+                var sum = dice1 + dice2;
+                
+                dice1Element.textContent = dice1;
+                dice2Element.textContent = dice2;
+                
+                dice1Element.classList.remove('dice-rolling');
+                dice2Element.classList.remove('dice-rolling');
+                
+                var resultContainer = document.getElementById('result');
+                resultContainer.innerHTML = '';
+                
+                var resultContent = document.createElement('div');
+                resultContent.className = 'animated-result';
+                
+                // Pasch-Prüfung
+                var isPasch = dice1 === dice2;
+                
+                if (sum === 11) {
+                    // Summe 11: Triskele-Regel
+                    resultContent.innerHTML = `
+                        <h3>Ergebnis: 11 - Triskele</h3>
+                        <p>Würfle einmal für die Anzahl der Gegenstände:</p>
+                        <div class="single-dice" id="triskeleDice">?</div>
+                        <button class="button" onclick="rollForTriskeleItems()">Für Anzahl würfeln</button>
+                    `;
+                    currentRoll = { 
+                        type: 'triskele', 
+                        item: items[11],
+                        phase: 'count'
+                    };
+                    triskeleItems = []; // Reset Triskele items
+                } else if (sum >= 2 && sum <= 10) {
+                    var item = items[sum];
+                    var unit = timeUnits[sum] === 'days' ? 'Tage' : 'Stunden';
+                    
+                    // Wenn Pasch, dann zuerst für den Gegenstand und danach für die Schläge würfeln
+                    if (isPasch) {
+                        resultContent.innerHTML = `
+                            <h3>Ergebnis: ${sum} + Pasch!</h3>
+                            <p>Zuerst Gegenstand: ${item}</p>
+                            <p>Würfle nun mit einem Würfel für die Dauer:</p>
+                            <div class="single-dice" id="durationDice">?</div>
+                            <button class="button" onclick="rollDurationDieWithPasch(${sum}, '${item}')">Für Dauer würfeln</button>
+                        `;
+                        currentRoll = { 
+                            type: 'pasch-combo', 
+                            value: sum, 
+                            item: item,
+                            unit: timeUnits[sum],
+                            hasStrikes: true
+                        };
+                    } else {
+                        resultContent.innerHTML = `
+                            <h3>Ergebnis: ${sum}</h3>
+                            <p>Gegenstand: ${item}</p>
+                            <p>Würfle nun mit einem Würfel, um die Dauer zu bestimmen:</p>
+                            <div class="single-dice" id="durationDice">?</div>
+                            <button class="button" onclick="rollDurationDie(${sum}, '${item}')">Für Dauer würfeln</button>
+                        `;
+                        currentRoll = { 
+                            type: 'standard', 
+                            value: sum, 
+                            item: item,
+                            unit: timeUnits[sum]
+                        };
+                    }
+                } else {
+                    // Summe 12 - erneut würfeln
+                    resultContent.innerHTML = `
+                        <h3>Ergebnis: ${sum}</h3>
+                        <p>Dieses Ergebnis hat keine spezielle Bedeutung. Würfle erneut.</p>
+                    `;
+                    currentRoll = null;
+                    // Würfelbutton wieder aktivieren
+                    toggleRollButton(true);
+                }
+                
+                resultContainer.appendChild(resultContent);
+            }, 600); // Animation-Dauer
+        }
+
+        // Fehlende Funktion: Für Triskele-Anzahl würfeln
+        function rollForTriskeleItems() {
+            var triskeleDiceElement = document.getElementById('triskeleDice');
+            triskeleDiceElement.classList.add('dice-rolling');
+            
+            setTimeout(function() {
+                var count = Math.floor(Math.random() * 6) + 1;
+                triskeleDiceElement.textContent = count;
+                triskeleDiceElement.classList.remove('dice-rolling');
+                
+                var resultContainer = document.getElementById('result');
+                resultContainer.innerHTML = '';
+                
+                var resultContent = document.createElement('div');
+                resultContent.className = 'animated-result';
+                
+                resultContent.innerHTML = `
+                    <h3>Triskele: ${count} Gegenstände</h3>
+                    <p>Würfle für den ersten Gegenstand:</p>
+                    <div class="dice-container">
+                        <div class="dice" id="itemDice1">?</div>
+                        <div class="dice" id="itemDice2">?</div>
+                    </div>
+                    <button class="button" onclick="rollForTriskeleItem(1, ${count})">Für Gegenstand 1 würfeln</button>
+                `;
+                
+                resultContainer.appendChild(resultContent);
+            }, 600);
+        }
+
+        function rollDurationDieWithPasch(itemValue, itemName) {
+            var durationDiceElement = document.getElementById('durationDice');
+            durationDiceElement.classList.add('dice-rolling');
+            
+            setTimeout(function() {
+                var die = Math.floor(Math.random() * 6) + 1;
+                durationDiceElement.textContent = die;
+                durationDiceElement.classList.remove('dice-rolling');
+                
+                var resultContainer = document.getElementById('result');
+                resultContainer.innerHTML = '';
+                
+                var resultContent = document.createElement('div');
+                resultContent.className = 'animated-result';
+                
+                var unit = timeUnits[itemValue] === 'days' ? 'Tage' : 'Stunden';
+                resultContent.innerHTML = `
+                    <h3>Ergebnis: ${itemValue}</h3>
+                    <p>Gegenstand: ${itemName}</p>
+                    <p>Dauer: ${die} ${unit}</p>
+                    <button class="button" onclick="addStandardTimerThenRollStrikes(${die})">Timer hinzufügen und für Pasch würfeln</button>
+                `;
+                
+                currentRoll.duration = die;
+                
+                resultContainer.appendChild(resultContent);
+            }, 600);
+        }
+
+        // Timer hinzufügen und dann für Pasch würfeln
+        function addStandardTimerThenRollStrikes(duration) {
+            // Aktuellen Roll speichern
+            var savedRoll = Object.assign({}, currentRoll);
+            savedRoll.duration = duration;
+            
+            // Timer hinzufügen
+            addOrUpdateTimer(savedRoll);
+            
+            // Für Pasch weitermachen
+            var resultContainer = document.getElementById('result');
+            resultContainer.innerHTML = '';
+            
+            var resultContent = document.createElement('div');
+            resultContent.className = 'animated-result';
+            
+            resultContent.innerHTML = `
+                <h3>Pasch: ${items["pasch"]}</h3>
+                <p>Würfle für die Anzahl der Schläge:</p>
+                <div class="single-dice" id="strikeDice">?</div>
+                <button class="button" onclick="rollForStrikes()">Für Schläge würfeln</button>
+            `;
+            
+            currentRoll = { 
+                type: 'pasch',
+                item: items["pasch"]
+            };
+            
+            resultContainer.appendChild(resultContent);
+        }
+
+        // Für Anzahl der Schläge würfeln
+        function rollForStrikes() {
+            var strikeDiceElement = document.getElementById('strikeDice');
+            strikeDiceElement.classList.add('dice-rolling');
+            
+            setTimeout(function() {
+                var strikes = Math.floor(Math.random() * 6) + 1;
+                strikeDiceElement.textContent = strikes;
+                strikeDiceElement.classList.remove('dice-rolling');
+                
+                var resultContainer = document.getElementById('result');
+                resultContainer.innerHTML = '';
+                
+                var resultContent = document.createElement('div');
+                resultContent.className = 'animated-result';
+                
+                resultContent.innerHTML = `
+                    <h3>Pasch: ${items["pasch"]}</h3>
+                    <p>Anzahl der Schläge: ${strikes}</p>
+                    <button class="button" onclick="finishPaschRoll()">Fertig</button>
+                `;
+                
+                resultContainer.appendChild(resultContent);
+            }, 600);
+        }
+
+        // Pasch-Wurf abschließen
+        function finishPaschRoll() {
+            // Zurück zum Hauptspiel
+            toggleRollButton(true);
+            currentRoll = null;
+            
+            var resultContainer = document.getElementById('result');
+            resultContainer.innerHTML = '<p>Würfle, um zu bestimmen, welchen Gegenstand du benutzen sollst und für wie lange.</p>';
+        }
+        
+        // Für einzelne Triskele-Gegenstände würfeln
+        function rollForTriskeleItem(itemNum, totalItems) {
+            var itemDice1Element = document.getElementById('itemDice1');
+            var itemDice2Element = document.getElementById('itemDice2');
+            
+            itemDice1Element.classList.add('dice-rolling');
+            itemDice2Element.classList.add('dice-rolling');
+            
+            setTimeout(function() {
+                var dice1 = Math.floor(Math.random() * 6) + 1;
+                var dice2 = Math.floor(Math.random() * 6) + 1;
+                var sum = dice1 + dice2;
+                
+                itemDice1Element.textContent = dice1;
+                itemDice2Element.textContent = dice2;
+                
+                itemDice1Element.classList.remove('dice-rolling');
+                itemDice2Element.classList.remove('dice-rolling');
+                
+                // Stellen Sie sicher, dass der Wert zwischen 2 und 11 liegt
+                // (12 führt erneut zum Würfeln)
+                if (sum > 11) {
+                    var resultContainer = document.getElementById('result');
+                    var currentContent = resultContainer.innerHTML;
+                    
+                    var newMessage = document.createElement('p');
+                    newMessage.innerHTML = `Ergebnis ${sum} > 10. Bitte erneut würfeln.`;
+                    newMessage.style.color = '#ff6b6b';
+                    
+                    resultContainer.appendChild(newMessage);
+                    
+                    setTimeout(function() {
+                        resultContainer.removeChild(newMessage);
+                    }, 2000);
+                    
+                    return;
+                }
+                
+                var item = items[sum];
+                
+                // Zum Array hinzufügen
+                triskeleItems.push({
+                    value: sum,
+                    name: item,
+                    unit: timeUnits[sum]
+                });
+                
+                var resultContainer = document.getElementById('result');
+                resultContainer.innerHTML = '';
+                
+                var resultContent = document.createElement('div');
+                resultContent.className = 'animated-result';
+                
+                var itemsText = triskeleItems.map(function(i) {
+                    return i.name;
+                }).join(', ');
+                
+                if (itemNum < totalItems) {
+                    resultContent.innerHTML = `
+                        <h3>Triskele: Gegenstand ${itemNum}</h3>
+                        <p>Gewürfelt: ${sum} = ${item}</p>
+                        <p>Bisherige Gegenstände: ${itemsText}</p>
+                        <p>Würfle für den nächsten Gegenstand:</p>
+                        <div class="dice-container">
+                            <div class="dice" id="itemDice1">?</div>
+                            <div class="dice" id="itemDice2">?</div>
+                        </div>
+                        <button class="button" onclick="rollForTriskeleItem(${itemNum + 1}, ${totalItems})">Für Gegenstand ${itemNum + 1} würfeln</button>
+                    `;
+                } else {
+                    resultContent.innerHTML = `
+                        <h3>Triskele: Alle Gegenstände</h3>
+                        <p>Kombiniere folgende Gegenstände: ${itemsText}</p>
+                        <p>Würfle nun für die Dauer:</p>
+                        <div class="single-dice" id="triskeleDurationDice">?</div>
+                        <button class="button" onclick="rollForTriskeleDuration()">Für Dauer würfeln</button>
+                    `;
+                    currentRoll.phase = 'duration';
+                }
+                
+                resultContainer.appendChild(resultContent);
+            }, 600);
+        }
+        
+        // Für Dauer der Triskele-Gegenstände würfeln
+        function rollForTriskeleDuration() {
+            var durationDiceElement = document.getElementById('triskeleDurationDice');
+            durationDiceElement.classList.add('dice-rolling');
+            
+            setTimeout(function() {
+                var duration = Math.floor(Math.random() * 6) + 1;
+                durationDiceElement.textContent = duration;
+                durationDiceElement.classList.remove('dice-rolling');
+                
+                var unit = timeUnits[11] === 'days' ? 'Tage' : 'Stunden';
+                
+                var resultContainer = document.getElementById('result');
+                resultContainer.innerHTML = '';
+                
+                var resultContent = document.createElement('div');
+                resultContent.className = 'animated-result';
+                
+                var itemsText = triskeleItems.map(function(i) {
+                    return i.name;
+                }).join(', ');
+                
+                resultContent.innerHTML = `
+                    <h3>Triskele:
