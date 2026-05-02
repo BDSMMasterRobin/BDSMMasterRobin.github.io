@@ -306,7 +306,7 @@
         for (var i = 2; i <= 12; i++) {
             defaultTimeUnits[i] = "hours";
         }
-        defaultTimeUnits["pasch"] = "hours";
+        defaultTimeUnits["pasch"] = "amount";
         
         // Aktuelle Gegenstände und Zeiteinheiten speichern
         var items = Object.assign({}, defaultItems);
@@ -369,9 +369,15 @@
                 dayOption.value = 'days';
                 dayOption.textContent = 'Tage';
                 dayOption.selected = timeUnits[i] === 'days';
+
+                var amountOption = document.createElement('option');
+                amountOption.value = 'amount';
+                amountOption.textContent = 'Anzahl';
+                amountOption.selected = timeUnits[i] === 'amount';
                 
                 select.appendChild(hourOption);
                 select.appendChild(dayOption);
+                select.appendChild(amountOption);
                 
                 row.appendChild(numberSpan);
                 row.appendChild(input);
@@ -411,9 +417,15 @@
                 dayOption.value = 'days';
                 dayOption.textContent = 'Tage';
                 dayOption.selected = timeUnits[item.key] === 'days';
+
+                var amountOption = document.createElement('option');
+                amountOption.value = 'amount';
+                amountOption.textContent = 'Anzahl';
+                amountOption.selected = timeUnits[item.key] === 'amount';
                 
                 select.appendChild(hourOption);
                 select.appendChild(dayOption);
+                select.appendChild(amountOption);
                 
                 row.appendChild(numberSpan);
                 row.appendChild(input);
@@ -490,37 +502,39 @@
                 
                 if (sum >= 2 && sum <= 10) {
                     var item = items[sum];
-                    var unit = timeUnits[sum] === 'days' ? 'Tage' : 'Stunden';
+                    var unitType = timeUnits[sum];
+                    var unitLabel = unitType === 'days' ? 'Tage' : (unitType === 'amount' ? 'Anzahl' : 'Stunden');
+                    var promptLabel = unitType === 'amount' ? 'die Anzahl' : 'die Dauer';
                     
                     // Wenn Pasch, dann zuerst für den Gegenstand und danach für die Schläge würfeln
                     if (isPasch) {
                         resultContent.innerHTML = `
                             <h3>Ergebnis: ${sum} + Pasch!</h3>
                             <p>Zuerst Gegenstand: ${item}</p>
-                            <p>Würfle nun mit einem Würfel für die Dauer:</p>
+                            <p>Würfle nun mit einem Würfel für ${promptLabel}:</p>
                             <div class="single-dice" id="durationDice">?</div>
-                            <button class="button" onclick="rollDurationDieWithPasch(${sum}, '${item}')">Für Dauer würfeln</button>
+                            <button class="button" onclick="rollDurationDieWithPasch(${sum}, '${item}')">Für ${unitLabel} würfeln</button>
                         `;
                         currentRoll = { 
                             type: 'pasch-combo', 
                             value: sum, 
                             item: item,
-                            unit: timeUnits[sum],
+                            unit: unitType,
                             hasStrikes: true
                         };
                     } else {
                         resultContent.innerHTML = `
                             <h3>Ergebnis: ${sum}</h3>
                             <p>Gegenstand: ${item}</p>
-                            <p>Würfle nun mit einem Würfel, um die Dauer zu bestimmen:</p>
+                            <p>Würfle nun mit einem Würfel, um ${promptLabel} zu bestimmen:</p>
                             <div class="single-dice" id="durationDice">?</div>
-                            <button class="button" onclick="rollDurationDie(${sum}, '${item}')">Für Dauer würfeln</button>
+                            <button class="button" onclick="rollDurationDie(${sum}, '${item}')">Für ${unitLabel} würfeln</button>
                         `;
                         currentRoll = { 
                             type: 'standard', 
                             value: sum, 
                             item: item,
-                            unit: timeUnits[sum]
+                            unit: unitType
                         };
                     }
                 } else {
@@ -553,12 +567,16 @@
                 var resultContent = document.createElement('div');
                 resultContent.className = 'animated-result';
                 
-                var unit = timeUnits[itemValue] === 'days' ? 'Tage' : 'Stunden';
+                var unitType = timeUnits[itemValue];
+                var unitLabel = unitType === 'days' ? 'Tage' : (unitType === 'amount' ? 'Anzahl' : 'Stunden');
+                var displayLabel = unitType === 'amount' ? 'Anzahl' : 'Dauer';
+                var buttonText = unitType === 'amount' ? 'Weiter und für Pasch würfeln' : 'Timer hinzufügen und für Pasch würfeln';
+
                 resultContent.innerHTML = `
                     <h3>Ergebnis: ${itemValue}</h3>
                     <p>Gegenstand: ${itemName}</p>
-                    <p>Dauer: ${die} ${unit}</p>
-                    <button class="button" onclick="addStandardTimerThenRollStrikes(${die})">Timer hinzufügen und für Pasch würfeln</button>
+                    <p>${displayLabel}: ${die} ${unitType === 'amount' ? '' : unitLabel}</p>
+                    <button class="button" onclick="addStandardTimerThenRollStrikes(${die})">${buttonText}</button>
                 `;
                 
                 currentRoll.duration = die;
@@ -583,22 +601,27 @@
             var resultContent = document.createElement('div');
             resultContent.className = 'animated-result';
             
+            var paschUnitType = timeUnits["pasch"];
+            var paschUnitLabel = paschUnitType === 'days' ? 'Tage' : (paschUnitType === 'amount' ? 'Anzahl' : 'Stunden');
+            var paschPromptLabel = paschUnitType === 'amount' ? 'die Anzahl' : 'die Dauer';
+
             resultContent.innerHTML = `
                 <h3>Pasch: ${items["pasch"]}</h3>
-                <p>Würfle für die Anzahl der Schläge:</p>
+                <p>Würfle für ${paschPromptLabel}:</p>
                 <div class="single-dice" id="strikeDice">?</div>
-                <button class="button" onclick="rollForStrikes()">Für Schläge würfeln</button>
+                <button class="button" onclick="rollForStrikes()">Für ${paschUnitLabel} würfeln</button>
             `;
             
             currentRoll = { 
                 type: 'pasch',
-                item: items["pasch"]
+                item: items["pasch"],
+                unit: paschUnitType
             };
             
             resultContainer.appendChild(resultContent);
         }
 
-        // Für Anzahl der Schläge würfeln
+        // Für Pasch (Anzahl/Dauer) würfeln
         function rollForStrikes() {
             var strikeDiceElement = document.getElementById('strikeDice');
             strikeDiceElement.classList.add('dice-rolling');
@@ -614,14 +637,27 @@
                 var resultContent = document.createElement('div');
                 resultContent.className = 'animated-result';
                 
+                var paschUnitType = timeUnits["pasch"];
+                var paschUnitLabel = paschUnitType === 'days' ? 'Tage' : (paschUnitType === 'amount' ? 'Anzahl' : 'Stunden');
+                var paschDisplayLabel = paschUnitType === 'amount' ? 'Anzahl' : 'Dauer';
+                var buttonText = paschUnitType === 'amount' ? 'Fertig' : 'Timer hinzufügen und Fertig';
+
                 resultContent.innerHTML = `
                     <h3>Pasch: ${items["pasch"]}</h3>
-                    <p>Anzahl der Schläge: ${strikes}</p>
-                    <button class="button" onclick="finishPaschRoll()">Fertig</button>
+                    <p>${paschDisplayLabel}: ${strikes} ${paschUnitType === 'amount' ? '' : paschUnitLabel}</p>
+                    <button class="button" onclick="addPaschTimer(${strikes})">${buttonText}</button>
                 `;
                 
+                currentRoll.duration = strikes;
+
                 resultContainer.appendChild(resultContent);
             }, 600);
+        }
+
+        function addPaschTimer(duration) {
+            currentRoll.duration = duration;
+            addOrUpdateTimer(currentRoll);
+            finishPaschRoll();
         }
 
         // Pasch-Wurf abschließen
@@ -634,7 +670,7 @@
             resultContainer.innerHTML = '<p>Würfle, um zu bestimmen, welchen Gegenstand du benutzen sollst und für wie lange.</p>';
         }
         
-        // Dauer für Standard-Wurf würfeln
+        // Dauer/Anzahl für Standard-Wurf würfeln
         function rollDurationDie(itemValue, itemName) {
             var durationDiceElement = document.getElementById('durationDice');
             durationDiceElement.classList.add('dice-rolling');
@@ -644,7 +680,10 @@
                 durationDiceElement.textContent = duration;
                 durationDiceElement.classList.remove('dice-rolling');
 
-                var unit = timeUnits[itemValue] === 'days' ? 'Tage' : 'Stunden';
+                var unitType = timeUnits[itemValue];
+                var unitLabel = unitType === 'days' ? 'Tage' : (unitType === 'amount' ? 'Anzahl' : 'Stunden');
+                var displayLabel = unitType === 'amount' ? 'Anzahl' : 'Dauer';
+                var buttonText = unitType === 'amount' ? 'Fertig' : 'Timer hinzufügen und Fertig';
 
                 var resultContainer = document.getElementById('result');
                 resultContainer.innerHTML = '';
@@ -654,8 +693,8 @@
 
                 resultContent.innerHTML = '<h3>Ergebnis: ' + itemValue + '</h3>' +
                     '<p>Gegenstand: ' + itemName + '</p>' +
-                    '<p>Dauer: ' + duration + ' ' + unit + '</p>' +
-                    '<button class="button" onclick="addStandardTimer(' + duration + ')">Timer hinzufügen und Fertig</button>';
+                    '<p>' + displayLabel + ': ' + duration + ' ' + (unitType === 'amount' ? '' : unitLabel) + '</p>' +
+                    '<button class="button" onclick="addStandardTimer(' + duration + ')">' + buttonText + '</button>';
 
                 currentRoll.duration = duration;
                 resultContainer.appendChild(resultContent);
@@ -670,6 +709,8 @@
 
         // Timer hinzufügen oder aktualisieren
         function addOrUpdateTimer(roll) {
+            if (roll.unit === 'amount') return;
+
             var now = new Date().getTime();
             var durationMs = 0;
 
