@@ -790,4 +790,254 @@
                 }).join(', ');
                 
                 resultContent.innerHTML = `
-                    <h3>Triskele:
+                    <h3>Triskele: Alle Gegenstände</h3>
+                    <p>Kombination: ${itemsText}</p>
+                    <p>Dauer: ${duration} ${unit}</p>
+                    <button class="button" onclick="addTriskeleTimer(${duration})">Timer hinzufügen und Fertig</button>
+                `;
+
+                currentRoll.duration = duration;
+                resultContainer.appendChild(resultContent);
+            }, 600);
+        }
+
+        // Triskele-Timer hinzufügen
+        function addTriskeleTimer(duration) {
+            var itemsText = triskeleItems.map(function(i) {
+                return i.name;
+            }).join(', ');
+
+            var roll = {
+                type: 'triskele',
+                item: "Triskele: " + itemsText,
+                duration: duration,
+                unit: timeUnits[11]
+            };
+
+            addOrUpdateTimer(roll);
+            finishPaschRoll(); // Verwendet die gleiche Reset-Logik
+        }
+        // Dauer für Standard-Wurf würfeln
+        function rollDurationDie(itemValue, itemName) {
+            var durationDiceElement = document.getElementById('durationDice');
+            durationDiceElement.classList.add('dice-rolling');
+
+            setTimeout(function() {
+                var duration = Math.floor(Math.random() * 6) + 1;
+                durationDiceElement.textContent = duration;
+                durationDiceElement.classList.remove('dice-rolling');
+
+                var unit = timeUnits[itemValue] === 'days' ? 'Tage' : 'Stunden';
+
+                var resultContainer = document.getElementById('result');
+                resultContainer.innerHTML = '';
+
+                var resultContent = document.createElement('div');
+                resultContent.className = 'animated-result';
+
+                resultContent.innerHTML = '<h3>Ergebnis: ' + itemValue + '</h3>' +
+                    '<p>Gegenstand: ' + itemName + '</p>' +
+                    '<p>Dauer: ' + duration + ' ' + unit + '</p>' +
+                    '<button class="button" onclick="addStandardTimer(' + duration + ')">Timer hinzufügen und Fertig</button>';
+
+                currentRoll.duration = duration;
+                resultContainer.appendChild(resultContent);
+            }, 600);
+        }
+
+        function addStandardTimer(duration) {
+            currentRoll.duration = duration;
+            addOrUpdateTimer(currentRoll);
+            finishPaschRoll();
+        }
+
+        // Timer hinzufügen oder aktualisieren
+        function addOrUpdateTimer(roll) {
+            var now = new Date().getTime();
+            var durationMs = 0;
+
+            if (roll.unit === 'days') {
+                durationMs = roll.duration * 24 * 60 * 60 * 1000;
+            } else {
+                durationMs = roll.duration * 60 * 60 * 1000;
+            }
+
+            var expiresAt = now + durationMs;
+
+            var newTimer = {
+                id: Date.now(),
+                item: roll.item,
+                expiresAt: expiresAt,
+                duration: roll.duration,
+                unit: roll.unit
+            };
+
+            activeTimers.push(newTimer);
+
+            // LocalStorage wäre gut, aber wir bleiben bei In-Memory für GitHub Pages Einfachheit
+            // es sei denn wir wollen Persistenz
+            saveTimersToLocalStorage();
+
+            if (autoSwitchToTimers) {
+                openTab(null, 'Timers');
+            }
+        }
+
+        function saveTimersToLocalStorage() {
+            localStorage.setItem('diceGameTimers', JSON.stringify(activeTimers));
+        }
+
+        function loadTimersFromLocalStorage() {
+            var saved = localStorage.getItem('diceGameTimers');
+            if (saved) {
+                activeTimers = JSON.parse(saved);
+            }
+        }
+
+        // Timer aktualisieren
+        function updateTimers() {
+            if (activeTimers.length === 0) return;
+
+            var now = new Date().getTime();
+            var changed = false;
+
+            // Wir müssen die Anzeige bei jedem Tick aktualisieren, wenn der Tab sichtbar ist
+            updateTimersDisplay();
+        }
+
+        // Timer-Anzeige aktualisieren
+        function updateTimersDisplay() {
+            var container = document.getElementById('timerContainer');
+            if (!container) return;
+
+            if (activeTimers.length === 0) {
+                container.innerHTML = '<p id="noTimers">Keine aktiven Timer.</p>';
+                return;
+            }
+
+            var html = '';
+            var now = new Date().getTime();
+
+            // Sortieren: Abgelaufene nach unten
+            activeTimers.sort(function(a, b) {
+                return a.expiresAt - b.expiresAt;
+            });
+
+            activeTimers.forEach(function(timer) {
+                var timeLeft = timer.expiresAt - now;
+                var isExpired = timeLeft <= 0;
+
+                var statusClass = isExpired ? 'timer-expired' : 'timer-running';
+                var timeText = '';
+
+                if (isExpired) {
+                    timeText = 'ABGELAUFEN';
+                } else {
+                    var hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                    var minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+                    timeText = hours + 'h ' + minutes + 'm ' + seconds + 's';
+                }
+
+                html += '<div class="timer ' + statusClass + '">' +
+                    '<span><strong>' + timer.item + '</strong></span>' +
+                    '<div>' +
+                    '<span style="margin-right: 15px;">' + timeText + '</span>' +
+                    '<button class="button" style="padding: 5px 10px; margin: 0; background-color: #c0392b;" onclick="removeTimer(' + timer.id + ')">Löschen</button>' +
+                    '</div>' +
+                    '</div>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        function removeTimer(id) {
+            activeTimers = activeTimers.filter(function(t) { return t.id !== id; });
+            saveTimersToLocalStorage();
+            updateTimersDisplay();
+        }
+
+        // Tab-Steuerung
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            if (evt) {
+                evt.currentTarget.className += " active";
+            } else {
+                // Find button with correct onclick
+                for (i = 0; i < tablinks.length; i++) {
+                    if (tablinks[i].getAttribute('onclick').indexOf(tabName) !== -1) {
+                        tablinks[i].className += " active";
+                        break;
+                    }
+                }
+            }
+
+            if (tabName === 'Settings') {
+                populateItemEditor();
+            }
+        }
+
+        function populateSettingsPage() {
+            // Diese Funktion wird beim Laden aufgerufen
+            loadItemsFromLocalStorage();
+            loadTimersFromLocalStorage();
+            populateItemEditor();
+        }
+
+        function loadItemsFromLocalStorage() {
+            var savedItems = localStorage.getItem('diceGameItems');
+            var savedUnits = localStorage.getItem('diceGameUnits');
+            if (savedItems) items = JSON.parse(savedItems);
+            if (savedUnits) timeUnits = JSON.parse(savedUnits);
+        }
+
+        // Überschreiben der saveItems Funktion um LocalStorage hinzuzufügen
+        var originalSaveItems = saveItems;
+        saveItems = function() {
+            // Zuerst die Logik ausführen
+            for (var i = 2; i <= 10; i++) {
+                var input = document.getElementById('item-' + i);
+                var select = document.getElementById('unit-' + i);
+                if (input && select) {
+                    items[i] = input.value.trim() || defaultItems[i];
+                    timeUnits[i] = select.value;
+                }
+            }
+            var specialKeys = [11, "pasch"];
+            specialKeys.forEach(function(key) {
+                var input = document.getElementById('item-' + key);
+                var select = document.getElementById('unit-' + key);
+                if (input && select) {
+                    items[key] = input.value.trim() || defaultItems[key];
+                    timeUnits[key] = select.value;
+                }
+            });
+
+            localStorage.setItem('diceGameItems', JSON.stringify(items));
+            localStorage.setItem('diceGameUnits', JSON.stringify(timeUnits));
+            alert('Gegenstände erfolgreich gespeichert!');
+        };
+
+        // Überschreiben der resetItems Funktion
+        resetItems = function() {
+            items = Object.assign({}, defaultItems);
+            timeUnits = Object.assign({}, defaultTimeUnits);
+            localStorage.removeItem('diceGameItems');
+            localStorage.removeItem('diceGameUnits');
+            populateItemEditor();
+            alert('Gegenstände auf Standard zurückgesetzt!');
+        };
+
+    </script>
+</body>
+</html>
