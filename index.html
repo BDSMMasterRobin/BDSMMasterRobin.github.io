@@ -298,7 +298,6 @@
             8: "Halsband",
             9: "Handschellen/Fesseln",
             10: "Buttplug/Dildo",
-            11: "Triskele",
             "pasch": "Peitsche/Paddle/Flogger"
         };
         
@@ -318,9 +317,6 @@
         
         // Aktuelles Würfelergebnis
         var currentRoll = null;
-        
-        // Triskele-Gegenstände speichern
-        var triskeleItems = [];
         
         // Einstellung für Auto-Tab-Wechsel
         var autoSwitchToTimers = true; // Standardmäßig aktiviert
@@ -345,7 +341,7 @@
             var editor = document.getElementById('itemEditor');
             editor.innerHTML = '';
             
-            // Normale Werte 2-10 (Pasch und Triskele nicht anzeigen)
+            // Normale Werte 2-10 (Pasch nicht anzeigen)
             for (var i = 2; i <= 10; i++) {
                 var row = document.createElement('div');
                 row.className = 'item-row';
@@ -383,9 +379,8 @@
                 editor.appendChild(row);
             }
 
-            // Spezielle Einträge für Triskele und Pasch hinzufügen
+            // Spezielle Einträge für Pasch hinzufügen
             var specialItems = [
-                { key: 11, name: "Triskele" },
                 { key: "pasch", name: "Pasch" }
             ];
 
@@ -440,7 +435,7 @@
             }
             
             // Spezielle Einträge
-            var specialKeys = [11, "pasch"];
+            var specialKeys = ["pasch"];
             specialKeys.forEach(function(key) {
                 var input = document.getElementById('item-' + key);
                 var select = document.getElementById('unit-' + key);
@@ -493,21 +488,7 @@
                 // Pasch-Prüfung
                 var isPasch = dice1 === dice2;
                 
-                if (sum === 11) {
-                    // Summe 11: Triskele-Regel
-                    resultContent.innerHTML = `
-                        <h3>Ergebnis: 11 - Triskele</h3>
-                        <p>Würfle einmal für die Anzahl der Gegenstände:</p>
-                        <div class="single-dice" id="triskeleDice">?</div>
-                        <button class="button" onclick="rollForTriskeleItems()">Für Anzahl würfeln</button>
-                    `;
-                    currentRoll = { 
-                        type: 'triskele', 
-                        item: items[11],
-                        phase: 'count'
-                    };
-                    triskeleItems = []; // Reset Triskele items
-                } else if (sum >= 2 && sum <= 10) {
+                if (sum >= 2 && sum <= 10) {
                     var item = items[sum];
                     var unit = timeUnits[sum] === 'days' ? 'Tage' : 'Stunden';
                     
@@ -543,7 +524,7 @@
                         };
                     }
                 } else {
-                    // Summe 12 - erneut würfeln
+                    // Summe 11 oder 12 - erneut würfeln
                     resultContent.innerHTML = `
                         <h3>Ergebnis: ${sum}</h3>
                         <p>Dieses Ergebnis hat keine spezielle Bedeutung. Würfle erneut.</p>
@@ -555,36 +536,6 @@
                 
                 resultContainer.appendChild(resultContent);
             }, 600); // Animation-Dauer
-        }
-
-        // Fehlende Funktion: Für Triskele-Anzahl würfeln
-        function rollForTriskeleItems() {
-            var triskeleDiceElement = document.getElementById('triskeleDice');
-            triskeleDiceElement.classList.add('dice-rolling');
-            
-            setTimeout(function() {
-                var count = Math.floor(Math.random() * 6) + 1;
-                triskeleDiceElement.textContent = count;
-                triskeleDiceElement.classList.remove('dice-rolling');
-                
-                var resultContainer = document.getElementById('result');
-                resultContainer.innerHTML = '';
-                
-                var resultContent = document.createElement('div');
-                resultContent.className = 'animated-result';
-                
-                resultContent.innerHTML = `
-                    <h3>Triskele: ${count} Gegenstände</h3>
-                    <p>Würfle für den ersten Gegenstand:</p>
-                    <div class="dice-container">
-                        <div class="dice" id="itemDice1">?</div>
-                        <div class="dice" id="itemDice2">?</div>
-                    </div>
-                    <button class="button" onclick="rollForTriskeleItem(1, ${count})">Für Gegenstand 1 würfeln</button>
-                `;
-                
-                resultContainer.appendChild(resultContent);
-            }, 600);
         }
 
         function rollDurationDieWithPasch(itemValue, itemName) {
@@ -683,140 +634,6 @@
             resultContainer.innerHTML = '<p>Würfle, um zu bestimmen, welchen Gegenstand du benutzen sollst und für wie lange.</p>';
         }
         
-        // Für einzelne Triskele-Gegenstände würfeln
-        function rollForTriskeleItem(itemNum, totalItems) {
-            var itemDice1Element = document.getElementById('itemDice1');
-            var itemDice2Element = document.getElementById('itemDice2');
-            
-            itemDice1Element.classList.add('dice-rolling');
-            itemDice2Element.classList.add('dice-rolling');
-            
-            setTimeout(function() {
-                var dice1 = Math.floor(Math.random() * 6) + 1;
-                var dice2 = Math.floor(Math.random() * 6) + 1;
-                var sum = dice1 + dice2;
-                
-                itemDice1Element.textContent = dice1;
-                itemDice2Element.textContent = dice2;
-                
-                itemDice1Element.classList.remove('dice-rolling');
-                itemDice2Element.classList.remove('dice-rolling');
-                
-                // Stellen Sie sicher, dass der Wert zwischen 2 und 11 liegt
-                // (12 führt erneut zum Würfeln)
-                if (sum > 11) {
-                    var resultContainer = document.getElementById('result');
-                    var currentContent = resultContainer.innerHTML;
-                    
-                    var newMessage = document.createElement('p');
-                    newMessage.innerHTML = `Ergebnis ${sum} > 10. Bitte erneut würfeln.`;
-                    newMessage.style.color = '#ff6b6b';
-                    
-                    resultContainer.appendChild(newMessage);
-                    
-                    setTimeout(function() {
-                        resultContainer.removeChild(newMessage);
-                    }, 2000);
-                    
-                    return;
-                }
-                
-                var item = items[sum];
-                
-                // Zum Array hinzufügen
-                triskeleItems.push({
-                    value: sum,
-                    name: item,
-                    unit: timeUnits[sum]
-                });
-                
-                var resultContainer = document.getElementById('result');
-                resultContainer.innerHTML = '';
-                
-                var resultContent = document.createElement('div');
-                resultContent.className = 'animated-result';
-                
-                var itemsText = triskeleItems.map(function(i) {
-                    return i.name;
-                }).join(', ');
-                
-                if (itemNum < totalItems) {
-                    resultContent.innerHTML = `
-                        <h3>Triskele: Gegenstand ${itemNum}</h3>
-                        <p>Gewürfelt: ${sum} = ${item}</p>
-                        <p>Bisherige Gegenstände: ${itemsText}</p>
-                        <p>Würfle für den nächsten Gegenstand:</p>
-                        <div class="dice-container">
-                            <div class="dice" id="itemDice1">?</div>
-                            <div class="dice" id="itemDice2">?</div>
-                        </div>
-                        <button class="button" onclick="rollForTriskeleItem(${itemNum + 1}, ${totalItems})">Für Gegenstand ${itemNum + 1} würfeln</button>
-                    `;
-                } else {
-                    resultContent.innerHTML = `
-                        <h3>Triskele: Alle Gegenstände</h3>
-                        <p>Kombiniere folgende Gegenstände: ${itemsText}</p>
-                        <p>Würfle nun für die Dauer:</p>
-                        <div class="single-dice" id="triskeleDurationDice">?</div>
-                        <button class="button" onclick="rollForTriskeleDuration()">Für Dauer würfeln</button>
-                    `;
-                    currentRoll.phase = 'duration';
-                }
-                
-                resultContainer.appendChild(resultContent);
-            }, 600);
-        }
-        
-        // Für Dauer der Triskele-Gegenstände würfeln
-        function rollForTriskeleDuration() {
-            var durationDiceElement = document.getElementById('triskeleDurationDice');
-            durationDiceElement.classList.add('dice-rolling');
-            
-            setTimeout(function() {
-                var duration = Math.floor(Math.random() * 6) + 1;
-                durationDiceElement.textContent = duration;
-                durationDiceElement.classList.remove('dice-rolling');
-                
-                var unit = timeUnits[11] === 'days' ? 'Tage' : 'Stunden';
-                
-                var resultContainer = document.getElementById('result');
-                resultContainer.innerHTML = '';
-                
-                var resultContent = document.createElement('div');
-                resultContent.className = 'animated-result';
-                
-                var itemsText = triskeleItems.map(function(i) {
-                    return i.name;
-                }).join(', ');
-                
-                resultContent.innerHTML = `
-                    <h3>Triskele: Alle Gegenstände</h3>
-                    <p>Kombination: ${itemsText}</p>
-                    <p>Dauer: ${duration} ${unit}</p>
-                    <button class="button" onclick="addTriskeleTimer(${duration})">Timer hinzufügen und Fertig</button>
-                `;
-
-                currentRoll.duration = duration;
-                resultContainer.appendChild(resultContent);
-            }, 600);
-        }
-
-        // Triskele-Timer hinzufügen
-        function addTriskeleTimer(duration) {
-            var itemsText = triskeleItems.map(function(i) {
-                return i.name;
-            }).join(', ');
-
-            var roll = {
-                type: 'triskele',
-                item: "Triskele: " + itemsText,
-                duration: duration,
-                unit: timeUnits[11]
-            };
-
-            addOrUpdateTimer(roll);
-            finishPaschRoll(); // Verwendet die gleiche Reset-Logik
-        }
         // Dauer für Standard-Wurf würfeln
         function rollDurationDie(itemValue, itemName) {
             var durationDiceElement = document.getElementById('durationDice');
@@ -1025,7 +842,7 @@
                     timeUnits[i] = select.value;
                 }
             }
-            var specialKeys = [11, "pasch"];
+            var specialKeys = ["pasch"];
             specialKeys.forEach(function(key) {
                 var input = document.getElementById('item-' + key);
                 var select = document.getElementById('unit-' + key);
