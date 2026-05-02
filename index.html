@@ -862,20 +862,32 @@
                 durationMs = roll.duration * 60 * 60 * 1000;
             }
 
-            var expiresAt = now + durationMs;
+            // Suchen nach einem existierenden aktiven Timer für denselben Gegenstand
+            var existingTimer = activeTimers.find(function(t) {
+                return t.item === roll.item && t.expiresAt > now;
+            });
 
-            var newTimer = {
-                id: Date.now(),
-                item: roll.item,
-                expiresAt: expiresAt,
-                duration: roll.duration,
-                unit: roll.unit
-            };
+            if (existingTimer) {
+                // Zeit zum bestehenden Timer hinzufügen
+                existingTimer.expiresAt += durationMs;
+                // Optional: ursprüngliche Dauer und Einheit aktualisieren?
+                // Da es addiert wird, behalten wir die Identität des ursprünglichen Timers bei,
+                // aber verlängern sein Ablaufdatum.
+            } else {
+                // Neuen Timer erstellen
+                var expiresAt = now + durationMs;
 
-            activeTimers.push(newTimer);
+                var newTimer = {
+                    id: Date.now(),
+                    item: roll.item,
+                    expiresAt: expiresAt,
+                    duration: roll.duration,
+                    unit: roll.unit
+                };
 
-            // LocalStorage wäre gut, aber wir bleiben bei In-Memory für GitHub Pages Einfachheit
-            // es sei denn wir wollen Persistenz
+                activeTimers.push(newTimer);
+            }
+
             saveTimersToLocalStorage();
 
             if (autoSwitchToTimers) {
