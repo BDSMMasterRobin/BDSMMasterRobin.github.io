@@ -160,7 +160,7 @@ function renderStep2() {
   app.innerHTML = `
     <div class="step-container">
       <h2>Vertragsstufen auswählen</h2>
-      <p class="step-description">Wähle pro Kategorie eine Stufe. Höhere Stufen übernehmen jeweils auch die Inhalte der niedrigeren Stufen.</p>
+      <p class="step-description">Wähle pro Kategorie genau eine Stufe. Im Vertrag erscheint nur die ausgewählte Stufe.</p>
       <div class="levels-container">${contractData.categories.map(renderCategory).join('')}</div>
       <div class="optional-sections">
         <h3>Optionale Vertragssektionen</h3>
@@ -216,10 +216,9 @@ function buildContract() {
   lines.push('**Vertragsbedingungen**', '');
   contractData.categories.forEach((category) => {
     const selected = Number(state.form.selectedLevels[category.id] || 1);
+    const level = category.levels[selected - 1];
     lines.push(`**${category.name}**`, '');
-    category.levels.slice(0, selected).forEach((level, index) => {
-      lines.push(`Stufe ${index + 1} – ${level.title}: ${level.content}`, '');
-    });
+    lines.push(`Stufe ${selected} – ${level.title}: ${level.content}`, '');
   });
   lines.push('**Abschlussbestimmungen**', 'Die Parteien bestätigen, dass alle Vereinbarungen freiwillig, einvernehmlich und widerrufbar sind. Grenzen, Gesundheit und Sicherheit gehen jederzeit vor.', '');
   if (state.form.includeSafewordSection) lines.push(contractData.optionalSections.safeword, '');
