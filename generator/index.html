@@ -3,71 +3,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Offline Vertrags-Generator</title>
+  <title>Offline BDSM Vertrags-Generator</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-  <main class="app">
-    <header class="hero">
-      <p class="eyebrow">Offline · GitHub Pages kompatibel</p>
-      <h1>Vertrags-Generator</h1>
-      <p>Erstelle eine private Vertragsvorlage vollständig im Browser – ohne PHP, Datenbank, Tracking oder Server-API.</p>
+  <main class="contract-generator">
+    <header class="generator-header">
+      <p class="eyebrow">Offline-Version für GitHub Pages</p>
+      <h1>BDSM Vertrags-Generator</h1>
+      <p>Die komplette Generierung läuft lokal im Browser – ohne PHP, Datenbank, Backend, Cookies oder externe Abhängigkeiten.</p>
     </header>
 
-    <section class="notice" aria-label="Hinweis">
-      <strong>Hinweis:</strong> Diese Vorlage ist keine Rechtsberatung. Prüfe den Text eigenverantwortlich und nutze nur einvernehmliche, sichere und legale Vereinbarungen.
+    <section class="notice" aria-label="Wichtiger Hinweis">
+      <strong>Wichtig:</strong> Diese Vorlage ersetzt keine Rechtsberatung. Nutze sie nur für volljährige Beteiligte, freiwillige Einvernehmlichkeit, klare Grenzen und sichere Absprachen.
     </section>
 
-    <section class="layout">
-      <form id="generator-form" class="card controls">
-        <h2>1. Basisdaten</h2>
-        <div class="grid two">
-          <label>Vertragstitel
-            <input name="contractTitle" value="Privater Vertrag" required>
-          </label>
-          <label>Datum
-            <input name="contractDate" type="date">
-          </label>
-          <label>Partei A
-            <input name="partyA" placeholder="Name / Pseudonym" required>
-          </label>
-          <label>Rolle Partei A
-            <input name="roleA" placeholder="z. B. Auftraggeber/in" required>
-          </label>
-          <label>Partei B
-            <input name="partyB" placeholder="Name / Pseudonym" required>
-          </label>
-          <label>Rolle Partei B
-            <input name="roleB" placeholder="z. B. Auftragnehmer/in" required>
-          </label>
-        </div>
+    <nav class="progress-bar" aria-label="Fortschritt">
+      <button class="step-indicator active" type="button" data-step="1">
+        <span class="step-number">1</span>
+        <span class="step-name">Basisinformationen</span>
+      </button>
+      <button class="step-indicator" type="button" data-step="2">
+        <span class="step-number">2</span>
+        <span class="step-name">Vertragsstufen</span>
+      </button>
+      <button class="step-indicator" type="button" data-step="3">
+        <span class="step-number">3</span>
+        <span class="step-name">Vorschau & Bearbeitung</span>
+      </button>
+    </nav>
 
-        <h2>2. Bausteine</h2>
-        <div id="clauses" class="clauses"></div>
+    <section id="app" class="step-shell" aria-live="polite"></section>
 
-        <h2>3. Eigene Ergänzungen</h2>
-        <label>Zusätzliche Vereinbarungen
-          <textarea name="customTerms" rows="5" placeholder="Eigene Punkte, Grenzen, Pflichten oder Fristen ergänzen …"></textarea>
-        </label>
-
-        <div class="actions">
-          <button type="button" id="generate">Vorschau aktualisieren</button>
-          <button type="button" id="download">Als TXT herunterladen</button>
-          <button type="button" id="print">Drucken / als PDF speichern</button>
-          <button type="reset" class="secondary">Zurücksetzen</button>
-        </div>
-      </form>
-
-      <section class="card preview-panel" aria-live="polite">
-        <div class="preview-header">
-          <h2>Vorschau</h2>
-          <span id="status">bereit</span>
-        </div>
-        <textarea id="contract-output" spellcheck="true"></textarea>
-      </section>
-    </section>
+    <footer class="generator-footer">
+      <p>Offline nutzbar: Ordner <code>generator/</code> direkt auf GitHub Pages veröffentlichen.</p>
+    </footer>
   </main>
 
+  <template id="print-template">
+    <html><head><title>Vertrag drucken</title><style>body{font-family:Arial,sans-serif;line-height:1.55;margin:32px;color:#111}pre{white-space:pre-wrap;font:inherit}</style></head><body><pre></pre></body></html>
+  </template>
   <script src="assets/app.js"></script>
 </body>
 </html>
