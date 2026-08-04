@@ -1,3 +1,5 @@
+const STORAGE_SCHEMA_VERSION = 2;
+
 const contractData = {
   introductions: {
     male: 'Der Herr übernimmt die dominante Rolle im Rahmen der vereinbarten Grenzen.',
@@ -218,7 +220,7 @@ function buildContract() {
     const selected = Number(state.form.selectedLevels[category.id] || 1);
     const level = category.levels[selected - 1];
     lines.push(`**${category.name}**`, '');
-    lines.push(`Stufe ${selected} – ${level.title}: ${level.content}`, '');
+    lines.push(level.content, '');
   });
   lines.push('**Abschlussbestimmungen**', 'Die Parteien bestätigen, dass alle Vereinbarungen freiwillig, einvernehmlich und widerrufbar sind. Grenzen, Gesundheit und Sicherheit gehen jederzeit vor.', '');
   if (state.form.includeSafewordSection) lines.push(contractData.optionalSections.safeword, '');
@@ -275,7 +277,12 @@ function formatContract(text) {
 function saveContract() {
   const id = state.contractId || String(Math.floor(10000000 + Math.random() * 90000000));
   state.contractId = id;
-  localStorage.setItem(`offline-contract-${id}`, JSON.stringify({ form: state.form, text: currentText(), savedAt: new Date().toISOString() }));
+  localStorage.setItem(`offline-contract-${id}`, JSON.stringify({
+    schemaVersion: STORAGE_SCHEMA_VERSION,
+    form: state.form,
+    text: currentText(),
+    savedAt: new Date().toISOString()
+  }));
   alert(`Offline gespeichert. Vertragsnummer: ${id}`);
   renderStep3();
 }
@@ -289,8 +296,9 @@ function loadContract() {
   state.contractId = id;
   state.form = { ...state.form, ...saved.form };
   setStep(3);
-  app.querySelector('#contract-editor').value = saved.text || buildContract();
-  app.querySelector('#contract-preview').innerHTML = formatContract(app.querySelector('#contract-editor').value);
+  const rebuiltText = buildContract();
+  app.querySelector('#contract-editor').value = rebuiltText;
+  app.querySelector('#contract-preview').innerHTML = formatContract(rebuiltText);
 }
 
 function downloadText(text) {
