@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offline Vertrags-Generator</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <p class="eyebrow">Offline · GitHub Pages kompatibel</p>
+      <h1>Vertrags-Generator</h1>
+      <p>Erstelle eine private Vertragsvorlage vollständig im Browser – ohne PHP, Datenbank, Tracking oder Server-API.</p>
+    </header>
+
+    <section class="notice" aria-label="Hinweis">
+      <strong>Hinweis:</strong> Diese Vorlage ist keine Rechtsberatung. Prüfe den Text eigenverantwortlich und nutze nur einvernehmliche, sichere und legale Vereinbarungen.
+    </section>
+
+    <section class="layout">
+      <form id="generator-form" class="card controls">
+        <h2>1. Basisdaten</h2>
+        <div class="grid two">
+          <label>Vertragstitel
+            <input name="contractTitle" value="Privater Vertrag" required>
+          </label>
+          <label>Datum
+            <input name="contractDate" type="date">
+          </label>
+          <label>Partei A
+            <input name="partyA" placeholder="Name / Pseudonym" required>
+          </label>
+          <label>Rolle Partei A
+            <input name="roleA" placeholder="z. B. Auftraggeber/in" required>
+          </label>
+          <label>Partei B
+            <input name="partyB" placeholder="Name / Pseudonym" required>
+          </label>
+          <label>Rolle Partei B
+            <input name="roleB" placeholder="z. B. Auftragnehmer/in" required>
+          </label>
+        </div>
+
+        <h2>2. Bausteine</h2>
+        <div id="clauses" class="clauses"></div>
+
+        <h2>3. Eigene Ergänzungen</h2>
+        <label>Zusätzliche Vereinbarungen
+          <textarea name="customTerms" rows="5" placeholder="Eigene Punkte, Grenzen, Pflichten oder Fristen ergänzen …"></textarea>
+        </label>
+
+        <div class="actions">
+          <button type="button" id="generate">Vorschau aktualisieren</button>
+          <button type="button" id="download">Als TXT herunterladen</button>
+          <button type="button" id="print">Drucken / als PDF speichern</button>
+          <button type="reset" class="secondary">Zurücksetzen</button>
+        </div>
+      </form>
+
+      <section class="card preview-panel" aria-live="polite">
+        <div class="preview-header">
+          <h2>Vorschau</h2>
+          <span id="status">bereit</span>
+        </div>
+        <textarea id="contract-output" spellcheck="true"></textarea>
+      </section>
+    </section>
+  </main>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
