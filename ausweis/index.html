@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kink-Ausweis erstellen</title>
+  <title>Sklaven-Ausweis</title>
   <style>
     :root { color-scheme: dark; --ink:#f7f2ff; --muted:#cbc1d8; --panel:#211a2d; --line:#59456d; --violet:#bb80ff; --violet-dark:#783bc1; --pink:#ff78ab; }
     * { box-sizing: border-box; }
@@ -95,7 +95,7 @@
 <body>
   <main>
     <header>
-      <h1>Kink-Ausweis</h1>
+      <h1>Sklaven-Ausweis</h1>
       <p>Erstelle eine persönliche Profilkarte</p>
     </header>
     <section id="app" aria-live="polite"></section>
@@ -167,7 +167,7 @@
         return sanitized;
       } catch { return null; }
     }
-    function renderShared(data) { document.title = 'Geteilter Kink-Ausweis'; app.innerHTML = `<section class="shared-view"><p class="preview-label">Geteiltes Ergebnis</p>${card(data)}<a class="link-button" href="${location.href.split('#')[0]}">Eigenen Ausweis erstellen</a></section>`; }
+    function renderShared(data) { document.title = 'Geteilter Sklaven-Ausweis'; app.innerHTML = `<section class="shared-view"><p class="preview-label">Geteiltes Ergebnis</p>${card(data)}<a class="link-button" href="${location.href.split('#')[0]}">Eigenen Ausweis erstellen</a></section>`; }
     const data = sharedData();
     if (data) renderShared(data); else renderEditor();
   </script>
