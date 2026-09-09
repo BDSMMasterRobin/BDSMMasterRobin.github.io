@@ -70,6 +70,7 @@
     .card-preferences ul { display:flex; flex-wrap:wrap; gap:.45rem; margin:.5rem 0 0; padding:0; list-style:none; }
     .card-preferences li { padding:.3rem .5rem; border-radius:999px; background:#fff8; font-size:.78rem; }
     .actions { display:grid; gap:.75rem; margin-top:1.25rem; }
+    .export-button { background:linear-gradient(135deg,#d24a87,#8a3fba); }
     .share-row { display:flex; gap:.65rem; }
     button,.link-button { border:0; border-radius:999px; padding:.85rem 1.1rem; background:linear-gradient(135deg,var(--violet),var(--violet-dark)); color:white; cursor:pointer; font:inherit; font-weight:850; text-align:center; text-decoration:none; }
     button.secondary { background:#32243f; border:1px solid var(--line); }
@@ -141,8 +142,9 @@
       return `<table class="preference-table"><thead><tr><th scope="col">Praktik</th>${choiceLabels.map((label, index) => `<th scope="col" title="${escapeHtml(preferenceChoices[index])}">${label}</th>`).join('')}</tr></thead><tbody>${preferenceQuestions.map((question, index) => `<tr><td class="preference-name">${escapeHtml(question)}</td>${preferenceChoices.map(choice => `<td class="preference-option" data-choice="${escapeHtml(choice)}"><label title="${escapeHtml(choice)}"><input type="radio" name="preference-${index}" value="${escapeHtml(choice)}" data-preference="${index}" aria-label="${escapeHtml(question)}: ${escapeHtml(choice)}"><span class="preference-dot" aria-hidden="true"></span></label></td>`).join('')}</tr>`).join('')}</tbody></table>`;
     }
     function renderEditor() {
-      app.innerHTML = `<div class="editor"><section><h2>Datenerfassung</h2><div class="fields"><label>Name<input name="name" maxlength="50" placeholder="z. B. Raven"></label><label>Geburtsdatum<input name="birthdate" type="date" required></label><label>Geschlecht<input name="gender" maxlength="50" placeholder="z. B. nicht-binär, weiblich oder männlich"></label><section class="preferences full" aria-labelledby="social-media-heading"><div class="preferences-heading"><h3 id="social-media-heading">Social Media</h3><p>Optional: Gib deinen Nutzernamen oder Profilnamen für die gewünschten Plattformen an.</p></div><div class="fields social-media-fields"><label>X<input name="x" maxlength="100" placeholder="@deinname"></label><label>Instagram<input name="instagram" maxlength="100" placeholder="@deinname"></label><label>Reddit<input name="reddit" maxlength="100" placeholder="u/deinname"></label><label>Fet<input name="fet" maxlength="100" placeholder="dein Profilname"></label><label>Recon<input name="recon" maxlength="100" placeholder="dein Profilname"></label><label>Bluesky<input name="bluesky" maxlength="100" placeholder="@deinname.bsky.social"></label></div></section><section class="preferences" aria-labelledby="preferences-heading"><div class="preferences-heading"><h3 id="preferences-heading">Vorlieben & Grenzen</h3><p>Wähle pro Praktik eine Bewertung. Unbeantwortete Fragen erscheinen nicht auf deinem Ausweis.</p></div><div class="preference-list">${preferenceFields()}</div></section></div><div class="actions"><button id="create-link" type="button">Ergebnis-Link erstellen</button><div class="share-row"><input id="share-link" readonly aria-label="Teilbarer Ergebnis-Link" placeholder="Der Link erscheint hier"><button id="copy-link" class="secondary" type="button">Link kopieren</button></div><p class="hint">Der Link enthält diese Angaben. Jede Person mit dem Link kann sie sehen.</p></div></section><section><p class="preview-label">Live-Vorschau</p><div id="preview"></div></section></div>`;
+      app.innerHTML = `<div class="editor"><section><h2>Datenerfassung</h2><div class="fields"><label>Name<input name="name" maxlength="50" placeholder="z. B. Raven"></label><label>Geburtsdatum<input name="birthdate" type="date" required></label><label>Geschlecht<input name="gender" maxlength="50" placeholder="z. B. nicht-binär, weiblich oder männlich"></label><section class="preferences full" aria-labelledby="social-media-heading"><div class="preferences-heading"><h3 id="social-media-heading">Social Media</h3><p>Optional: Gib deinen Nutzernamen oder Profilnamen für die gewünschten Plattformen an.</p></div><div class="fields social-media-fields"><label>X<input name="x" maxlength="100" placeholder="@deinname"></label><label>Instagram<input name="instagram" maxlength="100" placeholder="@deinname"></label><label>Reddit<input name="reddit" maxlength="100" placeholder="u/deinname"></label><label>Fet<input name="fet" maxlength="100" placeholder="dein Profilname"></label><label>Recon<input name="recon" maxlength="100" placeholder="dein Profilname"></label><label>Bluesky<input name="bluesky" maxlength="100" placeholder="@deinname.bsky.social"></label></div></section><section class="preferences" aria-labelledby="preferences-heading"><div class="preferences-heading"><h3 id="preferences-heading">Vorlieben & Grenzen</h3><p>Wähle pro Praktik eine Bewertung. Unbeantwortete Fragen erscheinen nicht auf deinem Ausweis.</p></div><div class="preference-list">${preferenceFields()}</div></section></div><div class="actions"><button id="export-image" class="export-button" type="button">Als Bild herunterladen</button><button id="create-link" type="button">Ergebnis-Link erstellen</button><div class="share-row"><input id="share-link" readonly aria-label="Teilbarer Ergebnis-Link" placeholder="Der Link erscheint hier"><button id="copy-link" class="secondary" type="button">Link kopieren</button></div><p class="hint">Der Link enthält diese Angaben. Jede Person mit dem Link kann sie sehen.</p></div></section><section><p class="preview-label">Live-Vorschau</p><div id="preview"></div></section></div>`;
       app.querySelectorAll('input, select, textarea').forEach(field => field.addEventListener('input', updatePreview));
+      app.querySelector('#export-image').addEventListener('click', exportImage);
       app.querySelector('#create-link').addEventListener('click', createLink);
       app.querySelector('#copy-link').addEventListener('click', copyLink);
       updatePreview();
@@ -155,6 +157,45 @@
       copyText(link, 'Der Ergebnis-Link wurde erstellt und kopiert.');
     }
     async function copyText(text, success) { try { await navigator.clipboard.writeText(text); if (success) alert(success); } catch { const input = app.querySelector('#share-link'); input.focus(); input.select(); if (success) alert('Der Link wurde erstellt. Bitte kopiere ihn aus dem Feld.'); } }
+    function imageFileName(name) {
+      const safeName = (name.trim() || 'sklaven-ausweis').replace(/[^\wäöüÄÖÜß-]+/g, '_').replace(/^_+|_+$/g, '');
+      return `${safeName || 'sklaven-ausweis'}-ausweis.png`;
+    }
+    function cardExportStyles() {
+      return `*{box-sizing:border-box}body{margin:0;font:16px/1.5 Inter,Arial,sans-serif}.card{position:relative;overflow:hidden;min-height:400px;padding:24px;border:1px solid #d6afff;border-radius:22px;color:#24132e;background:linear-gradient(135deg,#f8eaff,#c699f6 49%,#ffb3cf);width:100%;height:100%;}.card:before{content:"";position:absolute;width:260px;height:260px;border:35px solid #ffffff55;border-radius:50%;right:-90px;top:-105px}.card>*{position:relative}.card-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:1px solid #4b216466;padding-bottom:14px}.card-title{margin:3px 0 0;font-size:26px;line-height:1}.badge{display:grid;place-items:center;width:54px;aspect-ratio:1;border-radius:50%;background:#40155c;color:#fff;font-weight:900;font-size:18px}.identity{display:grid;grid-template-columns:92px 1fr;gap:16px;margin:22px 0;align-items:center}.avatar{display:grid;place-items:center;width:92px;aspect-ratio:1;border-radius:18px;background:#51206d;color:#fff;font-size:32px;font-weight:900}.name{margin:0;font-size:36px;line-height:1;overflow-wrap:anywhere}.role{margin:6px 0 0;font-weight:800;color:#54226e}.details{display:grid;gap:12px}.detail{padding:10px 12px;border-radius:12px;background:#fff8}.detail strong{display:block;color:#582276;font-size:12px;letter-spacing:.1em;text-transform:uppercase}.detail span,.detail li{overflow-wrap:anywhere}.card-social-media{margin-top:12px}.card-social-media ul,.card-preferences ul{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 0;padding:0;list-style:none}.card-social-media li,.card-preferences li{padding:5px 8px;border-radius:999px;background:#fff8;font-size:12px}.card-preferences{margin-top:12px}`;
+    }
+    async function exportImage(data = readForm()) {
+      const button = app.querySelector('#export-image');
+      const source = app.querySelector('#preview .card') || app.querySelector('.shared-view .card');
+      if (!source) return;
+      const width = Math.max(560, Math.ceil(source.getBoundingClientRect().width));
+      const height = Math.ceil(source.getBoundingClientRect().height);
+      const scale = 2;
+      button.disabled = true;
+      button.textContent = 'Bild wird erstellt …';
+      try {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${cardExportStyles()}</style>${source.outerHTML}</div></foreignObject></svg>`;
+        const image = new Image();
+        const svgUrl = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
+        await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; image.src = svgUrl; });
+        const canvas = document.createElement('canvas');
+        canvas.width = width * scale;
+        canvas.height = height * scale;
+        const context = canvas.getContext('2d');
+        context.scale(scale, scale);
+        context.drawImage(image, 0, 0);
+        URL.revokeObjectURL(svgUrl);
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = imageFileName(data.name);
+        link.click();
+      } catch {
+        alert('Das Bild konnte nicht erstellt werden. Bitte nutze einen aktuellen Browser und versuche es erneut.');
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Als Bild herunterladen';
+      }
+    }
     function copyLink() { const link = app.querySelector('#share-link').value; if (!link) return alert('Erstelle zuerst einen Ergebnis-Link.'); copyText(link, 'Der Link wurde kopiert.'); }
     function sharedData() {
       const match = location.hash.match(/^#ausweis=([^&]+)$/); if (!match) return null;
@@ -167,7 +208,8 @@
         return sanitized;
       } catch { return null; }
     }
-    function renderShared(data) { document.title = 'Geteilter Sklaven-Ausweis'; app.innerHTML = `<section class="shared-view"><p class="preview-label">Geteiltes Ergebnis</p>${card(data)}<a class="link-button" href="${location.href.split('#')[0]}">Eigenen Ausweis erstellen</a></section>`; }
+    function renderShared(data) { document.title = 'Geteilter Sklaven-Ausweis'; app.innerHTML = `<section class="shared-view"><p class="preview-label">Geteiltes Ergebnis</p>${card(data)}<div class="actions"><button id="export-image" class="export-button" type="button">Als Bild herunterladen</button><a class="link-button" href="${location.href.split('#')[0]}">Eigenen Ausweis erstellen</a></div></section>`; app.querySelector('#export-image').addEventListener('click', () => exportSharedImage(data)); }
+    async function exportSharedImage(data) { await exportImage(data); }
     const data = sharedData();
     if (data) renderShared(data); else renderEditor();
   </script>
