@@ -79,6 +79,29 @@ const state = {
 const app = document.querySelector('#app');
 const indicators = [...document.querySelectorAll('.step-indicator')];
 
+function encodeShareText(text) {
+  const bytes = new TextEncoder().encode(text);
+  let binary = '';
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function decodeShareText(encoded) {
+  const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - encoded.length % 4) % 4);
+  const binary = atob(base64);
+  return new TextDecoder().decode(Uint8Array.from(binary, (character) => character.charCodeAt(0)));
+}
+
+function sharedTextFromUrl() {
+  const match = location.hash.match(/^#vertrag=([^&]+)$/);
+  if (!match) return null;
+  try {
+    return decodeShareText(match[1]);
+  } catch {
+    return null;
+  }
+}
+
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
 }
@@ -240,7 +263,8 @@ function renderStep3() {
       <div class="preview-mode-selector"><button type="button" id="preview-mode" class="mode-button selected">Vorschau</button><button type="button" id="edit-mode" class="mode-button">Bearbeiten</button></div>
       <div id="contract-preview" class="contract-preview">${formatContract(contract)}</div>
       <textarea id="contract-editor" class="contract-editor hidden">${escapeHtml(contract)}</textarea>
-      <div class="navigation-buttons"><button type="button" id="back" class="button secondary">Zurück</button><div class="action-buttons"><button type="button" id="save" class="button secondary">Offline speichern</button><button type="button" id="download" class="button secondary">Als Text herunterladen</button><button type="button" id="copy" class="button secondary">Kopieren</button><button type="button" id="print" class="button primary">Drucken / PDF</button></div></div>
+      <div class="share-panel"><strong>Ergebnis teilen</strong><p>Der Link enthält den Vertragstext. Jeder mit diesem Link kann die Vorschau öffnen.</p><div class="input-group"><input id="share-link" class="text-input" readonly aria-label="Teilbarer Ergebnis-Link" placeholder="Link erstellen …"><button type="button" id="share" class="button secondary">Link erstellen</button></div></div>
+      <div class="navigation-buttons"><button type="button" id="back" class="button secondary">Zurück</button><div class="action-buttons"><button type="button" id="save" class="button secondary">Auf diesem Gerät speichern</button><button type="button" id="download" class="button secondary">Als Text herunterladen</button><button type="button" id="copy" class="button secondary">Text kopieren</button><button type="button" id="print" class="button primary">Drucken / PDF</button></div></div>
     </div>`;
 
   const preview = app.querySelector('#contract-preview');
@@ -259,15 +283,50 @@ function renderStep3() {
     app.querySelector('#preview-mode').classList.remove('selected');
   });
   app.querySelector('#back').addEventListener('click', () => setStep(2));
+  app.querySelector('#share').addEventListener('click', createShareLink);
   app.querySelector('#save').addEventListener('click', saveContract);
   app.querySelector('#download').addEventListener('click', () => downloadText(currentText()));
-  app.querySelector('#copy').addEventListener('click', async () => { await navigator.clipboard.writeText(currentText()); alert('Vertragstext wurde kopiert.'); });
+  app.querySelector('#copy').addEventListener('click', async () => { await copyToClipboard(currentText()); alert('Vertragstext wurde kopiert.'); });
   app.querySelector('#print').addEventListener('click', printContract);
 }
 
 function currentText() {
   const editor = app.querySelector('#contract-editor');
   return editor ? editor.value : buildContract();
+}
+
+async function copyToClipboard(value) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+  const temporaryInput = document.createElement('textarea');
+  temporaryInput.value = value;
+  document.body.appendChild(temporaryInput);
+  temporaryInput.select();
+  document.execCommand('copy');
+  temporaryInput.remove();
+}
+
+async function createShareLink() {
+  const url = `${location.href.split('#')[0]}#vertrag=${encodeShareText(currentText())}`;
+  const input = app.querySelector('#share-link');
+  input.value = url;
+  input.select();
+  try {
+    await copyToClipboard(url);
+    alert('Der Ergebnis-Link wurde erstellt und in die Zwischenablage kopiert.');
+  } catch {
+    alert('Der Ergebnis-Link wurde erstellt. Bitte kopiere ihn aus dem Feld.');
+  }
+}
+
+function renderSharedContract(text) {
+  document.title = 'Geteilter BDSM Vertrag';
+  document.querySelector('.generator-header').innerHTML = '<p class="eyebrow">Geteiltes Ergebnis</p><h1>BDSM Vertrag</h1><p>Diese Vorschau wurde über einen Ergebnis-Link geteilt.</p>';
+  document.querySelector('.notice').innerHTML = '<strong>Hinweis:</strong> Diese Vorlage ersetzt keine Rechtsberatung. Vereinbarungen müssen freiwillig, einvernehmlich und jederzeit widerrufbar sein.';
+  document.querySelector('.progress-bar').remove();
+  app.innerHTML = `<div class="step-container"><h2>Vertragsvorschau</h2><div class="contract-preview shared-contract">${formatContract(text)}</div><div class="navigation-buttons"><a class="button primary" href="${location.href.split('#')[0]}">Eigenen Vertrag erstellen</a></div></div>`;
 }
 
 function formatContract(text) {
@@ -325,4 +384,9 @@ indicators.forEach((indicator) => indicator.addEventListener('click', () => {
   if (target <= state.step) setStep(target);
 }));
 
-setStep(1);
+const sharedText = sharedTextFromUrl();
+if (sharedText) {
+  renderSharedContract(sharedText);
+} else {
+  setStep(1);
+}

@@ -108,6 +108,7 @@ h1 { margin: 0; font-size: clamp(2.4rem, 8vw, 5rem); }
 .contract-loader,
 .optional-sections,
 .level-selector,
+.share-panel,
 .contract-preview,
 .contract-editor {
   border: 1px solid var(--border);
@@ -117,7 +118,10 @@ h1 { margin: 0; font-size: clamp(2.4rem, 8vw, 5rem); }
 
 .contract-loader,
 .optional-sections,
-.level-selector { padding: 1rem; }
+.level-selector,
+.share-panel { padding: 1rem; }
+
+.share-panel p { margin: .35rem 0 .8rem; color: var(--muted); }
 
 .form-row {
   display: grid;
@@ -175,6 +179,8 @@ input:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--acc
   background: #191927;
   font-weight: 800;
 }
+
+a.button { text-decoration: none; text-align: center; }
 
 .button.primary,
 .gender-button.selected,
