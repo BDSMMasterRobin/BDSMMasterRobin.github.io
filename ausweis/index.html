@@ -39,13 +39,29 @@
     .detail { padding:.65rem .75rem; border-radius:12px; background:#fff8; }
     .detail strong { display:block; color:#582276; font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; }
     .detail span { overflow-wrap:anywhere; }
-    .preferences { grid-column:1 / -1; padding:1rem; border:1px solid var(--line); border-radius:16px; background:#191221; }
+    .preferences { grid-column:1 / -1; overflow:hidden; border:1px solid var(--line); border-radius:16px; background:#101827; }
+    .preferences-heading { padding:.85rem 1rem; border-bottom:1px solid #344155; background:#1d2939; }
     .preferences h3 { margin:0; font-size:1.08rem; color:var(--ink); }
-    .preferences > p { margin:.25rem 0 1rem; color:var(--muted); font-size:.9rem; }
-    .preference-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.7rem; max-height:520px; overflow:auto; padding-right:.35rem; }
-    .preference { display:flex; align-items:center; justify-content:space-between; gap:.65rem; padding:.55rem .65rem; border-radius:10px; background:#140f1c; color:var(--ink); font-size:.9rem; }
-    .preference span { overflow-wrap:anywhere; }
-    .preference select { width:auto; min-width:130px; padding:.45rem; font-size:.82rem; }
+    .preferences-heading p { margin:.25rem 0 0; color:var(--muted); font-size:.84rem; }
+    .preference-list { max-height:520px; overflow:auto; }
+    .preference-table { width:100%; min-width:650px; border-collapse:collapse; font-size:.9rem; }
+    .preference-table th { padding:.35rem .5rem; color:var(--ink); font-size:.78rem; text-align:center; font-weight:800; }
+    .preference-table th:first-child { width:100%; text-align:left; }
+    .preference-table td { border-top:1px solid #344155; }
+    .preference-name { padding:.48rem .5rem; color:var(--ink); overflow-wrap:anywhere; }
+    .preference-option { width:2.1rem; padding:.3rem .1rem; text-align:center; }
+    .preference-option label { display:grid; place-items:center; color:var(--ink); cursor:pointer; }
+    .preference-option input { position:absolute; inline-size:1px; block-size:1px; opacity:0; }
+    .preference-dot { width:19px; aspect-ratio:1; border:1px solid currentColor; border-radius:50%; transition:transform .15s ease, box-shadow .15s ease, background .15s ease; }
+    .preference-option label:hover .preference-dot { transform:scale(1.13); }
+    .preference-option input:focus-visible + .preference-dot { outline:2px solid var(--ink); outline-offset:3px; }
+    .preference-option input:checked + .preference-dot { background:currentColor; box-shadow:inset 0 0 0 3px #101827; }
+    .preference-option[data-choice="Absolutes Tabu"] { color:#94a3b8; }
+    .preference-option[data-choice="schwere Strafe"] { color:#8b5cf6; }
+    .preference-option[data-choice="muss nicht sein"] { color:#db2777; }
+    .preference-option[data-choice="mir egal"] { color:#f0440b; }
+    .preference-option[data-choice="wäre schön"] { color:#d97706; }
+    .preference-option[data-choice="must have"] { color:#16a34a; }
     .card-preferences { margin-top:.75rem; }
     .card-preferences ul { display:flex; flex-wrap:wrap; gap:.45rem; margin:.5rem 0 0; padding:0; list-style:none; }
     .card-preferences li { padding:.3rem .5rem; border-radius:999px; background:#fff8; font-size:.78rem; }
@@ -58,7 +74,7 @@
     .shared-view { max-width:560px; margin:auto; padding:1.5rem; }
     .shared-view .card { margin:1.2rem 0; }
     .hidden { display:none; }
-    @media(max-width:760px) { main{padding-top:2rem}.editor{grid-template-columns:1fr}.fields{grid-template-columns:1fr}.preference-list{grid-template-columns:1fr;max-height:460px}.share-row{flex-direction:column}.share-row button{width:100%} }
+    @media(max-width:760px) { main{padding-top:2rem}.editor{grid-template-columns:1fr}.fields{grid-template-columns:1fr}.preference-list{max-height:460px}.share-row{flex-direction:column}.share-row button{width:100%} }
   </style>
 </head>
 <body>
@@ -88,13 +104,16 @@
     }
     function readForm() {
       const data = Object.fromEntries(Object.keys(defaults).filter(key => key !== 'preferences').map(key => [key, document.querySelector(`[name="${key}"]`).value]));
-      data.preferences = Object.fromEntries([...app.querySelectorAll('[data-preference]')].filter(select => select.value).map(select => [select.dataset.preference, select.value]));
+      data.preferences = Object.fromEntries([...app.querySelectorAll('[data-preference]:checked')].map(input => [input.dataset.preference, input.value]));
       return data;
     }
     function updatePreview() { document.querySelector('#preview').innerHTML = card(readForm()); }
-    function preferenceFields() { return preferenceQuestions.map((question, index) => `<label class="preference"><span>${escapeHtml(question)}</span><select data-preference="${index}" aria-label="${escapeHtml(question)}"><option value="">Bitte wählen</option>${preferenceChoices.map(choice => `<option>${escapeHtml(choice)}</option>`).join('')}</select></label>`).join(''); }
+    function preferenceFields() {
+      const choiceLabels = ['Tabu', 'Strafe', 'Nein', 'Egal', 'Gern', 'Must-have'];
+      return `<table class="preference-table"><thead><tr><th scope="col">Praktik</th>${choiceLabels.map((label, index) => `<th scope="col" title="${escapeHtml(preferenceChoices[index])}">${label}</th>`).join('')}</tr></thead><tbody>${preferenceQuestions.map((question, index) => `<tr><td class="preference-name">${escapeHtml(question)}</td>${preferenceChoices.map(choice => `<td class="preference-option" data-choice="${escapeHtml(choice)}"><label title="${escapeHtml(choice)}"><input type="radio" name="preference-${index}" value="${escapeHtml(choice)}" data-preference="${index}" aria-label="${escapeHtml(question)}: ${escapeHtml(choice)}"><span class="preference-dot" aria-hidden="true"></span></label></td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    }
     function renderEditor() {
-      app.innerHTML = `<div class="editor"><section><h2>Deinen Ausweis gestalten</h2><div class="fields"><label>Spitzname<input name="name" maxlength="50" placeholder="z. B. Raven"></label><label>Rolle<select name="role"><option>Submissive</option><option>Dominant</option><option>Switch</option><option>Entdeckend</option><option>Andere</option></select></label><label>Pronomen<input name="pronouns" maxlength="50" placeholder="z. B. sie/ihr"></label><label>Safeword<input name="safeword" maxlength="50" placeholder="z. B. Rot"></label><label class="full">Interessen<textarea name="interests" maxlength="300" placeholder="Was möchtest du zeigen?"></textarea></label><label class="full">Grenzen<textarea name="boundaries" maxlength="300" placeholder="Was ist für dich wichtig oder ausgeschlossen?"></textarea></label><section class="preferences" aria-labelledby="preferences-heading"><h3 id="preferences-heading">Vorlieben & Grenzen</h3><p>Bewerte jede gewünschte Praktik. Unbeantwortete Fragen erscheinen nicht auf deinem Ausweis.</p><div class="preference-list">${preferenceFields()}</div></section></div><div class="actions"><button id="create-link" type="button">Ergebnis-Link erstellen</button><div class="share-row"><input id="share-link" readonly aria-label="Teilbarer Ergebnis-Link" placeholder="Der Link erscheint hier"><button id="copy-link" class="secondary" type="button">Link kopieren</button></div><p class="hint">Der Link enthält diese Angaben. Jede Person mit dem Link kann sie sehen.</p></div></section><section><p class="preview-label">Live-Vorschau</p><div id="preview"></div></section></div>`;
+      app.innerHTML = `<div class="editor"><section><h2>Deinen Ausweis gestalten</h2><div class="fields"><label>Spitzname<input name="name" maxlength="50" placeholder="z. B. Raven"></label><label>Rolle<select name="role"><option>Submissive</option><option>Dominant</option><option>Switch</option><option>Entdeckend</option><option>Andere</option></select></label><label>Pronomen<input name="pronouns" maxlength="50" placeholder="z. B. sie/ihr"></label><label>Safeword<input name="safeword" maxlength="50" placeholder="z. B. Rot"></label><label class="full">Interessen<textarea name="interests" maxlength="300" placeholder="Was möchtest du zeigen?"></textarea></label><label class="full">Grenzen<textarea name="boundaries" maxlength="300" placeholder="Was ist für dich wichtig oder ausgeschlossen?"></textarea></label><section class="preferences" aria-labelledby="preferences-heading"><div class="preferences-heading"><h3 id="preferences-heading">Vorlieben & Grenzen</h3><p>Wähle pro Praktik eine Bewertung. Unbeantwortete Fragen erscheinen nicht auf deinem Ausweis.</p></div><div class="preference-list">${preferenceFields()}</div></section></div><div class="actions"><button id="create-link" type="button">Ergebnis-Link erstellen</button><div class="share-row"><input id="share-link" readonly aria-label="Teilbarer Ergebnis-Link" placeholder="Der Link erscheint hier"><button id="copy-link" class="secondary" type="button">Link kopieren</button></div><p class="hint">Der Link enthält diese Angaben. Jede Person mit dem Link kann sie sehen.</p></div></section><section><p class="preview-label">Live-Vorschau</p><div id="preview"></div></section></div>`;
       app.querySelectorAll('input, select, textarea').forEach(field => field.addEventListener('input', updatePreview));
       app.querySelector('#create-link').addEventListener('click', createLink);
       app.querySelector('#copy-link').addEventListener('click', copyLink);
