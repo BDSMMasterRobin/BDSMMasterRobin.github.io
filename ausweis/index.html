@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sklaven-Ausweis</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
   <style>
     :root { color-scheme: dark; --ink:#f7f2ff; --muted:#cbc1d8; --panel:#211a2d; --line:#59456d; --violet:#bb80ff; --violet-dark:#783bc1; --pink:#ff78ab; }
     * { box-sizing: border-box; }
@@ -109,8 +110,8 @@
     const app = document.querySelector('#app');
 
     function escapeHtml(value) { return String(value || '').replace(/[&<>'"]/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[character]); }
-    function encode(data) { const bytes = new TextEncoder().encode(JSON.stringify(data)); let binary = ''; bytes.forEach(byte => binary += String.fromCharCode(byte)); return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
-    function decode(value) { const base64 = value.replace(/-/g,'+').replace(/_/g,'/') + '='.repeat((4 - value.length % 4) % 4); return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(base64), char => char.charCodeAt(0)))); }
+    function encode(data) { return LZString.compressToEncodedURIComponent(JSON.stringify(data)); }
+    function decode(value) { return JSON.parse(LZString.decompressFromEncodedURIComponent(value)); }
     function initials(name) { return (name.trim().split(/\s+/).map(word => word[0]).join('').slice(0,2) || 'K').toUpperCase(); }
     function selectedPreferences(data) { return preferenceQuestions.map((question, index) => [question, data.preferences?.[index]]).filter(([, answer]) => preferenceChoices.includes(answer)); }
     function ageFromBirthdate(birthdate, today = new Date()) {
