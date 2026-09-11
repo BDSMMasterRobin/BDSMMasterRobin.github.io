@@ -1,9 +1,11 @@
+```html
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sklaven-Ausweis</title>
+
+  <title>Slave ID Card</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 
@@ -56,6 +58,28 @@
 
     header > p:last-child {
       color:var(--muted);
+    }
+
+    .language-switcher {
+      display:flex;
+      justify-content:flex-end;
+      margin-bottom:1rem;
+    }
+
+    .language-switcher label {
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      color:var(--muted);
+      font-size:.85rem;
+      font-weight:700;
+    }
+
+    .language-switcher select {
+      width:auto;
+      min-width:125px;
+      padding:.5rem .75rem;
+      border-radius:999px;
     }
 
     .editor,
@@ -350,26 +374,32 @@
       box-shadow:inset 0 0 0 3px #101827;
     }
 
+    .preference-option[data-choice="Absolute no"],
     .preference-option[data-choice="Absolutes Tabu"] {
       color:#94a3b8;
     }
 
+    .preference-option[data-choice="Severe punishment"],
     .preference-option[data-choice="schwere Strafe"] {
       color:#8b5cf6;
     }
 
+    .preference-option[data-choice="Not necessary"],
     .preference-option[data-choice="muss nicht sein"] {
       color:#db2777;
     }
 
+    .preference-option[data-choice="Indifferent"],
     .preference-option[data-choice="mir egal"] {
       color:#f0440b;
     }
 
+    .preference-option[data-choice="Would be nice"],
     .preference-option[data-choice="wäre schön"] {
       color:#d97706;
     }
 
+    .preference-option[data-choice="Must-have"],
     .preference-option[data-choice="must have"] {
       color:#16a34a;
     }
@@ -413,6 +443,7 @@
       border-radius:999px;
       background:#fff8;
       font-size:.78rem;
+      overflow-wrap:anywhere;
     }
 
     .actions {
@@ -516,6 +547,10 @@
         padding:1rem;
       }
 
+      .language-switcher {
+        justify-content:center;
+      }
+
       .preference-table {
         min-width:0;
         table-layout:fixed;
@@ -555,17 +590,439 @@
 <main>
 
   <header>
-    <h1>Sklaven-Ausweis</h1>
-    <p>Erstelle dein Sklaven-Ausweis</p>
+
+    <div class="language-switcher">
+
+      <label for="language-select">
+
+        <span id="language-label">
+          Language
+        </span>
+
+        <select id="language-select">
+          <option value="en">English</option>
+          <option value="de">Deutsch</option>
+        </select>
+
+      </label>
+
+    </div>
+
+    <h1 id="page-title">
+      Slave ID Card
+    </h1>
+
+    <p id="page-subtitle">
+      Create your slave ID card
+    </p>
+
   </header>
 
   <section id="app" aria-live="polite"></section>
 
 </main>
 
+
 <script>
 
+/* =========================================================
+   TRANSLATIONS
+========================================================= */
+
+const translations = {
+
+  en: {
+
+    pageTitle: 'Slave ID Card',
+    pageSubtitle: 'Create your slave ID card',
+    language: 'Language',
+
+    dataCollection: 'Personal information',
+
+    name: 'Name',
+    namePlaceholder: 'e.g. Raven',
+
+    birthdate: 'Date of birth',
+
+    gender: 'Gender',
+    genderPlaceholder:
+      'e.g. non-binary, female or male',
+
+    genderNotSpecified:
+      'Gender not specified',
+
+    socialMedia: 'Social Media',
+
+    socialMediaDescription:
+      'Optional: Enter your username or profile name for the platforms you use.',
+
+    usernamePlaceholder:
+      '@yourname',
+
+    redditPlaceholder:
+      'u/yourname',
+
+    profilePlaceholder:
+      'Your profile name',
+
+    blueskyPlaceholder:
+      '@yourname.bsky.social',
+
+    preferences:
+      'Preferences & Limits',
+
+    preferencesDescription:
+      'Select one rating for each activity. Unanswered questions will not appear on your ID card.',
+
+    practice:
+      'Activity',
+
+    choiceLabels: [
+      'Absolute no',
+      'Severe punishment',
+      'Not necessary',
+      'Indifferent',
+      'Would be nice',
+      'Must-have'
+    ],
+
+    choiceTitles: [
+      'Absolute no',
+      'Severe punishment',
+      'Not necessary',
+      'Indifferent',
+      'Would be nice',
+      'Must-have'
+    ],
+
+    cardTitle:
+      'Slave ID Card',
+
+    ageUnknown:
+      'Unknown',
+
+    years:
+      'yrs.',
+
+    socialMediaCard:
+      'Social Media',
+
+    preferencesCard:
+      'Preferences & Limits',
+
+    livePreview:
+      'Live preview',
+
+    exportImage:
+      'Download as image',
+
+    creatingImage:
+      'Creating image …',
+
+    createLink:
+      'Create result link',
+
+    copyLink:
+      'Copy link',
+
+    sharePlaceholder:
+      'The link will appear here',
+
+    linkHint:
+      'The link contains the information entered here. Anyone with the link can view it.',
+
+    linkCreated:
+      'The result link was created and copied.',
+
+    linkCopied:
+      'The link was copied.',
+
+    createLinkFirst:
+      'Create a result link first.',
+
+    invalidBirthdate:
+      'Please enter a valid date of birth that is not in the future.',
+
+    copyFallback:
+      'The link was created. Please copy it from the field.',
+
+    imageError:
+      'The image could not be created. Please use a current browser and try again.',
+
+    sharedResult:
+      'Shared result',
+
+    createOwn:
+      'Create your own ID card',
+
+    invalidLink:
+      'The link could not be read.'
+  },
+
+
+  de: {
+
+    pageTitle:
+      'Sklaven-Ausweis',
+
+    pageSubtitle:
+      'Erstelle deinen Sklaven-Ausweis',
+
+    language:
+      'Sprache',
+
+    dataCollection:
+      'Datenerfassung',
+
+    name:
+      'Name',
+
+    namePlaceholder:
+      'z. B. Raven',
+
+    birthdate:
+      'Geburtsdatum',
+
+    gender:
+      'Geschlecht',
+
+    genderPlaceholder:
+      'z. B. nicht-binär, weiblich oder männlich',
+
+    genderNotSpecified:
+      'Geschlecht nicht angegeben',
+
+    socialMedia:
+      'Social Media',
+
+    socialMediaDescription:
+      'Optional: Gib deinen Nutzernamen oder Profilnamen für die gewünschten Plattformen an.',
+
+    usernamePlaceholder:
+      '@deinname',
+
+    redditPlaceholder:
+      'u/deinname',
+
+    profilePlaceholder:
+      'Dein Profilname',
+
+    blueskyPlaceholder:
+      '@deinname.bsky.social',
+
+    preferences:
+      'Vorlieben & Grenzen',
+
+    preferencesDescription:
+      'Wähle pro Praktik eine Bewertung. Unbeantwortete Fragen erscheinen nicht auf deinem Ausweis.',
+
+    practice:
+      'Praktik',
+
+    choiceLabels: [
+      'Tabu',
+      'Strafe',
+      'Nein',
+      'Egal',
+      'Gern',
+      'Must-have'
+    ],
+
+    choiceTitles: [
+      'Absolutes Tabu',
+      'schwere Strafe',
+      'muss nicht sein',
+      'mir egal',
+      'wäre schön',
+      'must have'
+    ],
+
+    cardTitle:
+      'Sklaven-Ausweis',
+
+    ageUnknown:
+      'unbekannt',
+
+    years:
+      'J.',
+
+    socialMediaCard:
+      'Social Media',
+
+    preferencesCard:
+      'Vorlieben & Grenzen',
+
+    livePreview:
+      'Live-Vorschau',
+
+    exportImage:
+      'Als Bild herunterladen',
+
+    creatingImage:
+      'Bild wird erstellt …',
+
+    createLink:
+      'Ergebnis-Link erstellen',
+
+    copyLink:
+      'Link kopieren',
+
+    sharePlaceholder:
+      'Der Link erscheint hier',
+
+    linkHint:
+      'Der Link enthält diese Angaben. Jede Person mit dem Link kann sie sehen.',
+
+    linkCreated:
+      'Der Ergebnis-Link wurde erstellt und kopiert.',
+
+    linkCopied:
+      'Der Link wurde kopiert.',
+
+    createLinkFirst:
+      'Erstelle zuerst einen Ergebnis-Link.',
+
+    invalidBirthdate:
+      'Bitte gib ein gültiges Geburtsdatum ein, das nicht in der Zukunft liegt.',
+
+    copyFallback:
+      'Der Link wurde erstellt. Bitte kopiere ihn aus dem Feld.',
+
+    imageError:
+      'Das Bild konnte nicht erstellt werden. Bitte nutze einen aktuellen Browser und versuche es erneut.',
+
+    sharedResult:
+      'Geteiltes Ergebnis',
+
+    createOwn:
+      'Eigenen Ausweis erstellen',
+
+    invalidLink:
+      'Der Link konnte nicht gelesen werden.'
+  }
+
+};
+
+
+/* =========================================================
+   LANGUAGE
+========================================================= */
+
+/*
+  English is the default language.
+  Existing users may have a saved language preference.
+*/
+
+let currentLanguage = 'en';
+
+const savedLanguage =
+  localStorage.getItem(
+    'slave-id-language'
+  );
+
+if (
+  savedLanguage === 'de' ||
+  savedLanguage === 'en'
+) {
+  currentLanguage = savedLanguage;
+}
+
+
+function t(key) {
+
+  return (
+    translations[currentLanguage]?.[key] ??
+    translations.en[key] ??
+    key
+  );
+
+}
+
+
+function setLanguage(language) {
+
+  currentLanguage =
+    language === 'de'
+      ? 'de'
+      : 'en';
+
+  localStorage.setItem(
+    'slave-id-language',
+    currentLanguage
+  );
+
+  document.documentElement.lang =
+    currentLanguage;
+
+  updateLanguageUI();
+
+  const shared =
+    sharedData();
+
+  if (shared) {
+
+    renderShared(shared);
+
+  } else {
+
+    renderEditor();
+
+  }
+
+}
+
+
+function updateLanguageUI() {
+
+  const select =
+    document.querySelector(
+      '#language-select'
+    );
+
+  if (select) {
+    select.value =
+      currentLanguage;
+  }
+
+  const label =
+    document.querySelector(
+      '#language-label'
+    );
+
+  const title =
+    document.querySelector(
+      '#page-title'
+    );
+
+  const subtitle =
+    document.querySelector(
+      '#page-subtitle'
+    );
+
+  if (label) {
+    label.textContent =
+      t('language');
+  }
+
+  if (title) {
+    title.textContent =
+      t('pageTitle');
+  }
+
+  if (subtitle) {
+    subtitle.textContent =
+      t('pageSubtitle');
+  }
+
+}
+
+
+/* =========================================================
+   DEFAULT DATA
+========================================================= */
+
 const defaults = {
+
   name:'',
   birthdate:'',
   gender:'',
@@ -576,27 +1033,40 @@ const defaults = {
   recon:'',
   bluesky:'',
   preferences:{}
+
 };
 
+
 const socialMediaFields = [
-  ['x', 'X'],
-  ['instagram', 'Instagram'],
-  ['reddit', 'Reddit'],
-  ['fet', 'Fet'],
-  ['recon', 'Recon'],
-  ['bluesky', 'Bluesky']
+
+  ['x','X'],
+  ['instagram','Instagram'],
+  ['reddit','Reddit'],
+  ['fet','Fet'],
+  ['recon','Recon'],
+  ['bluesky','Bluesky']
+
 ];
 
+
 const preferenceChoices = [
+
   'Absolutes Tabu',
   'schwere Strafe',
   'muss nicht sein',
   'mir egal',
   'wäre schön',
   'must have'
+
 ];
 
+
+/* =========================================================
+   PREFERENCE QUESTIONS
+========================================================= */
+
 const preferenceQuestions = [
+
   "Altersspiele",
   "An Haaren ziehen",
   "Analdehnung",
@@ -799,82 +1269,280 @@ const preferenceQuestions = [
   "Windeln",
   "Würgespiele",
   "Zwangsjacke"
+
 ];
 
-const app = document.querySelector('#app');
+
+/*
+  English translations.
+
+  The index must correspond exactly to
+  preferenceQuestions.
+*/
+
+const preferenceQuestionsEN = [
+
+  "Age play",
+  "Hair pulling",
+  "Anal stretching",
+  "Anal beads",
+  "Anal play (licking)",
+  "Anal intercourse",
+  "St. Andrew's cross",
+  "Being spat on",
+  "Breath control",
+  "Suspension / swinging",
+  "Vertical suspension",
+  "Horizontal suspension",
+  "Suspension by the feet",
+  "Suspension by the hands",
+  "Blindfold / eye mask",
+  "Full-body whipping",
+  "Exposure",
+  "Barefoot indoors",
+  "Barefoot outdoors",
+  "Bastinado (foot torture)",
+  "Serving",
+  "Permanent leg hair removal",
+  "Biting / being bitten",
+  "Begging",
+  "Bisexual activities",
+  "Restricted eye contact",
+  "Stinging nettles",
+  "Bondage",
+  "Multi-day bondage",
+  "Bondage under clothing",
+  "Branding",
+  "Butt plugs",
+  "Permanent butt plug",
+  "Chinese torture",
+  "CBT",
+  "Thumb cuffs",
+  "Thumb screws",
+  "Verbal humiliation",
+  "Serving as a maid",
+  "Serving as an art object",
+  "Serving as furniture",
+  "Serving as a toilet",
+  "Oral service",
+  "Dildos (anal)",
+  "Dildos (oral)",
+  "Doctor play",
+  "Being leashed outdoors",
+  "Dress code",
+  "Dressage whips",
+  "Solitary confinement",
+  "Enema (for cleaning)",
+  "Solitary confinement / captivity",
+  "Ice dildos",
+  "Ice cubes",
+  "Electricity",
+  "Abduction role-play",
+  "Abstinence",
+  "EPE",
+  "Humiliation",
+  "Erotic dance (strip / belly dance)",
+  "Erotic dance (go-go)",
+  "Training games",
+  "Forced nudity",
+  "Forced masturbation",
+  "Forced exercise",
+  "Forced bedwetting",
+  "Forced eating",
+  "Food selected by another person",
+  "Food deprivation",
+  "Feathers",
+  "Fellatio",
+  "Leather restraints",
+  "Rope restraints",
+  "Steel / iron restraints",
+  "Fetish clothing",
+  "Fire play",
+  "Finger play (being sucked)",
+  "Finger play (sucking fingers)",
+  "Anal fingering",
+  "Being fingered anally",
+  "Anal fisting",
+  "Receiving anal fisting",
+  "Photo / video recording",
+  "Plastic wrap / mummification",
+  "Foot service",
+  "Wearing ankle restraints",
+  "Foot licking",
+  "Full-head mask",
+  "Gas masks",
+  "Prison role-play",
+  "Obedience exercises",
+  "Smell torture",
+  "Taste torture",
+  "Drink deprivation",
+  "Maintaining basic positions",
+  "Group activities in all configurations",
+  "Rubber clothing / underwear",
+  "Belts / straps",
+  "Gynecological examination chair",
+  "Weighted collar",
+  "Wearing a collar",
+  "Wearing a collar in public",
+  "Collar and leash",
+  "Wearing hand restraints",
+  "Handjobs",
+  "Harness",
+  "Housework",
+  "Hot creams",
+  "Hot candle wax",
+  "Hot oil",
+  "Wooden striking implements",
+  "Dog whip",
+  "Hypnosis",
+  "Standing in the corner",
+  "Permanent cage confinement",
+  "Temporary cage confinement",
+  "Fighting / wrestling",
+  "Catheter",
+  "Chains",
+  "Permanent chastity belt",
+  "Temporary chastity belt",
+  "Tickling",
+  "Tape",
+  "Clothing rules",
+  "Skin-tight clothing without underwear",
+  "Gag",
+  "Kneeling",
+  "Competition with other submissives",
+  "Toilet control",
+  "Headphones / earplugs",
+  "Total body hair removal",
+  "Corset",
+  "Scratching",
+  "Crawling",
+  "Latex clothing / underwear",
+  "Licking (non-sexual)",
+  "Licking (sexual)",
+  "Leather restraints",
+  "Leather clothing",
+  "Leather strap clothing",
+  "Body bag",
+  "Massage (giving)",
+  "Milking / forced ejaculation",
+  "Mummification",
+  "Needles",
+  "Name change",
+  "Scarring",
+  "Nipple stretching",
+  "Nipple biting",
+  "Nipple weights",
+  "Nipple clamps",
+  "Nipple clips",
+  "Nipple licking",
+  "Nipple sucking",
+  "Nipple play / torture",
+  "Nipple stretchers",
+  "Nylons",
+  "Public humiliation",
+  "Slapping",
+  "Oral sex",
+  "Forced orgasm until unconsciousness",
+  "Orgasm control",
+  "Partner swapping",
+  "Whip",
+  "Pet play",
+  "PVC clothing",
+  "Speech restrictions",
+  "Restrictive behavioral rules",
+  "Coffin play",
+  "Shame board",
+  "Pillory",
+  "Sleeping while restrained",
+  "Sleeping naked / uncovered",
+  "Sleep deprivation",
+  "Striking",
+  "Swallowing feces",
+  "Swallowing semen",
+  "Shoe service",
+  "Ropes",
+  "Sex in front of a camera for the Dom",
+  "Sexual services under coercion",
+  "Sensory deprivation",
+  "Sitting on the face",
+  "Spanking",
+  "Spitting",
+  "Strapping",
+  "Stretching bench",
+  "Short-lasting marks",
+  "Long-lasting marks",
+  "Verbal humiliation / degradation",
+  "Interrogation",
+  "Auction role-play",
+  "Giving up privacy",
+  "Vibrator",
+  "Public display",
+  "Waxing",
+  "Wax play",
+  "Clothespins",
+  "Water torture",
+  "Diapers",
+  "Choking play",
+  "Straightjacket"
+
+];
 
 
-/* ---------------------------------------------------------
-   HILFSFUNKTIONEN
---------------------------------------------------------- */
+/* =========================================================
+   HELPERS
+========================================================= */
 
 function escapeHtml(value) {
+
   return String(value || '').replace(
     /[&<>'"]/g,
+
     character => ({
+
       '&':'&amp;',
       '<':'&lt;',
       '>':'&gt;',
       "'":'&#39;',
       '"':'&quot;'
+
     })[character]
   );
+
 }
 
 
-/* ---------------------------------------------------------
-   KOMPAKTES LINK-FORMAT
---------------------------------------------------------- */
+function localizedPreferenceQuestion(
+  question,
+  index
+) {
 
-/*
-  Neues Format:
+  if (currentLanguage === 'de') {
+    return question;
+  }
 
-  [
-    name,
-    birthdate,
-    gender,
-    x,
-    instagram,
-    reddit,
-    fet,
-    recon,
-    bluesky,
-    [
-      frageIndex,
-      auswahlIndex,
-      frageIndex,
-      auswahlIndex,
-      ...
-    ]
-  ]
+  return (
+    preferenceQuestionsEN[index] ||
+    question
+  );
 
-  Beispiel:
+}
 
-  [
-    "Raven",
-    "1990-01-01",
-    "weiblich",
-    "@raven",
-    "",
-    "",
-    "",
-    "",
-    "",
-    [0,5,1,4,20,3]
-  ]
 
-  Dadurch werden die langen Texte der Fragen und Antworten
-  NICHT mehr in den Link geschrieben.
-*/
+/* =========================================================
+   COMPACT LINK ENCODING
+========================================================= */
 
 function encode(data) {
 
   const preferences = [];
 
-  Object.entries(data.preferences || {}).forEach(
+  Object.entries(
+    data.preferences || {}
+  ).forEach(
     ([questionIndex, choice]) => {
 
-      const choiceIndex = preferenceChoices.indexOf(choice);
+      const choiceIndex =
+        preferenceChoices.indexOf(choice);
 
       if (
         /^\d+$/.test(questionIndex) &&
@@ -882,15 +1550,36 @@ function encode(data) {
         Number(questionIndex) >= 0 &&
         Number(questionIndex) < preferenceQuestions.length
       ) {
+
         preferences.push(
           Number(questionIndex),
           choiceIndex
         );
+
       }
+
     }
   );
 
+
+  /*
+    Indexes:
+
+    0  name
+    1  birthdate
+    2  gender
+    3  x
+    4  instagram
+    5  reddit
+    6  fet
+    7  recon
+    8  bluesky
+    9  language
+    10 preferences
+  */
+
   const compactData = [
+
     data.name || '',
     data.birthdate || '',
     data.gender || '',
@@ -900,57 +1589,122 @@ function encode(data) {
     data.fet || '',
     data.recon || '',
     data.bluesky || '',
+    currentLanguage,
     preferences
+
   ];
+
 
   return LZString.compressToEncodedURIComponent(
     JSON.stringify(compactData)
   );
+
 }
 
 
-/*
-  Decoder unterstützt:
-
-  1. Das neue kurze Format
-  2. Das alte Format
-
-  Dadurch bleiben bereits verschickte alte Links
-  weiterhin funktionsfähig.
-*/
+/* =========================================================
+   DECODING
+========================================================= */
 
 function decode(value) {
 
   const decompressed =
-    LZString.decompressFromEncodedURIComponent(value);
+    LZString.decompressFromEncodedURIComponent(
+      value
+    );
+
 
   if (!decompressed) {
-    throw new Error('Link konnte nicht entschlüsselt werden.');
+
+    throw new Error(
+      'Link could not be decoded.'
+    );
+
   }
 
-  const parsed = JSON.parse(decompressed);
 
-  /* Neues kompaktes Format */
+  const parsed =
+    JSON.parse(decompressed);
+
+
+  /* -------------------------------------------------------
+     NEW COMPACT FORMAT
+  ------------------------------------------------------- */
+
   if (Array.isArray(parsed)) {
 
     const compactData = parsed;
 
-    const name = compactData[0] || '';
-    const birthdate = compactData[1] || '';
-    const gender = compactData[2] || '';
-    const x = compactData[3] || '';
-    const instagram = compactData[4] || '';
-    const reddit = compactData[5] || '';
-    const fet = compactData[6] || '';
-    const recon = compactData[7] || '';
-    const bluesky = compactData[8] || '';
+    const name =
+      compactData[0] || '';
 
-    const preferenceArray =
-      Array.isArray(compactData[9])
-        ? compactData[9]
-        : [];
+    const birthdate =
+      compactData[1] || '';
+
+    const gender =
+      compactData[2] || '';
+
+    const x =
+      compactData[3] || '';
+
+    const instagram =
+      compactData[4] || '';
+
+    const reddit =
+      compactData[5] || '';
+
+    const fet =
+      compactData[6] || '';
+
+    const recon =
+      compactData[7] || '';
+
+    const bluesky =
+      compactData[8] || '';
+
+
+    /*
+      Old compact links had preferences at index 9.
+
+      New links have language at index 9
+      and preferences at index 10.
+    */
+
+    let language = 'en';
+
+    let preferenceArray = [];
+
+
+    if (
+      compactData[9] === 'de' ||
+      compactData[9] === 'en'
+    ) {
+
+      language =
+        compactData[9];
+
+      preferenceArray =
+        Array.isArray(compactData[10])
+          ? compactData[10]
+          : [];
+
+    } else {
+
+      /*
+        Compatibility with the previous
+        compact format.
+      */
+
+      preferenceArray =
+        Array.isArray(compactData[9])
+          ? compactData[9]
+          : [];
+
+    }
+
 
     const preferences = {};
+
 
     for (
       let i = 0;
@@ -964,6 +1718,7 @@ function decode(value) {
       const choiceIndex =
         Number(preferenceArray[i + 1]);
 
+
       if (
         Number.isInteger(questionIndex) &&
         Number.isInteger(choiceIndex) &&
@@ -972,12 +1727,17 @@ function decode(value) {
         choiceIndex >= 0 &&
         choiceIndex < preferenceChoices.length
       ) {
+
         preferences[questionIndex] =
           preferenceChoices[choiceIndex];
+
       }
+
     }
 
+
     return {
+
       name,
       birthdate,
       gender,
@@ -987,92 +1747,139 @@ function decode(value) {
       fet,
       recon,
       bluesky,
+      language,
       preferences
+
     };
+
   }
 
 
-  /* Altes Format */
+  /* -------------------------------------------------------
+     OLD OBJECT FORMAT
+  ------------------------------------------------------- */
 
-  if (parsed && typeof parsed === 'object') {
+  if (
+    parsed &&
+    typeof parsed === 'object'
+  ) {
 
     return {
-      name:typeof parsed.name === 'string'
-        ? parsed.name
-        : '',
 
-      birthdate:typeof parsed.birthdate === 'string'
-        ? parsed.birthdate
-        : '',
+      name:
+        typeof parsed.name === 'string'
+          ? parsed.name
+          : '',
 
-      gender:typeof parsed.gender === 'string'
-        ? parsed.gender
-        : '',
+      birthdate:
+        typeof parsed.birthdate === 'string'
+          ? parsed.birthdate
+          : '',
 
-      x:typeof parsed.x === 'string'
-        ? parsed.x
-        : '',
+      gender:
+        typeof parsed.gender === 'string'
+          ? parsed.gender
+          : '',
 
-      instagram:typeof parsed.instagram === 'string'
-        ? parsed.instagram
-        : '',
+      x:
+        typeof parsed.x === 'string'
+          ? parsed.x
+          : '',
 
-      reddit:typeof parsed.reddit === 'string'
-        ? parsed.reddit
-        : '',
+      instagram:
+        typeof parsed.instagram === 'string'
+          ? parsed.instagram
+          : '',
 
-      fet:typeof parsed.fet === 'string'
-        ? parsed.fet
-        : '',
+      reddit:
+        typeof parsed.reddit === 'string'
+          ? parsed.reddit
+          : '',
 
-      recon:typeof parsed.recon === 'string'
-        ? parsed.recon
-        : '',
+      fet:
+        typeof parsed.fet === 'string'
+          ? parsed.fet
+          : '',
 
-      bluesky:typeof parsed.bluesky === 'string'
-        ? parsed.bluesky
-        : '',
+      recon:
+        typeof parsed.recon === 'string'
+          ? parsed.recon
+          : '',
+
+      bluesky:
+        typeof parsed.bluesky === 'string'
+          ? parsed.bluesky
+          : '',
+
+      language:
+        parsed.language === 'de'
+          ? 'de'
+          : 'en',
 
       preferences:
         parsed.preferences &&
         typeof parsed.preferences === 'object'
           ? parsed.preferences
           : {}
+
     };
+
   }
 
-  throw new Error('Ungültiges Datenformat.');
+
+  throw new Error(
+    'Invalid data format.'
+  );
+
 }
 
 
-/* ---------------------------------------------------------
-   AUSWEIS
---------------------------------------------------------- */
+/* =========================================================
+   CARD
+========================================================= */
 
 function initials(name) {
 
   return (
+
     name
       .trim()
       .split(/\s+/)
-      .map(word => word[0])
+      .map(
+        word => word[0]
+      )
       .join('')
-      .slice(0,2) || 'K'
+      .slice(0,2) ||
+
+    'S'
+
   ).toUpperCase();
+
 }
 
 
 function selectedPreferences(data) {
 
   return preferenceQuestions
-    .map((question,index) => [
-      question,
-      data.preferences?.[index]
-    ])
+
+    .map(
+      (question,index) => [
+
+        localizedPreferenceQuestion(
+          question,
+          index
+        ),
+
+        data.preferences?.[index]
+
+      ]
+    )
+
     .filter(
       ([,answer]) =>
         preferenceChoices.includes(answer)
     );
+
 }
 
 
@@ -1081,15 +1888,26 @@ function ageFromBirthdate(
   today = new Date()
 ) {
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthdate)) {
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(
+      birthdate
+    )
+  ) {
+
     return null;
+
   }
+
 
   const [
     year,
     month,
     day
-  ] = birthdate.split('-').map(Number);
+  ] =
+    birthdate
+      .split('-')
+      .map(Number);
+
 
   const birthday =
     new Date(
@@ -1098,17 +1916,22 @@ function ageFromBirthdate(
       day
     );
 
+
   if (
     birthday.getFullYear() !== year ||
     birthday.getMonth() !== month - 1 ||
     birthday.getDate() !== day ||
     birthday > today
   ) {
+
     return null;
+
   }
+
 
   let age =
     today.getFullYear() - year;
+
 
   if (
     today.getMonth() < month - 1 ||
@@ -1117,27 +1940,46 @@ function ageFromBirthdate(
       today.getDate() < day
     )
   ) {
+
     age--;
+
   }
 
+
   return age;
+
 }
 
+
+/* =========================================================
+   CARD HTML
+========================================================= */
 
 function card(data) {
 
   const name =
-    data.name.trim() || 'Dein Name';
+    data.name.trim() ||
+    (
+      currentLanguage === 'en'
+        ? 'Your name'
+        : 'Dein Name'
+    );
+
 
   const age =
-    ageFromBirthdate(data.birthdate);
+    ageFromBirthdate(
+      data.birthdate
+    );
+
 
   const selections =
     selectedPreferences(data);
 
+
   const socialMedia =
     socialMediaFields.filter(
-      ([key]) => data[key]?.trim()
+      ([key]) =>
+        data[key]?.trim()
     );
 
 
@@ -1145,9 +1987,17 @@ function card(data) {
     socialMedia.length
 
       ? `
+
         <div class="detail card-social-media">
-          <strong>Social Media</strong>
+
+          <strong>
+            ${escapeHtml(
+              t('socialMediaCard')
+            )}
+          </strong>
+
           <ul>
+
             ${
               socialMedia
                 .map(
@@ -1159,8 +2009,11 @@ function card(data) {
                 )
                 .join('')
             }
+
           </ul>
+
         </div>
+
       `
 
       : '';
@@ -1170,9 +2023,17 @@ function card(data) {
     selections.length
 
       ? `
+
         <div class="detail card-preferences">
-          <strong>Vorlieben & Grenzen</strong>
+
+          <strong>
+            ${escapeHtml(
+              t('preferencesCard')
+            )}
+          </strong>
+
           <ul>
+
             ${
               selections
                 .map(
@@ -1184,33 +2045,47 @@ function card(data) {
                 )
                 .join('')
             }
+
           </ul>
+
         </div>
+
       `
 
       : '';
 
 
   return `
+
     <article class="card">
 
       <div class="card-top">
 
         <div>
+
           <h2 class="card-title">
-            Sklaven-Ausweis
+            ${escapeHtml(
+              t('cardTitle')
+            )}
           </h2>
+
         </div>
 
         <div
           class="badge"
-          aria-label="Alter: ${age ?? 'unbekannt'}"
+          aria-label="Age: ${age ?? t('ageUnknown')}"
         >
+
           ${
             age === null
+
               ? '—'
-              : `${age} J.`
+
+              : `${age} ${escapeHtml(
+                  t('years')
+                )}`
           }
+
         </div>
 
       </div>
@@ -1219,7 +2094,9 @@ function card(data) {
       <div class="identity">
 
         <div class="avatar">
-          ${escapeHtml(initials(name))}
+          ${escapeHtml(
+            initials(name)
+          )}
         </div>
 
         <div>
@@ -1229,12 +2106,14 @@ function card(data) {
           </h3>
 
           <p class="role">
+
             ${
               escapeHtml(
                 data.gender.trim() ||
-                'Geschlecht nicht angegeben'
+                t('genderNotSpecified')
               )
             }
+
           </p>
 
         </div>
@@ -1251,81 +2130,113 @@ function card(data) {
       </div>
 
     </article>
+
   `;
+
 }
 
 
-/* ---------------------------------------------------------
-   FORMULAR
---------------------------------------------------------- */
+/* =========================================================
+   FORM DATA
+========================================================= */
 
 function readForm() {
 
   const data =
     Object.fromEntries(
+
       Object.keys(defaults)
+
         .filter(
-          key => key !== 'preferences'
+          key =>
+            key !== 'preferences'
         )
+
         .map(
-          key => [
-            key,
-            document.querySelector(
-              `[name="${key}"]`
-            ).value
-          ]
+          key => {
+
+            const field =
+              document.querySelector(
+                `[name="${key}"]`
+              );
+
+            return [
+              key,
+              field
+                ? field.value
+                : ''
+            ];
+
+          }
         )
+
     );
 
 
   data.preferences =
     Object.fromEntries(
+
       [
         ...app.querySelectorAll(
           '[data-preference]:checked'
         )
-      ].map(
+      ]
+
+      .map(
         input => [
+
           input.dataset.preference,
+
           input.value
+
         ]
       )
+
     );
 
 
   return data;
+
 }
 
+
+/* =========================================================
+   PREVIEW
+========================================================= */
 
 function updatePreview() {
 
   const preview =
-    document.querySelector('#preview');
+    document.querySelector(
+      '#preview'
+    );
+
 
   if (!preview) return;
 
+
   preview.innerHTML =
     card(readForm());
+
 }
 
 
-/* ---------------------------------------------------------
-   VORLIEBEN-TABELLE
---------------------------------------------------------- */
+/* =========================================================
+   PREFERENCE TABLE
+========================================================= */
 
 function preferenceFields() {
 
-  const choiceLabels = [
-    'Tabu',
-    'Strafe',
-    'Nein',
-    'Egal',
-    'Gern',
-    'Must-have'
-  ];
+  const choiceLabels =
+    t('choiceLabels');
+
+
+  const choiceTitles =
+    t('choiceTitles');
 
 
   return `
+
     <table class="preference-table">
 
       <thead>
@@ -1333,20 +2244,25 @@ function preferenceFields() {
         <tr>
 
           <th scope="col">
-            Praktik
+            ${escapeHtml(
+              t('practice')
+            )}
           </th>
 
           ${
             choiceLabels
               .map(
                 (label,index) =>
+
                   `<th
                     scope="col"
                     title="${escapeHtml(
-                      preferenceChoices[index]
+                      choiceTitles[index]
                     )}"
                   >
-                    ${label}
+
+                    ${escapeHtml(label)}
+
                   </th>`
               )
               .join('')
@@ -1367,45 +2283,85 @@ function preferenceFields() {
                 <tr>
 
                   <td class="preference-name">
-                    ${escapeHtml(question)}
+
+                    ${escapeHtml(
+                      localizedPreferenceQuestion(
+                        question,
+                        index
+                      )
+                    )}
+
                   </td>
 
                   ${
                     preferenceChoices
                       .map(
-                        choice => `
+                        choice => {
 
-                          <td
-                            class="preference-option"
-                            data-choice="${escapeHtml(choice)}"
-                          >
+                          /*
+                            The actual stored value
+                            remains German so existing
+                            links stay compatible.
+                          */
 
-                            <label
-                              title="${escapeHtml(choice)}"
+                          const choiceIndex =
+                            preferenceChoices.indexOf(
+                              choice
+                            );
+
+                          const displayChoice =
+                            choiceTitles[
+                              choiceIndex
+                            ];
+
+                          return `
+
+                            <td
+                              class="preference-option"
+                              data-choice="${escapeHtml(
+                                displayChoice
+                              )}"
                             >
 
-                              <input
-                                type="radio"
-                                name="preference-${index}"
-                                value="${escapeHtml(choice)}"
-                                data-preference="${index}"
-                                aria-label="${escapeHtml(question)}: ${escapeHtml(choice)}"
+                              <label
+                                title="${escapeHtml(
+                                  displayChoice
+                                )}"
                               >
 
-                              <span
-                                class="preference-dot"
-                                aria-hidden="true"
-                              ></span>
+                                <input
+                                  type="radio"
+                                  name="preference-${index}"
+                                  value="${escapeHtml(choice)}"
+                                  data-preference="${index}"
+                                  aria-label="${escapeHtml(
+                                    localizedPreferenceQuestion(
+                                      question,
+                                      index
+                                    )
+                                  )}: ${escapeHtml(
+                                    displayChoice
+                                  )}"
+                                >
 
-                            </label>
+                                <span
+                                  class="preference-dot"
+                                  aria-hidden="true"
+                                ></span>
 
-                          </td>
-                        `
+                              </label>
+
+                            </td>
+
+                          `;
+
+                        }
                       )
                       .join('')
                   }
 
                 </tr>
+
               `
             )
             .join('')
@@ -1414,13 +2370,15 @@ function preferenceFields() {
       </tbody>
 
     </table>
+
   `;
+
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    EDITOR
---------------------------------------------------------- */
+========================================================= */
 
 function renderEditor() {
 
@@ -1431,39 +2389,60 @@ function renderEditor() {
       <section>
 
         <h2>
-          Datenerfassung
+          ${escapeHtml(
+            t('dataCollection')
+          )}
         </h2>
 
 
         <div class="fields">
 
           <label>
-            Name
+
+            ${escapeHtml(
+              t('name')
+            )}
+
             <input
               name="name"
               maxlength="50"
-              placeholder="z. B. Raven"
+              placeholder="${escapeHtml(
+                t('namePlaceholder')
+              )}"
             >
+
           </label>
 
 
           <label>
-            Geburtsdatum
+
+            ${escapeHtml(
+              t('birthdate')
+            )}
+
             <input
               name="birthdate"
               type="date"
               required
             >
+
           </label>
 
 
           <label>
-            Geschlecht
+
+            ${escapeHtml(
+              t('gender')
+            )}
+
             <input
               name="gender"
               maxlength="50"
-              placeholder="z. B. nicht-binär, weiblich oder männlich"
+              placeholder="${escapeHtml(
+                t('genderPlaceholder')
+              )}"
             >
+
           </label>
 
 
@@ -1475,12 +2454,19 @@ function renderEditor() {
             <div class="preferences-heading">
 
               <h3 id="social-media-heading">
-                Social Media
+
+                ${escapeHtml(
+                  t('socialMedia')
+                )}
+
               </h3>
 
               <p>
-                Optional: Gib deinen Nutzernamen oder Profilnamen
-                für die gewünschten Plattformen an.
+
+                ${escapeHtml(
+                  t('socialMediaDescription')
+                )}
+
               </p>
 
             </div>
@@ -1489,62 +2475,92 @@ function renderEditor() {
             <div class="fields social-media-fields">
 
               <label>
+
                 X
+
                 <input
                   name="x"
                   maxlength="100"
-                  placeholder="@deinname"
+                  placeholder="${escapeHtml(
+                    t('usernamePlaceholder')
+                  )}"
                 >
+
               </label>
 
 
               <label>
+
                 Instagram
+
                 <input
                   name="instagram"
                   maxlength="100"
-                  placeholder="@deinname"
+                  placeholder="${escapeHtml(
+                    t('usernamePlaceholder')
+                  )}"
                 >
+
               </label>
 
 
               <label>
+
                 Reddit
+
                 <input
                   name="reddit"
                   maxlength="100"
-                  placeholder="u/deinname"
+                  placeholder="${escapeHtml(
+                    t('redditPlaceholder')
+                  )}"
                 >
+
               </label>
 
 
               <label>
+
                 Fet
+
                 <input
                   name="fet"
                   maxlength="100"
-                  placeholder="dein Profilname"
+                  placeholder="${escapeHtml(
+                    t('profilePlaceholder')
+                  )}"
                 >
+
               </label>
 
 
               <label>
+
                 Recon
+
                 <input
                   name="recon"
                   maxlength="100"
-                  placeholder="dein Profilname"
+                  placeholder="${escapeHtml(
+                    t('profilePlaceholder')
+                  )}"
                 >
+
               </label>
 
 
               <label>
+
                 Bluesky
+
                 <input
                   name="bluesky"
                   maxlength="100"
-                  placeholder="@deinname.bsky.social"
+                  placeholder="${escapeHtml(
+                    t('blueskyPlaceholder')
+                  )}"
                 >
+
               </label>
 
             </div>
@@ -1560,20 +2576,28 @@ function renderEditor() {
             <div class="preferences-heading">
 
               <h3 id="preferences-heading">
-                Vorlieben & Grenzen
+
+                ${escapeHtml(
+                  t('preferences')
+                )}
+
               </h3>
 
               <p>
-                Wähle pro Praktik eine Bewertung.
-                Unbeantwortete Fragen erscheinen nicht
-                auf deinem Ausweis.
+
+                ${escapeHtml(
+                  t('preferencesDescription')
+                )}
+
               </p>
 
             </div>
 
 
             <div class="preference-list">
+
               ${preferenceFields()}
+
             </div>
 
           </section>
@@ -1588,7 +2612,11 @@ function renderEditor() {
             class="export-button"
             type="button"
           >
-            Als Bild herunterladen
+
+            ${escapeHtml(
+              t('exportImage')
+            )}
+
           </button>
 
 
@@ -1596,7 +2624,11 @@ function renderEditor() {
             id="create-link"
             type="button"
           >
-            Ergebnis-Link erstellen
+
+            ${escapeHtml(
+              t('createLink')
+            )}
+
           </button>
 
 
@@ -1605,8 +2637,12 @@ function renderEditor() {
             <input
               id="share-link"
               readonly
-              aria-label="Teilbarer Ergebnis-Link"
-              placeholder="Der Link erscheint hier"
+              aria-label="${escapeHtml(
+                t('createLink')
+              )}"
+              placeholder="${escapeHtml(
+                t('sharePlaceholder')
+              )}"
             >
 
             <button
@@ -1614,15 +2650,22 @@ function renderEditor() {
               class="secondary"
               type="button"
             >
-              Link kopieren
+
+              ${escapeHtml(
+                t('copyLink')
+              )}
+
             </button>
 
           </div>
 
 
           <p class="hint">
-            Der Link enthält diese Angaben.
-            Jede Person mit dem Link kann sie sehen.
+
+            ${escapeHtml(
+              t('linkHint')
+            )}
+
           </p>
 
         </div>
@@ -1633,7 +2676,11 @@ function renderEditor() {
       <section>
 
         <p class="preview-label">
-          Live-Vorschau
+
+          ${escapeHtml(
+            t('livePreview')
+          )}
+
         </p>
 
         <div id="preview"></div>
@@ -1641,6 +2688,7 @@ function renderEditor() {
       </section>
 
     </div>
+
   `;
 
 
@@ -1658,7 +2706,9 @@ function renderEditor() {
 
 
   app
-    .querySelector('#export-image')
+    .querySelector(
+      '#export-image'
+    )
     .addEventListener(
       'click',
       exportImage
@@ -1666,7 +2716,9 @@ function renderEditor() {
 
 
   app
-    .querySelector('#create-link')
+    .querySelector(
+      '#create-link'
+    )
     .addEventListener(
       'click',
       createLink
@@ -1674,7 +2726,9 @@ function renderEditor() {
 
 
   app
-    .querySelector('#copy-link')
+    .querySelector(
+      '#copy-link'
+    )
     .addEventListener(
       'click',
       copyLink
@@ -1682,24 +2736,28 @@ function renderEditor() {
 
 
   updatePreview();
+
 }
 
 
-/* ---------------------------------------------------------
-   LINK ERSTELLEN
---------------------------------------------------------- */
+/* =========================================================
+   CREATE LINK
+========================================================= */
 
 function createLink() {
 
-  const data = readForm();
+  const data =
+    readForm();
 
 
   if (
-    ageFromBirthdate(data.birthdate) === null
+    ageFromBirthdate(
+      data.birthdate
+    ) === null
   ) {
 
     return alert(
-      'Bitte gib ein gültiges Geburtsdatum ein, das nicht in der Zukunft liegt.'
+      t('invalidBirthdate')
     );
 
   }
@@ -1709,35 +2767,35 @@ function createLink() {
     encode(data);
 
 
-  /*
-    NEU:
-
-    #a=
-
-    statt:
-
-    #ausweis=
-  */
-
   const link =
     `${location.href.split('#')[0]}#a=${encoded}`;
 
 
-  app
-    .querySelector('#share-link')
-    .value = link;
+  const shareInput =
+    app.querySelector(
+      '#share-link'
+    );
+
+
+  if (shareInput) {
+
+    shareInput.value =
+      link;
+
+  }
 
 
   copyText(
     link,
-    'Der Ergebnis-Link wurde erstellt und kopiert.'
+    t('linkCreated')
   );
+
 }
 
 
-/* ---------------------------------------------------------
-   KOPIEREN
---------------------------------------------------------- */
+/* =========================================================
+   COPY
+========================================================= */
 
 async function copyText(
   text,
@@ -1746,16 +2804,23 @@ async function copyText(
 
   try {
 
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(
+      text
+    );
 
     if (success) {
+
       alert(success);
+
     }
 
   } catch {
 
     const input =
-      app.querySelector('#share-link');
+      app.querySelector(
+        '#share-link'
+      );
+
 
     if (input) {
 
@@ -1763,28 +2828,39 @@ async function copyText(
       input.select();
 
       alert(
-        'Der Link wurde erstellt. Bitte kopiere ihn aus dem Feld.'
+        t('copyFallback')
       );
+
     }
+
   }
+
 }
 
 
-/* ---------------------------------------------------------
-   BILD EXPORT
---------------------------------------------------------- */
+/* =========================================================
+   IMAGE FILENAME
+========================================================= */
 
 function imageFileName(name) {
+
+  const fallback =
+    currentLanguage === 'en'
+      ? 'slave-id-card'
+      : 'sklaven-ausweis';
+
 
   const safeName =
     (
       name.trim() ||
-      'sklaven-ausweis'
+      fallback
     )
+
       .replace(
         /[^\wäöüÄÖÜß-]+/g,
         '_'
       )
+
       .replace(
         /^_+|_+$/g,
         ''
@@ -1793,14 +2869,20 @@ function imageFileName(name) {
 
   return `${
     safeName ||
-    'sklaven-ausweis'
-  }-ausweis.png`;
+    fallback
+  }-card.png`;
+
 }
 
+
+/* =========================================================
+   EXPORT STYLES
+========================================================= */
 
 function cardExportStyles() {
 
   return `
+
     * {
       box-sizing:border-box
     }
@@ -1953,21 +3035,33 @@ function cardExportStyles() {
     .card-preferences {
       margin-top:12px
     }
+
   `;
+
 }
 
+
+/* =========================================================
+   EXPORT IMAGE
+========================================================= */
 
 async function exportImage(
   data = readForm()
 ) {
 
   const button =
-    app.querySelector('#export-image');
+    app.querySelector(
+      '#export-image'
+    );
 
 
   const source =
-    app.querySelector('#preview .card') ||
-    app.querySelector('.shared-view .card');
+    app.querySelector(
+      '#preview .card'
+    ) ||
+    app.querySelector(
+      '.shared-view .card'
+    );
 
 
   if (!source) return;
@@ -1996,13 +3090,15 @@ async function exportImage(
     button.disabled = true;
 
     button.textContent =
-      'Bild wird erstellt …';
+      t('creatingImage');
+
   }
 
 
   try {
 
     const svg = `
+
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="${width}"
@@ -2030,6 +3126,7 @@ async function exportImage(
         </foreignObject>
 
       </svg>
+
     `;
 
 
@@ -2039,6 +3136,7 @@ async function exportImage(
 
     const svgUrl =
       URL.createObjectURL(
+
         new Blob(
           [svg],
           {
@@ -2046,22 +3144,30 @@ async function exportImage(
               'image/svg+xml;charset=utf-8'
           }
         )
+
       );
 
 
     await new Promise(
       (resolve,reject) => {
 
-        image.onload = resolve;
-        image.onerror = reject;
-        image.src = svgUrl;
+        image.onload =
+          resolve;
+
+        image.onerror =
+          reject;
+
+        image.src =
+          svgUrl;
 
       }
     );
 
 
     const canvas =
-      document.createElement('canvas');
+      document.createElement(
+        'canvas'
+      );
 
 
     canvas.width =
@@ -2072,7 +3178,9 @@ async function exportImage(
 
 
     const context =
-      canvas.getContext('2d');
+      canvas.getContext(
+        '2d'
+      );
 
 
     context.scale(
@@ -2088,19 +3196,27 @@ async function exportImage(
     );
 
 
-    URL.revokeObjectURL(svgUrl);
+    URL.revokeObjectURL(
+      svgUrl
+    );
 
 
     const link =
-      document.createElement('a');
+      document.createElement(
+        'a'
+      );
 
 
     link.href =
-      canvas.toDataURL('image/png');
+      canvas.toDataURL(
+        'image/png'
+      );
 
 
     link.download =
-      imageFileName(data.name);
+      imageFileName(
+        data.name
+      );
 
 
     link.click();
@@ -2109,37 +3225,48 @@ async function exportImage(
   } catch {
 
     alert(
-      'Das Bild konnte nicht erstellt werden. Bitte nutze einen aktuellen Browser und versuche es erneut.'
+      t('imageError')
     );
 
   } finally {
 
     if (button) {
 
-      button.disabled = false;
+      button.disabled =
+        false;
 
       button.textContent =
-        'Als Bild herunterladen';
+        t('exportImage');
 
     }
+
   }
+
 }
 
 
-/* ---------------------------------------------------------
-   LINK KOPIEREN
---------------------------------------------------------- */
+/* =========================================================
+   COPY LINK BUTTON
+========================================================= */
 
 function copyLink() {
 
+  const input =
+    app.querySelector(
+      '#share-link'
+    );
+
+
   const link =
-    app.querySelector('#share-link').value;
+    input
+      ? input.value
+      : '';
 
 
   if (!link) {
 
     return alert(
-      'Erstelle zuerst einen Ergebnis-Link.'
+      t('createLinkFirst')
     );
 
   }
@@ -2147,22 +3274,23 @@ function copyLink() {
 
   copyText(
     link,
-    'Der Link wurde kopiert.'
+    t('linkCopied')
   );
+
 }
 
 
-/* ---------------------------------------------------------
-   GETEILTER AUSWEIS
---------------------------------------------------------- */
+/* =========================================================
+   SHARED DATA
+========================================================= */
 
 function sharedData() {
 
   /*
-    Unterstützt beide Varianten:
+    Supports:
 
-    #a=...
-    #ausweis=...
+      #a=...
+      #ausweis=...
   */
 
   const match =
@@ -2172,29 +3300,53 @@ function sharedData() {
 
 
   if (!match) {
+
     return null;
+
   }
 
 
   try {
 
     const data =
-      decode(match[1]);
+      decode(
+        match[1]
+      );
+
+
+    /*
+      Language stored inside link.
+    */
+
+    currentLanguage =
+      data.language === 'de'
+        ? 'de'
+        : 'en';
+
+
+    document.documentElement.lang =
+      currentLanguage;
 
 
     const sanitized =
       Object.fromEntries(
 
         Object.keys(defaults)
+
           .filter(
-            key => key !== 'preferences'
+            key =>
+              key !== 'preferences'
           )
+
           .map(
             key => [
+
               key,
+
               typeof data[key] === 'string'
                 ? data[key]
                 : defaults[key]
+
             ]
           )
 
@@ -2229,6 +3381,7 @@ function sharedData() {
         Object.entries(
           data.preferences || {}
         )
+
         .filter(
           ([key,value]) =>
 
@@ -2237,7 +3390,9 @@ function sharedData() {
             Number(key) <
               preferenceQuestions.length &&
 
-            preferenceChoices.includes(value)
+            preferenceChoices.includes(
+              value
+            )
         )
 
       );
@@ -2250,13 +3405,20 @@ function sharedData() {
     return null;
 
   }
+
 }
 
+
+/* =========================================================
+   SHARED VIEW
+========================================================= */
 
 function renderShared(data) {
 
   document.title =
-    'Geteilter Sklaven-Ausweis';
+    currentLanguage === 'de'
+      ? 'Geteilter Sklaven-Ausweis'
+      : 'Shared Slave ID Card';
 
 
   app.innerHTML = `
@@ -2264,10 +3426,16 @@ function renderShared(data) {
     <section class="shared-view">
 
       <p class="preview-label">
-        Geteiltes Ergebnis
+
+        ${escapeHtml(
+          t('sharedResult')
+        )}
+
       </p>
 
+
       ${card(data)}
+
 
       <div class="actions">
 
@@ -2276,7 +3444,11 @@ function renderShared(data) {
           class="export-button"
           type="button"
         >
-          Als Bild herunterladen
+
+          ${escapeHtml(
+            t('exportImage')
+          )}
+
         </button>
 
 
@@ -2286,7 +3458,11 @@ function renderShared(data) {
             location.href.split('#')[0]
           )}"
         >
-          Eigenen Ausweis erstellen
+
+          ${escapeHtml(
+            t('createOwn')
+          )}
+
         </a>
 
       </div>
@@ -2297,24 +3473,50 @@ function renderShared(data) {
 
 
   app
-    .querySelector('#export-image')
+    .querySelector(
+      '#export-image'
+    )
     .addEventListener(
       'click',
-      () => exportSharedImage(data)
+      () =>
+        exportSharedImage(data)
     );
+
 }
 
 
-async function exportSharedImage(data) {
+async function exportSharedImage(
+  data
+) {
 
   await exportImage(data);
 
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
+   LANGUAGE SWITCHER
+========================================================= */
+
+document
+  .querySelector(
+    '#language-select'
+  )
+  .addEventListener(
+    'change',
+    event => {
+
+      setLanguage(
+        event.target.value
+      );
+
+    }
+  );
+
+
+/* =========================================================
    START
---------------------------------------------------------- */
+========================================================= */
 
 const data =
   sharedData();
@@ -2326,11 +3528,18 @@ if (data) {
 
 } else {
 
+  document.documentElement.lang =
+    currentLanguage;
+
   renderEditor();
 
 }
+
+
+updateLanguageUI();
 
 </script>
 
 </body>
 </html>
+```
