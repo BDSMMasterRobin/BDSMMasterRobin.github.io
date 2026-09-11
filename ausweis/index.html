@@ -1,3 +1,2416 @@
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Slave ID Card</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink:#f7f2ff;
+      --muted:#cbc1d8;
+      --panel:#211a2d;
+      --line:#59456d;
+      --violet:#bb80ff;
+      --violet-dark:#783bc1;
+      --pink:#ff78ab;
+    }
+
+    * { box-sizing:border-box; }
+
+    body {
+      margin:0;
+      min-height:100vh;
+      overflow-x:clip;
+      color:var(--ink);
+      font:16px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;
+      background:
+        radial-gradient(circle at 10% 0%,#61357f 0,transparent 32rem),
+        radial-gradient(circle at 100% 100%,#54223f 0,transparent 28rem),
+        #100d16;
+    }
+
+    main {
+      width:min(1800px,calc(100% - clamp(2rem,5vw,6rem)));
+      margin:auto;
+      padding:clamp(2rem,4vw,4rem) 0;
+    }
+
+    header {
+      text-align:center;
+      max-width:760px;
+      margin:0 auto 2rem;
+    }
+
+    h1 {
+      margin:0;
+      font-size:clamp(2.5rem,7vw,5rem);
+      letter-spacing:-.06em;
+      line-height:1;
+    }
+
+    header > p:last-child { color:var(--muted); }
+
+    .language-switcher {
+      display:flex;
+      justify-content:flex-end;
+      margin-bottom:1rem;
+    }
+
+    .language-switcher label {
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      color:var(--muted);
+      font-size:.85rem;
+      font-weight:700;
+    }
+
+    .language-switcher select {
+      width:auto;
+      min-width:125px;
+      padding:.5rem .75rem;
+      border-radius:999px;
+    }
+
+    .editor,
+    .shared-view {
+      border:1px solid var(--line);
+      border-radius:24px;
+      background:rgba(33,26,45,.93);
+      box-shadow:0 22px 60px #0006;
+    }
+
+    .editor {
+      display:grid;
+      grid-template-columns:minmax(650px,1.25fr) minmax(420px,.75fr);
+      gap:clamp(1.5rem,3vw,3rem);
+      padding:clamp(1.5rem,3vw,3rem);
+    }
+
+    h2 { margin:0 0 1rem; font-size:1.45rem; }
+
+    .fields {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:1rem;
+    }
+
+    label {
+      display:grid;
+      gap:.4rem;
+      color:var(--muted);
+      font-weight:700;
+    }
+
+    label.full { grid-column:1 / -1; }
+
+    input,
+    select,
+    textarea {
+      width:100%;
+      color:var(--ink);
+      background:#140f1c;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.75rem .85rem;
+      font:inherit;
+    }
+
+    textarea {
+      resize:vertical;
+      min-height:96px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus,
+    button:focus-visible,
+    a:focus-visible {
+      outline:3px solid var(--pink);
+      outline-offset:2px;
+    }
+
+    .preview-label {
+      color:var(--muted);
+      margin:0 0 .7rem;
+      font-size:.9rem;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.09em;
+    }
+
+    .card {
+      position:relative;
+      overflow:hidden;
+      min-height:400px;
+      padding:1.5rem;
+      border:1px solid #d6afff;
+      border-radius:22px;
+      color:#24132e;
+      background:linear-gradient(135deg,#f8eaff,#c699f6 49%,#ffb3cf);
+      box-shadow:0 18px 36px #0004;
+    }
+
+    .card:before {
+      content:"";
+      position:absolute;
+      width:260px;
+      height:260px;
+      border:35px solid #ffffff55;
+      border-radius:50%;
+      right:-90px;
+      top:-105px;
+    }
+
+    .card > * { position:relative; }
+
+    .card-top {
+      display:flex;
+      justify-content:space-between;
+      gap:1rem;
+      align-items:start;
+      border-bottom:1px solid #4b216466;
+      padding-bottom:.9rem;
+    }
+
+    .card-title {
+      margin:.2rem 0 0;
+      font-size:1.6rem;
+      line-height:1;
+    }
+
+    .badge {
+      display:grid;
+      place-items:center;
+      width:54px;
+      aspect-ratio:1;
+      border-radius:50%;
+      background:#40155c;
+      color:#fff;
+      font-weight:900;
+      font-size:1.3rem;
+    }
+
+    .identity {
+      display:grid;
+      grid-template-columns:92px 1fr;
+      gap:1rem;
+      margin:1.4rem 0;
+      align-items:center;
+    }
+
+    .avatar {
+      display:grid;
+      place-items:center;
+      width:92px;
+      aspect-ratio:1;
+      border-radius:18px;
+      background:#51206d;
+      color:white;
+      font-size:2rem;
+      font-weight:900;
+    }
+
+    .name {
+      margin:0;
+      font-size:clamp(1.6rem,5vw,2.45rem);
+      line-height:1;
+      overflow-wrap:anywhere;
+    }
+
+    .role {
+      margin:.4rem 0 0;
+      font-weight:800;
+      color:#54226e;
+    }
+
+    .details {
+      display:grid;
+      gap:.75rem;
+    }
+
+    .detail {
+      padding:.65rem .75rem;
+      border-radius:12px;
+      background:#fff8;
+    }
+
+    .detail strong {
+      display:block;
+      color:#582276;
+      font-size:.72rem;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+    }
+
+    .detail span { overflow-wrap:anywhere; }
+
+    .preferences {
+      grid-column:1 / -1;
+      overflow:hidden;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:#101827;
+    }
+
+    .social-media-fields { padding:1rem; }
+
+    .preferences-heading {
+      padding:.85rem 1rem;
+      border-bottom:1px solid #344155;
+      background:#1d2939;
+    }
+
+    .preferences h3 {
+      margin:0;
+      font-size:1.08rem;
+      color:var(--ink);
+    }
+
+    .preferences-heading p {
+      margin:.25rem 0 0;
+      color:var(--muted);
+      font-size:.84rem;
+    }
+
+    .preference-list {
+      max-height:520px;
+      overflow:auto;
+    }
+
+    .preference-table {
+      width:100%;
+      min-width:650px;
+      border-collapse:collapse;
+      font-size:.9rem;
+    }
+
+    .preference-table th {
+      padding:.35rem .5rem;
+      color:var(--ink);
+      font-size:.78rem;
+      text-align:center;
+      font-weight:800;
+    }
+
+    .preference-table th:first-child {
+      width:100%;
+      text-align:left;
+    }
+
+    .preference-table td { border-top:1px solid #344155; }
+
+    .preference-name {
+      padding:.48rem .5rem;
+      color:var(--ink);
+      overflow-wrap:anywhere;
+    }
+
+    .preference-option {
+      width:2.1rem;
+      padding:.3rem .1rem;
+      text-align:center;
+    }
+
+    .preference-option label {
+      display:grid;
+      place-items:center;
+      color:var(--ink);
+      cursor:pointer;
+    }
+
+    .preference-option input {
+      position:absolute;
+      inline-size:1px;
+      block-size:1px;
+      opacity:0;
+    }
+
+    .preference-dot {
+      width:19px;
+      aspect-ratio:1;
+      border:1px solid currentColor;
+      border-radius:50%;
+      transition:
+        transform .15s ease,
+        box-shadow .15s ease,
+        background .15s ease;
+    }
+
+    .preference-option label:hover .preference-dot {
+      transform:scale(1.13);
+    }
+
+    .preference-option input:focus-visible + .preference-dot {
+      outline:2px solid var(--ink);
+      outline-offset:3px;
+    }
+
+    .preference-option input:checked + .preference-dot {
+      background:currentColor;
+      box-shadow:inset 0 0 0 3px #101827;
+    }
+
+    .preference-option[data-choice="Absolute no"],
+    .preference-option[data-choice="Absolutes Tabu"] {
+      color:#94a3b8;
+    }
+
+    .preference-option[data-choice="Severe punishment"],
+    .preference-option[data-choice="schwere Strafe"] {
+      color:#8b5cf6;
+    }
+
+    .preference-option[data-choice="Not necessary"],
+    .preference-option[data-choice="muss nicht sein"] {
+      color:#db2777;
+    }
+
+    .preference-option[data-choice="Indifferent"],
+    .preference-option[data-choice="mir egal"] {
+      color:#f0440b;
+    }
+
+    .preference-option[data-choice="Would be nice"],
+    .preference-option[data-choice="wäre schön"] {
+      color:#d97706;
+    }
+
+    .preference-option[data-choice="Must-have"],
+    .preference-option[data-choice="must have"] {
+      color:#16a34a;
+    }
+
+    .card-social-media { margin-top:.75rem; }
+
+    .card-social-media ul {
+      display:flex;
+      flex-wrap:wrap;
+      gap:.45rem;
+      margin:.5rem 0 0;
+      padding:0;
+      list-style:none;
+    }
+
+    .card-social-media li {
+      padding:.3rem .5rem;
+      border-radius:999px;
+      background:#fff8;
+      font-size:.78rem;
+      overflow-wrap:anywhere;
+    }
+
+    .card-preferences { margin-top:.75rem; }
+
+    .card-preferences ul {
+      display:flex;
+      flex-wrap:wrap;
+      gap:.45rem;
+      margin:.5rem 0 0;
+      padding:0;
+      list-style:none;
+    }
+
+    .card-preferences li {
+      padding:.3rem .5rem;
+      border-radius:999px;
+      background:#fff8;
+      font-size:.78rem;
+      overflow-wrap:anywhere;
+    }
+
+    .actions {
+      display:grid;
+      gap:.75rem;
+      margin-top:1.25rem;
+    }
+
+    .export-button {
+      background:linear-gradient(135deg,#d24a87,#8a3fba);
+    }
+
+    .share-row {
+      display:flex;
+      gap:.65rem;
+    }
+
+    button,
+    .link-button {
+      border:0;
+      border-radius:999px;
+      padding:.85rem 1.1rem;
+      background:linear-gradient(135deg,var(--violet),var(--violet-dark));
+      color:white;
+      cursor:pointer;
+      font:inherit;
+      font-weight:850;
+      text-align:center;
+      text-decoration:none;
+    }
+
+    button.secondary {
+      background:#32243f;
+      border:1px solid var(--line);
+    }
+
+    .share-row input { min-width:0; }
+
+    .hint {
+      margin:0;
+      color:var(--muted);
+      font-size:.88rem;
+    }
+
+    .shared-view {
+      max-width:560px;
+      margin:auto;
+      padding:1.5rem;
+    }
+
+    .shared-view .card { margin:1.2rem 0; }
+
+    .hidden { display:none; }
+
+    @media(max-width:1250px) {
+      main {
+        width:min(1050px,calc(100% - 2rem));
+        padding-top:2rem;
+      }
+
+      .editor { grid-template-columns:1fr; }
+
+      .fields { grid-template-columns:1fr; }
+
+      .preference-list { max-height:460px; }
+
+      .share-row { flex-direction:column; }
+
+      .share-row button { width:100%; }
+    }
+
+    @media(max-width:560px) {
+      main {
+        width:100%;
+        padding:1.25rem .75rem 2rem;
+      }
+
+      .editor {
+        gap:1rem;
+        padding:1rem;
+        border-radius:18px;
+      }
+
+      .card { padding:1rem; }
+
+      .language-switcher { justify-content:center; }
+
+      .preference-table {
+        min-width:0;
+        table-layout:fixed;
+        font-size:.72rem;
+      }
+
+      .preference-table th {
+        padding:.35rem .1rem;
+        font-size:.62rem;
+        line-height:1.15;
+        overflow-wrap:anywhere;
+      }
+
+      .preference-table th:first-child {
+        width:calc(100% - 9rem);
+      }
+
+      .preference-name {
+        padding:.45rem .35rem;
+        line-height:1.2;
+      }
+
+      .preference-option {
+        width:1.5rem;
+        padding:.25rem 0;
+      }
+
+      .preference-dot { width:16px; }
+    }
+  </style>
+</head>
+
+<body>
+
+<main>
+
+  <header>
+
+    <div class="language-switcher">
+
+      <label for="language-select">
+
+        <span id="language-label">Language</span>
+
+        <select id="language-select">
+          <option value="en">English</option>
+          <option value="de">Deutsch</option>
+        </select>
+
+      </label>
+
+    </div>
+
+    <h1 id="page-title">Slave ID Card</h1>
+
+    <p id="page-subtitle">Create your slave ID card</p>
+
+  </header>
+
+  <section id="app" aria-live="polite"></section>
+
+</main>
+
+
+<script>
+
+/* =========================================================
+   TRANSLATIONS
+========================================================= */
+
+const translations = {
+
+  en: {
+    pageTitle:'Slave ID Card',
+    pageSubtitle:'Create your slave ID card',
+    language:'Language',
+
+    dataCollection:'Personal information',
+
+    name:'Name',
+    namePlaceholder:'e.g. Raven',
+
+    birthdate:'Date of birth',
+
+    gender:'Gender',
+    genderPlaceholder:'e.g. non-binary, female or male',
+
+    genderNotSpecified:'Gender not specified',
+
+    socialMedia:'Social Media',
+
+    socialMediaDescription:
+      'Optional: Enter your username or profile name for the platforms you use.',
+
+    usernamePlaceholder:'@yourname',
+    redditPlaceholder:'u/yourname',
+    profilePlaceholder:'Your profile name',
+    blueskyPlaceholder:'@yourname.bsky.social',
+
+    preferences:'Preferences & Limits',
+
+    preferencesDescription:
+      'Select one rating for each activity. Unanswered questions will not appear on your ID card.',
+
+    practice:'Activity',
+
+    choiceLabels:[
+      'Absolute no',
+      'Severe punishment',
+      'Not necessary',
+      'Indifferent',
+      'Would be nice',
+      'Must-have'
+    ],
+
+    choiceTitles:[
+      'Absolute no',
+      'Severe punishment',
+      'Not necessary',
+      'Indifferent',
+      'Would be nice',
+      'Must-have'
+    ],
+
+    cardTitle:'Slave ID Card',
+    ageUnknown:'Unknown',
+    years:'yrs.',
+    socialMediaCard:'Social Media',
+    preferencesCard:'Preferences & Limits',
+
+    livePreview:'Live preview',
+
+    exportImage:'Download as image',
+    creatingImage:'Creating image …',
+
+    createLink:'Create result link',
+    copyLink:'Copy link',
+
+    sharePlaceholder:'The link will appear here',
+
+    linkHint:
+      'The link contains the information entered here. Anyone with the link can view it.',
+
+    linkCreated:'The result link was created and copied.',
+    linkCopied:'The link was copied.',
+
+    createLinkFirst:'Create a result link first.',
+
+    invalidBirthdate:
+      'Please enter a valid date of birth that is not in the future.',
+
+    copyFallback:
+      'The link was created. Please copy it from the field.',
+
+    imageError:
+      'The image could not be created. Please use a current browser and try again.',
+
+    sharedResult:'Shared result',
+    createOwn:'Create your own ID card',
+
+    invalidLink:'The link could not be read.'
+  },
+
+  de: {
+    pageTitle:'Sklaven-Ausweis',
+    pageSubtitle:'Erstelle deinen Sklaven-Ausweis',
+    language:'Sprache',
+
+    dataCollection:'Datenerfassung',
+
+    name:'Name',
+    namePlaceholder:'z. B. Raven',
+
+    birthdate:'Geburtsdatum',
+
+    gender:'Geschlecht',
+    genderPlaceholder:'z. B. nicht-binär, weiblich oder männlich',
+
+    genderNotSpecified:'Geschlecht nicht angegeben',
+
+    socialMedia:'Social Media',
+
+    socialMediaDescription:
+      'Optional: Gib deinen Nutzernamen oder Profilnamen für die gewünschten Plattformen an.',
+
+    usernamePlaceholder:'@deinname',
+    redditPlaceholder:'u/deinname',
+    profilePlaceholder:'Dein Profilname',
+    blueskyPlaceholder:'@deinname.bsky.social',
+
+    preferences:'Vorlieben & Grenzen',
+
+    preferencesDescription:
+      'Wähle pro Praktik eine Bewertung. Unbeantwortete Fragen erscheinen nicht auf deinem Ausweis.',
+
+    practice:'Praktik',
+
+    choiceLabels:[
+      'Tabu',
+      'Strafe',
+      'Nein',
+      'Egal',
+      'Gern',
+      'Must-have'
+    ],
+
+    choiceTitles:[
+      'Absolutes Tabu',
+      'schwere Strafe',
+      'muss nicht sein',
+      'mir egal',
+      'wäre schön',
+      'must have'
+    ],
+
+    cardTitle:'Sklaven-Ausweis',
+    ageUnknown:'unbekannt',
+    years:'J.',
+    socialMediaCard:'Social Media',
+    preferencesCard:'Vorlieben & Grenzen',
+
+    livePreview:'Live-Vorschau',
+
+    exportImage:'Als Bild herunterladen',
+    creatingImage:'Bild wird erstellt …',
+
+    createLink:'Ergebnis-Link erstellen',
+    copyLink:'Link kopieren',
+
+    sharePlaceholder:'Der Link erscheint hier',
+
+    linkHint:
+      'Der Link enthält diese Angaben. Jede Person mit dem Link kann sie sehen.',
+
+    linkCreated:
+      'Der Ergebnis-Link wurde erstellt und kopiert.',
+
+    linkCopied:'Der Link wurde kopiert.',
+
+    createLinkFirst:
+      'Erstelle zuerst einen Ergebnis-Link.',
+
+    invalidBirthdate:
+      'Bitte gib ein gültiges Geburtsdatum ein, das nicht in der Zukunft liegt.',
+
+    copyFallback:
+      'Der Link wurde erstellt. Bitte kopiere ihn aus dem Feld.',
+
+    imageError:
+      'Das Bild konnte nicht erstellt werden. Bitte nutze einen aktuellen Browser und versuche es erneut.',
+
+    sharedResult:'Geteiltes Ergebnis',
+    createOwn:'Eigenen Ausweis erstellen',
+
+    invalidLink:'Der Link konnte nicht gelesen werden.'
+  }
+
+};
+
+
+/* =========================================================
+   LANGUAGE
+========================================================= */
+
+let currentLanguage = 'en';
+
+const savedLanguage =
+  localStorage.getItem('slave-id-language');
+
+if (
+  savedLanguage === 'de' ||
+  savedLanguage === 'en'
+) {
+  currentLanguage = savedLanguage;
+}
+
+
+function t(key) {
+  return (
+    translations[currentLanguage]?.[key] ??
+    translations.en[key] ??
+    key
+  );
+}
+
+
+function setLanguage(language) {
+
+  currentLanguage =
+    language === 'de' ? 'de' : 'en';
+
+  localStorage.setItem(
+    'slave-id-language',
+    currentLanguage
+  );
+
+  document.documentElement.lang =
+    currentLanguage;
+
+  updateLanguageUI();
+
+  const shared = sharedData();
+
+  if (shared) {
+    renderShared(shared);
+  } else {
+    renderEditor();
+  }
+
+}
+
+
+function updateLanguageUI() {
+
+  const select =
+    document.querySelector('#language-select');
+
+  if (select) {
+    select.value = currentLanguage;
+  }
+
+  const label =
+    document.querySelector('#language-label');
+
+  const title =
+    document.querySelector('#page-title');
+
+  const subtitle =
+    document.querySelector('#page-subtitle');
+
+  if (label) {
+    label.textContent = t('language');
+  }
+
+  if (title) {
+    title.textContent = t('pageTitle');
+  }
+
+  if (subtitle) {
+    subtitle.textContent = t('pageSubtitle');
+  }
+
+}
+
+
+/* =========================================================
+   DEFAULT DATA
+========================================================= */
+
+const defaults = {
+
+  name:'',
+  birthdate:'',
+  gender:'',
+  x:'',
+  instagram:'',
+  reddit:'',
+  fet:'',
+  recon:'',
+  bluesky:'',
+  preferences:{}
+
+};
+
+
+const socialMediaFields = [
+
+  ['x','X'],
+  ['instagram','Instagram'],
+  ['reddit','Reddit'],
+  ['fet','Fet'],
+  ['recon','Recon'],
+  ['bluesky','Bluesky']
+
+];
+
+
+const preferenceChoices = [
+
+  'Absolutes Tabu',
+  'schwere Strafe',
+  'muss nicht sein',
+  'mir egal',
+  'wäre schön',
+  'must have'
+
+];
+
+
+/* =========================================================
+   PREFERENCE QUESTIONS
+========================================================= */
+
+const preferenceQuestions = [
+
+  "Altersspiele",
+  "An Haaren ziehen",
+  "Analdehnung",
+  "Analkugeln",
+  "Analspiele (lecken)",
+  "Analverkehr",
+  "Andreaskreuz/Antonskreuz",
+  "Anspucken lassen",
+  "Atemkontrolle",
+  "Aufhängen / schaukeln",
+  "Aufhängen (senkrecht)",
+  "Aufhängen (wagerecht)",
+  "Aufhängen an den Füßen",
+  "Aufhängen an den Händen",
+  "Augenbinde/Augenmaske",
+  "Auspeitschen am ganzen Leib",
+  "Aussetzung",
+  "Barfuß indoor",
+  "Barfuß outdoor",
+  "Bastinado (Fußsohlenfolter)",
+  "Bedienen",
+  "Beinenthaarung (permanent)",
+  "Beißen (gebissen werden)",
+  "Betteln",
+  "Bisexuelle Aktivitäten",
+  "Blickkontakteinschränkungen",
+  "Brenneseln",
+  "Bondage",
+  "Bondage (mehrtägig)",
+  "Bondage (unter Kleidung)",
+  "Branding",
+  "Buttplugs",
+  "Buttplugs (dauerhaft)",
+  "Chinesische Folter",
+  "CBT",
+  "Daumenschellen",
+  "Daumenschrauben",
+  "Demütigung (verbal)",
+  "Dienen als Maid",
+  "Dienen als Kunstobjekt",
+  "Dienen als Möbelstück",
+  "Dienen als Toilette",
+  "Dienen oral",
+  "Dildos (anal)",
+  "Dildos (oral)",
+  "Doktorspiele",
+  "Draußen angeleint sein",
+  "Dresscode",
+  "Dressurpeitschen",
+  "Dunkelhaft",
+  "Einlauf (zur Reinigung)",
+  "Einzelhaft, Gefangenschaft",
+  "Eisdildos",
+  "Eiswürfel",
+  "Elektrizität",
+  "Entführung",
+  "Enthaltsamkeit",
+  "EPE",
+  "Erniedrigung",
+  "Erotischer Tanz (Strip, Bauchtanz)",
+  "Erotischer Tanz (Go-Go)",
+  "Erziehungsspiele",
+  "Erzwungene Nacktheit",
+  "Erzwungene Selbstbefriedigung",
+  "Erzwungener Sport",
+  "Erzwungenes Bettnässen",
+  "Erzwungenes Essen",
+  "Essen ausgewählt bekommen",
+  "Essenentzug",
+  "Federn",
+  "Fellatio (einen blasen)",
+  "Fesseln (Leder)",
+  "Fesseln (Seile)",
+  "Fesseln (Stahl / Eisen)",
+  "Fetisch Kleidung",
+  "Feuerspiele",
+  "Fingersex (an Fingern gesaugt bekommen)",
+  "Fingersex (an Fingern saugen)",
+  "Fingersex (anal, fingern)",
+  "Fingersex (anal, gefingert werden)",
+  "Fisting (anal, fisten)",
+  "Fisting (anal, gefistet werden)",
+  "Fotoaufnahmen/Videoaufnahmen",
+  "Frischhaltefolie (eingepackt werden, Mumifizierung)",
+  "Fußdienste",
+  "Fußfesseln tragen",
+  "Füße lecken",
+  "Ganzkopfmaske",
+  "Gasmasken",
+  "Gefängnisspiele",
+  "Gehorsamsübungen",
+  "Geruchsfolter",
+  "Geschmacksfolter",
+  "Getränkeentzug",
+  "Grundstellungen einhalten",
+  "Gruppenaktivitäten in allen Konstellationen",
+  "Gummikleidung/-wäsche",
+  "Gürtel / Riemen",
+  "Gyn. Untersuchungsstuhl",
+  "Halsband mit Gewichten",
+  "Halsband tragen",
+  "Halsband tragen (öffentlich)",
+  "Halsband und Leine tragen",
+  "Handfesseln tragen",
+  "Handjobs",
+  "Harness",
+  "Hausarbeit",
+  "Heiße Cremes",
+  "Heißes Kerzenwachs",
+  "Heißes Öl",
+  "Hölzerne Schlaginstrumente",
+  "Hundepeitsche",
+  "Hypnose",
+  "In der Ecke stehen",
+  "Käfighaltung dauernd",
+  "Käfighaltung zeitweise",
+  "Kämpfen, Ringen",
+  "Katheter",
+  "Ketten",
+  "Keuschheitsgürtel (dauernd)",
+  "Keuschheitsgürtel (zeitweise)",
+  "Kitzeln",
+  "Klebeband",
+  "Kleiderordnung",
+  "Kleidung hauteng, ohne Unterwäsche",
+  "Knebel",
+  "Knien",
+  "Konkurrenzkampf (mit anderen Subs)",
+  "Kontrolle der Toilettengänge",
+  "Kopfhörer / Ohrstöpsel (Hörsinn rauben)",
+  "Körperenthaarung total",
+  "Korsett",
+  "Kratzen",
+  "Kriechen",
+  "Latexkleidung/-wäsche",
+  "Lecken (nicht sexuell)",
+  "Lecken (sexuell)",
+  "Lederfesseln",
+  "Lederkleidung",
+  "Lederriemenkleidung",
+  "Leichensack",
+  "Massage (geben)",
+  "Melken (Zwangsentsamung)",
+  "Mumifizierung",
+  "Nadeln",
+  "Namensänderung",
+  "Narben",
+  "Nippel dehnen",
+  "Nippelbeißen",
+  "Nippelgewichte",
+  "Nippelklammern",
+  "Nippelklips",
+  "Nippellecken",
+  "Nippelsaugen",
+  "Nippelspiele / Folter",
+  "Nippelstretcher",
+  "Nylons",
+  "Öffentliche Bloßstellung",
+  "Ohrfeigen",
+  "Oralsex",
+  "Orgasmus erzwungen bis zur Ohnmacht",
+  "Orgasmuskontrolle",
+  "Partnertausch",
+  "Peitsche",
+  "Pet-Play",
+  "PVC Kleidung",
+  "Redeeinschränkungen",
+  "Restriktive Verhaltensregeln einhalten",
+  "Sargspiele",
+  "Schandbrett",
+  "Schandpfahl",
+  "Schlafen gefesselt",
+  "Schlafen nackt (unbedeckt)",
+  "Schlafentzug",
+  "Schlagen",
+  "Schlucken von Fäkalien",
+  "Schlucken von Sperma",
+  "Schuhdienste",
+  "Seile",
+  "Sex vor der Cam für den Dom",
+  "Sexdienste unter Zwang",
+  "Sinnesentzug",
+  "Sitzen auf dem Gesicht",
+  "Spanking",
+  "Spucken (Dominuskus)",
+  "Strapping",
+  "Streckbank",
+  "Striemen (kurzfristig sichtbar)",
+  "Striemen (länger sichtbar)",
+  "Verbale Erniedrigung, Demütigung",
+  "Verhöre",
+  "Versteigerung",
+  "Verzicht auf Intimsphäre",
+  "Vibrator",
+  "Vorführung",
+  "Wachsenthaarung",
+  "Wachsspiele",
+  "Wäscheklammern",
+  "Wasserfolter",
+  "Windeln",
+  "Würgespiele",
+  "Zwangsjacke"
+
+];
+
+
+const preferenceQuestionsEN = [
+
+  "Age play",
+  "Hair pulling",
+  "Anal stretching",
+  "Anal beads",
+  "Anal play (licking)",
+  "Anal intercourse",
+  "St. Andrew's cross",
+  "Being spat on",
+  "Breath control",
+  "Suspension / swinging",
+  "Vertical suspension",
+  "Horizontal suspension",
+  "Suspension by the feet",
+  "Suspension by the hands",
+  "Blindfold / eye mask",
+  "Full-body whipping",
+  "Exposure",
+  "Barefoot indoors",
+  "Barefoot outdoors",
+  "Bastinado (foot torture)",
+  "Serving",
+  "Permanent leg hair removal",
+  "Biting / being bitten",
+  "Begging",
+  "Bisexual activities",
+  "Restricted eye contact",
+  "Stinging nettles",
+  "Bondage",
+  "Multi-day bondage",
+  "Bondage under clothing",
+  "Branding",
+  "Butt plugs",
+  "Permanent butt plug",
+  "Chinese torture",
+  "CBT",
+  "Thumb cuffs",
+  "Thumb screws",
+  "Verbal humiliation",
+  "Serving as a maid",
+  "Serving as an art object",
+  "Serving as furniture",
+  "Serving as a toilet",
+  "Oral service",
+  "Dildos (anal)",
+  "Dildos (oral)",
+  "Doctor play",
+  "Being leashed outdoors",
+  "Dress code",
+  "Dressage whips",
+  "Solitary confinement",
+  "Enema (for cleaning)",
+  "Solitary confinement / captivity",
+  "Ice dildos",
+  "Ice cubes",
+  "Electricity",
+  "Abduction role-play",
+  "Abstinence",
+  "EPE",
+  "Humiliation",
+  "Erotic dance (strip / belly dance)",
+  "Erotic dance (go-go)",
+  "Training games",
+  "Forced nudity",
+  "Forced masturbation",
+  "Forced exercise",
+  "Forced bedwetting",
+  "Forced eating",
+  "Food selected by another person",
+  "Food deprivation",
+  "Feathers",
+  "Fellatio",
+  "Leather restraints",
+  "Rope restraints",
+  "Steel / iron restraints",
+  "Fetish clothing",
+  "Fire play",
+  "Finger play (being sucked)",
+  "Finger play (sucking fingers)",
+  "Anal fingering",
+  "Being fingered anally",
+  "Anal fisting",
+  "Receiving anal fisting",
+  "Photo / video recording",
+  "Plastic wrap / mummification",
+  "Foot service",
+  "Wearing ankle restraints",
+  "Foot licking",
+  "Full-head mask",
+  "Gas masks",
+  "Prison role-play",
+  "Obedience exercises",
+  "Smell torture",
+  "Taste torture",
+  "Drink deprivation",
+  "Maintaining basic positions",
+  "Group activities in all configurations",
+  "Rubber clothing / underwear",
+  "Belts / straps",
+  "Gynecological examination chair",
+  "Weighted collar",
+  "Wearing a collar",
+  "Wearing a collar in public",
+  "Collar and leash",
+  "Wearing hand restraints",
+  "Handjobs",
+  "Harness",
+  "Housework",
+  "Hot creams",
+  "Hot candle wax",
+  "Hot oil",
+  "Wooden striking implements",
+  "Dog whip",
+  "Hypnosis",
+  "Standing in the corner",
+  "Permanent cage confinement",
+  "Temporary cage confinement",
+  "Fighting / wrestling",
+  "Catheter",
+  "Chains",
+  "Permanent chastity belt",
+  "Temporary chastity belt",
+  "Tickling",
+  "Tape",
+  "Clothing rules",
+  "Skin-tight clothing without underwear",
+  "Gag",
+  "Kneeling",
+  "Competition with other submissives",
+  "Toilet control",
+  "Headphones / earplugs",
+  "Total body hair removal",
+  "Corset",
+  "Scratching",
+  "Crawling",
+  "Latex clothing / underwear",
+  "Licking (non-sexual)",
+  "Licking (sexual)",
+  "Leather restraints",
+  "Leather clothing",
+  "Leather strap clothing",
+  "Body bag",
+  "Massage (giving)",
+  "Milking / forced ejaculation",
+  "Mummification",
+  "Needles",
+  "Name change",
+  "Scarring",
+  "Nipple stretching",
+  "Nipple biting",
+  "Nipple weights",
+  "Nipple clamps",
+  "Nipple clips",
+  "Nipple licking",
+  "Nipple sucking",
+  "Nipple play / torture",
+  "Nipple stretchers",
+  "Nylons",
+  "Public humiliation",
+  "Slapping",
+  "Oral sex",
+  "Forced orgasm until unconsciousness",
+  "Orgasm control",
+  "Partner swapping",
+  "Whip",
+  "Pet play",
+  "PVC clothing",
+  "Speech restrictions",
+  "Restrictive behavioral rules",
+  "Coffin play",
+  "Shame board",
+  "Pillory",
+  "Sleeping while restrained",
+  "Sleeping naked / uncovered",
+  "Sleep deprivation",
+  "Striking",
+  "Swallowing feces",
+  "Swallowing semen",
+  "Shoe service",
+  "Ropes",
+  "Sex in front of a camera for the Dom",
+  "Sexual services under coercion",
+  "Sensory deprivation",
+  "Sitting on the face",
+  "Spanking",
+  "Spitting",
+  "Strapping",
+  "Stretching bench",
+  "Short-lasting marks",
+  "Long-lasting marks",
+  "Verbal humiliation / degradation",
+  "Interrogation",
+  "Auction role-play",
+  "Giving up privacy",
+  "Vibrator",
+  "Public display",
+  "Waxing",
+  "Wax play",
+  "Clothespins",
+  "Water torture",
+  "Diapers",
+  "Choking play",
+  "Straightjacket"
+
+];
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function escapeHtml(value) {
+
+  return String(value || '').replace(
+    /[&<>'"]/g,
+    character => ({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      "'":'&#39;',
+      '"':'&quot;'
+    })[character]
+  );
+
+}
+
+
+function localizedPreferenceQuestion(question,index) {
+
+  if (currentLanguage === 'de') {
+    return question;
+  }
+
+  return preferenceQuestionsEN[index] || question;
+
+}
+
+
+/* =========================================================
+   COMPACT LINK ENCODING
+========================================================= */
+
+function encode(data) {
+
+  const preferences = [];
+
+  Object.entries(data.preferences || {}).forEach(
+    ([questionIndex,choice]) => {
+
+      const choiceIndex =
+        preferenceChoices.indexOf(choice);
+
+      if (
+        /^\d+$/.test(questionIndex) &&
+        choiceIndex !== -1 &&
+        Number(questionIndex) >= 0 &&
+        Number(questionIndex) < preferenceQuestions.length
+      ) {
+
+        preferences.push(
+          Number(questionIndex),
+          choiceIndex
+        );
+
+      }
+
+    }
+  );
+
+
+  const compactData = [
+
+    data.name || '',
+    data.birthdate || '',
+    data.gender || '',
+    data.x || '',
+    data.instagram || '',
+    data.reddit || '',
+    data.fet || '',
+    data.recon || '',
+    data.bluesky || '',
+    currentLanguage,
+    preferences
+
+  ];
+
+
+  return LZString.compressToEncodedURIComponent(
+    JSON.stringify(compactData)
+  );
+
+}
+
+
+/* =========================================================
+   DECODING
+========================================================= */
+
+function decode(value) {
+
+  const decompressed =
+    LZString.decompressFromEncodedURIComponent(value);
+
+  if (!decompressed) {
+    throw new Error('Link could not be decoded.');
+  }
+
+  const parsed = JSON.parse(decompressed);
+
+
+  if (Array.isArray(parsed)) {
+
+    const compactData = parsed;
+
+    const name = compactData[0] || '';
+    const birthdate = compactData[1] || '';
+    const gender = compactData[2] || '';
+    const x = compactData[3] || '';
+    const instagram = compactData[4] || '';
+    const reddit = compactData[5] || '';
+    const fet = compactData[6] || '';
+    const recon = compactData[7] || '';
+    const bluesky = compactData[8] || '';
+
+    let language = 'en';
+    let preferenceArray = [];
+
+    if (
+      compactData[9] === 'de' ||
+      compactData[9] === 'en'
+    ) {
+
+      language = compactData[9];
+
+      preferenceArray =
+        Array.isArray(compactData[10])
+          ? compactData[10]
+          : [];
+
+    } else {
+
+      preferenceArray =
+        Array.isArray(compactData[9])
+          ? compactData[9]
+          : [];
+
+    }
+
+
+    const preferences = {};
+
+    for (
+      let i = 0;
+      i + 1 < preferenceArray.length;
+      i += 2
+    ) {
+
+      const questionIndex =
+        Number(preferenceArray[i]);
+
+      const choiceIndex =
+        Number(preferenceArray[i + 1]);
+
+      if (
+        Number.isInteger(questionIndex) &&
+        Number.isInteger(choiceIndex) &&
+        questionIndex >= 0 &&
+        questionIndex < preferenceQuestions.length &&
+        choiceIndex >= 0 &&
+        choiceIndex < preferenceChoices.length
+      ) {
+
+        preferences[questionIndex] =
+          preferenceChoices[choiceIndex];
+
+      }
+
+    }
+
+
+    return {
+      name,
+      birthdate,
+      gender,
+      x,
+      instagram,
+      reddit,
+      fet,
+      recon,
+      bluesky,
+      language,
+      preferences
+    };
+
+  }
+
+
+  if (
+    parsed &&
+    typeof parsed === 'object'
+  ) {
+
+    return {
+
+      name:
+        typeof parsed.name === 'string'
+          ? parsed.name
+          : '',
+
+      birthdate:
+        typeof parsed.birthdate === 'string'
+          ? parsed.birthdate
+          : '',
+
+      gender:
+        typeof parsed.gender === 'string'
+          ? parsed.gender
+          : '',
+
+      x:
+        typeof parsed.x === 'string'
+          ? parsed.x
+          : '',
+
+      instagram:
+        typeof parsed.instagram === 'string'
+          ? parsed.instagram
+          : '',
+
+      reddit:
+        typeof parsed.reddit === 'string'
+          ? parsed.reddit
+          : '',
+
+      fet:
+        typeof parsed.fet === 'string'
+          ? parsed.fet
+          : '',
+
+      recon:
+        typeof parsed.recon === 'string'
+          ? parsed.recon
+          : '',
+
+      bluesky:
+        typeof parsed.bluesky === 'string'
+          ? parsed.bluesky
+          : '',
+
+      language:
+        parsed.language === 'de'
+          ? 'de'
+          : 'en',
+
+      preferences:
+        parsed.preferences &&
+        typeof parsed.preferences === 'object'
+          ? parsed.preferences
+          : {}
+
+    };
+
+  }
+
+
+  throw new Error('Invalid data format.');
+
+}
+
+
+/* =========================================================
+   CARD
+========================================================= */
+
+function initials(name) {
+
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .map(word => word[0])
+      .join('')
+      .slice(0,2) ||
+    'S'
+  ).toUpperCase();
+
+}
+
+
+function selectedPreferences(data) {
+
+  return preferenceQuestions
+    .map((question,index) => [
+      localizedPreferenceQuestion(question,index),
+      data.preferences?.[index]
+    ])
+    .filter(
+      ([,answer]) =>
+        preferenceChoices.includes(answer)
+    );
+
+}
+
+
+function ageFromBirthdate(
+  birthdate,
+  today = new Date()
+) {
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthdate)) {
+    return null;
+  }
+
+  const [year,month,day] =
+    birthdate.split('-').map(Number);
+
+  const birthday =
+    new Date(year,month - 1,day);
+
+  if (
+    birthday.getFullYear() !== year ||
+    birthday.getMonth() !== month - 1 ||
+    birthday.getDate() !== day ||
+    birthday > today
+  ) {
+    return null;
+  }
+
+  let age =
+    today.getFullYear() - year;
+
+  if (
+    today.getMonth() < month - 1 ||
+    (
+      today.getMonth() === month - 1 &&
+      today.getDate() < day
+    )
+  ) {
+    age--;
+  }
+
+  return age;
+
+}
+
+
+/* =========================================================
+   CARD HTML
+========================================================= */
+
+function card(data) {
+
+  const name =
+    data.name.trim() ||
+    (
+      currentLanguage === 'en'
+        ? 'Your name'
+        : 'Dein Name'
+    );
+
+
+  const age =
+    ageFromBirthdate(data.birthdate);
+
+
+  const selections =
+    selectedPreferences(data);
+
+
+  const socialMedia =
+    socialMediaFields.filter(
+      ([key]) => data[key]?.trim()
+    );
+
+
+  const socialMediaHtml =
+    socialMedia.length
+      ? `
+        <div class="detail card-social-media">
+          <strong>${escapeHtml(t('socialMediaCard'))}</strong>
+          <ul>
+            ${
+              socialMedia
+                .map(
+                  ([key,label]) =>
+                    `<li>
+                      <b>${escapeHtml(label)}:</b>
+                      ${escapeHtml(data[key])}
+                    </li>`
+                )
+                .join('')
+            }
+          </ul>
+        </div>
+      `
+      : '';
+
+
+  const preferenceHtml =
+    selections.length
+      ? `
+        <div class="detail card-preferences">
+          <strong>${escapeHtml(t('preferencesCard'))}</strong>
+          <ul>
+            ${
+              selections
+                .map(
+                  ([question,answer]) =>
+                    `<li>
+                      ${escapeHtml(question)}:
+                      <b>${escapeHtml(answer)}</b>
+                    </li>`
+                )
+                .join('')
+            }
+          </ul>
+        </div>
+      `
+      : '';
+
+
+  return `
+
+    <article class="card">
+
+      <div class="card-top">
+
+        <div>
+          <h2 class="card-title">
+            ${escapeHtml(t('cardTitle'))}
+          </h2>
+        </div>
+
+        <div
+          class="badge"
+          aria-label="Age: ${age ?? t('ageUnknown')}"
+        >
+          ${
+            age === null
+              ? '—'
+              : `${age} ${escapeHtml(t('years'))}`
+          }
+        </div>
+
+      </div>
+
+
+      <div class="identity">
+
+        <div class="avatar">
+          ${escapeHtml(initials(name))}
+        </div>
+
+        <div>
+
+          <h3 class="name">
+            ${escapeHtml(name)}
+          </h3>
+
+          <p class="role">
+            ${
+              escapeHtml(
+                data.gender.trim() ||
+                t('genderNotSpecified')
+              )
+            }
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="details">
+
+        ${socialMediaHtml}
+
+        ${preferenceHtml}
+
+      </div>
+
+    </article>
+
+  `;
+
+}
+
+
+/* =========================================================
+   FORM DATA
+========================================================= */
+
+function readForm() {
+
+  const data =
+    Object.fromEntries(
+
+      Object.keys(defaults)
+
+        .filter(
+          key => key !== 'preferences'
+        )
+
+        .map(
+          key => {
+
+            const field =
+              document.querySelector(
+                `[name="${key}"]`
+              );
+
+            return [
+              key,
+              field ? field.value : ''
+            ];
+
+          }
+        )
+
+    );
+
+
+  data.preferences =
+    Object.fromEntries(
+
+      [
+        ...app.querySelectorAll(
+          '[data-preference]:checked'
+        )
+      ]
+
+      .map(
+        input => [
+          input.dataset.preference,
+          input.value
+        ]
+      )
+
+    );
+
+
+  return data;
+
+}
+
+
+/* =========================================================
+   PREVIEW
+========================================================= */
+
+function updatePreview() {
+
+  const preview =
+    document.querySelector('#preview');
+
+  if (!preview) return;
+
+  preview.innerHTML =
+    card(readForm());
+
+}
+
+
+/* =========================================================
+   PREFERENCE TABLE
+========================================================= */
+
+function preferenceFields() {
+
+  const choiceLabels =
+    t('choiceLabels');
+
+  const choiceTitles =
+    t('choiceTitles');
+
+
+  return `
+
+    <table class="preference-table">
+
+      <thead>
+
+        <tr>
+
+          <th scope="col">
+            ${escapeHtml(t('practice'))}
+          </th>
+
+          ${
+            choiceLabels
+              .map(
+                (label,index) =>
+                  `<th
+                    scope="col"
+                    title="${escapeHtml(
+                      choiceTitles[index]
+                    )}"
+                  >
+                    ${escapeHtml(label)}
+                  </th>`
+              )
+              .join('')
+          }
+
+        </tr>
+
+      </thead>
+
+
+      <tbody>
+
+        ${
+          preferenceQuestions
+            .map(
+              (question,index) => `
+
+                <tr>
+
+                  <td class="preference-name">
+                    ${escapeHtml(
+                      localizedPreferenceQuestion(
+                        question,
+                        index
+                      )
+                    )}
+                  </td>
+
+                  ${
+                    preferenceChoices
+                      .map(
+                        choice => {
+
+                          const choiceIndex =
+                            preferenceChoices.indexOf(
+                              choice
+                            );
+
+                          const displayChoice =
+                            choiceTitles[choiceIndex];
+
+                          return `
+
+                            <td
+                              class="preference-option"
+                              data-choice="${escapeHtml(
+                                displayChoice
+                              )}"
+                            >
+
+                              <label
+                                title="${escapeHtml(
+                                  displayChoice
+                                )}"
+                              >
+
+                                <input
+                                  type="radio"
+                                  name="preference-${index}"
+                                  value="${escapeHtml(choice)}"
+                                  data-preference="${index}"
+                                  aria-label="${escapeHtml(
+                                    localizedPreferenceQuestion(
+                                      question,
+                                      index
+                                    )
+                                  )}: ${escapeHtml(
+                                    displayChoice
+                                  )}"
+                                >
+
+                                <span
+                                  class="preference-dot"
+                                  aria-hidden="true"
+                                ></span>
+
+                              </label>
+
+                            </td>
+
+                          `;
+
+                        }
+                      )
+                      .join('')
+                  }
+
+                </tr>
+
+              `
+            )
+            .join('')
+        }
+
+      </tbody>
+
+    </table>
+
+  `;
+
+}
+
+
+/* =========================================================
+   EDITOR
+========================================================= */
+
+function renderEditor() {
+
+  app.innerHTML = `
+
+    <div class="editor">
+
+      <section>
+
+        <h2>
+          ${escapeHtml(t('dataCollection'))}
+        </h2>
+
+
+        <div class="fields">
+
+          <label>
+
+            ${escapeHtml(t('name'))}
+
+            <input
+              name="name"
+              maxlength="50"
+              placeholder="${escapeHtml(
+                t('namePlaceholder')
+              )}"
+            >
+
+          </label>
+
+
+          <label>
+
+            ${escapeHtml(t('birthdate'))}
+
+            <input
+              name="birthdate"
+              type="date"
+              required
+            >
+
+          </label>
+
+
+          <label>
+
+            ${escapeHtml(t('gender'))}
+
+            <input
+              name="gender"
+              maxlength="50"
+              placeholder="${escapeHtml(
+                t('genderPlaceholder')
+              )}"
+            >
+
+          </label>
+
+
+          <section
+            class="preferences full"
+            aria-labelledby="social-media-heading"
+          >
+
+            <div class="preferences-heading">
+
+              <h3 id="social-media-heading">
+                ${escapeHtml(t('socialMedia'))}
+              </h3>
+
+              <p>
+                ${escapeHtml(
+                  t('socialMediaDescription')
+                )}
+              </p>
+
+            </div>
+
+
+            <div class="fields social-media-fields">
+
+              <label>
+
+                X
+
+                <input
+                  name="x"
+                  maxlength="100"
+                  placeholder="${escapeHtml(
+                    t('usernamePlaceholder')
+                  )}"
+                >
+
+              </label>
+
+
+              <label>
+
+                Instagram
+
+                <input
+                  name="instagram"
+                  maxlength="100"
+                  placeholder="${escapeHtml(
+                    t('usernamePlaceholder')
+                  )}"
+                >
+
+              </label>
+
+
+              <label>
+
+                Reddit
+
+                <input
+                  name="reddit"
+                  maxlength="100"
+                  placeholder="${escapeHtml(
+                    t('redditPlaceholder')
+                  )}"
+                >
+
+              </label>
+
+
+              <label>
+
+                Fet
+
+                <input
+                  name="fet"
+                  maxlength="100"
+                  placeholder="${escapeHtml(
+                    t('profilePlaceholder')
+                  )}"
+                >
+
+              </label>
+
+
+              <label>
+
+                Recon
+
+                <input
+                  name="recon"
+                  maxlength="100"
+                  placeholder="${escapeHtml(
+                    t('profilePlaceholder')
+                  )}"
+                >
+
+              </label>
+
+
+              <label>
+
+                Bluesky
+
+                <input
+                  name="bluesky"
+                  maxlength="100"
+                  placeholder="${escapeHtml(
+                    t('blueskyPlaceholder')
+                  )}"
+                >
+
+              </label>
+
+            </div>
+
+          </section>
+
+
+          <section
+            class="preferences"
+            aria-labelledby="preferences-heading"
+          >
+
+            <div class="preferences-heading">
+
+              <h3 id="preferences-heading">
+                ${escapeHtml(t('preferences'))}
+              </h3>
+
+              <p>
+                ${escapeHtml(
+                  t('preferencesDescription')
+                )}
+              </p>
+
+            </div>
+
+
+            <div class="preference-list">
+
+              ${preferenceFields()}
+
+            </div>
+
+          </section>
+
+        </div>
+
+
+        <div class="actions">
+
+          <button
+            id="export-image"
+            class="export-button"
+            type="button"
+          >
+            ${escapeHtml(t('exportImage'))}
+          </button>
+
+
+          <button
+            id="create-link"
+            type="button"
+          >
+            ${escapeHtml(t('createLink'))}
+          </button>
+
+
+          <div class="share-row">
+
+            <input
+              id="share-link"
+              readonly
+              aria-label="${escapeHtml(
+                t('createLink')
+              )}"
+              placeholder="${escapeHtml(
+                t('sharePlaceholder')
+              )}"
+            >
+
+            <button
+              id="copy-link"
+              class="secondary"
+              type="button"
+            >
+              ${escapeHtml(t('copyLink'))}
+            </button>
+
+          </div>
+
+
+          <p class="hint">
+            ${escapeHtml(t('linkHint'))}
+          </p>
+
+        </div>
+
+      </section>
+
+
+      <section>
+
+        <p class="preview-label">
+          ${escapeHtml(t('livePreview'))}
+        </p>
+
+        <div id="preview"></div>
+
+      </section>
+
+    </div>
+
+  `;
+
+
+  app
+    .querySelectorAll(
+      'input, select, textarea'
+    )
+    .forEach(
+      field =>
+        field.addEventListener(
+          'input',
+          updatePreview
+        )
+    );
+
+
+  app
+    .querySelector('#export-image')
+    .addEventListener(
+      'click',
+      exportImage
+    );
+
+
+  app
+    .querySelector('#create-link')
+    .addEventListener(
+      'click',
+      createLink
+    );
+
+
+  app
+    .querySelector('#copy-link')
+    .addEventListener(
+      'click',
+      copyLink
+    );
+
+
+  updatePreview();
+
+}
+
+
+/* =========================================================
+   CREATE LINK
+========================================================= */
+
+function createLink() {
+
+  const data = readForm();
+
+  if (
+    ageFromBirthdate(
+      data.birthdate
+    ) === null
+  ) {
+
+    return alert(
+      t('invalidBirthdate')
+    );
+
+  }
+
+
+  const encoded =
+    encode(data);
+
+
+  const link =
+    `${location.href.split('#')[0]}#a=${encoded}`;
+
+
+  const shareInput =
+    app.querySelector('#share-link');
+
+
+  if (shareInput) {
+    shareInput.value = link;
+  }
+
+
+  copyText(
+    link,
+    t('linkCreated')
+  );
+
+}
+
+
+/* =========================================================
+   COPY
+========================================================= */
+
+async function copyText(text,success) {
+
+  try {
+
+    await navigator.clipboard.writeText(text);
+
+    if (success) {
+      alert(success);
+    }
+
+  } catch {
+
+    const input =
+      app.querySelector('#share-link');
+
+    if (input) {
+
+      input.focus();
+      input.select();
+
+      alert(t('copyFallback'));
+
+    }
+
+  }
+
+}
+
+
 /* =========================================================
    IMAGE FILENAME
 ========================================================= */
@@ -8,6 +2421,7 @@ function imageFileName(name) {
     currentLanguage === 'en'
       ? 'slave-id-card'
       : 'sklaven-ausweis';
+
 
   const safeName =
     (
@@ -22,6 +2436,7 @@ function imageFileName(name) {
         /^_+|_+$/g,
         ''
       );
+
 
   return `${
     safeName || fallback
@@ -52,10 +2467,7 @@ function canvasRoundRect(
 
   ctx.beginPath();
 
-  ctx.moveTo(
-    x + r,
-    y
-  );
+  ctx.moveTo(x + r,y);
 
   ctx.lineTo(
     x + width - r,
@@ -130,7 +2542,6 @@ function fillRoundRect(
   );
 
   ctx.fillStyle = fill;
-
   ctx.fill();
 
 }
@@ -158,20 +2569,12 @@ function strokeRoundRect(
 
   ctx.strokeStyle = stroke;
   ctx.lineWidth = lineWidth;
-
   ctx.stroke();
 
 }
 
 
-/* =========================================================
-   TEXT HELPERS
-========================================================= */
-
-function canvasTextWidth(
-  ctx,
-  text
-) {
+function canvasTextWidth(ctx,text) {
 
   return ctx.measureText(
     String(text)
@@ -191,12 +2594,15 @@ function wrapCanvasText(
       .split(/\s+/)
       .filter(Boolean);
 
+
   if (!words.length) {
     return [''];
   }
 
+
   const lines = [];
   let current = '';
+
 
   for (const word of words) {
 
@@ -204,6 +2610,7 @@ function wrapCanvasText(
       current
         ? `${current} ${word}`
         : word;
+
 
     if (
       canvasTextWidth(
@@ -220,69 +2627,25 @@ function wrapCanvasText(
         lines.push(current);
       }
 
-      /*
-        Falls ein einzelnes Wort breiter
-        als die verfügbare Breite ist,
-        wird es trotzdem ausgegeben.
-      */
-
       current = word;
 
     }
 
   }
 
+
   if (current) {
     lines.push(current);
   }
+
 
   return lines;
 
 }
 
 
-function drawWrappedText(
-  ctx,
-  text,
-  x,
-  y,
-  maxWidth,
-  lineHeight,
-  maxLines = Infinity
-) {
-
-  const lines =
-    wrapCanvasText(
-      ctx,
-      text,
-      maxWidth
-    );
-
-  const visible =
-    lines.slice(
-      0,
-      maxLines
-    );
-
-  visible.forEach(
-    (line, index) => {
-
-      ctx.fillText(
-        line,
-        x,
-        y + index * lineHeight
-      );
-
-    }
-  );
-
-  return visible.length;
-
-}
-
-
 /* =========================================================
-   CANVAS CHIP HELPERS
+   CANVAS CHIP
 ========================================================= */
 
 function drawCanvasChip(
@@ -295,84 +2658,94 @@ function drawCanvasChip(
 ) {
 
   const {
-
-    font =
-      '700 12px Arial, sans-serif',
-
-    textColor =
-      '#24132e',
-
-    background =
-      'rgba(255,255,255,.53)',
-
-    paddingX =
-      9,
-
-    paddingY =
-      6,
-
-    radius =
-      999,
-
-    maxTextWidth =
-      maxWidth - paddingX * 2
-
+    font='700 16px Arial, sans-serif',
+    textColor='#24132e',
+    background='rgba(255,255,255,.53)',
+    paddingX=12,
+    paddingY=8,
+    radius=999
   } = options;
 
 
   ctx.font = font;
 
 
+  const availableTextWidth =
+    Math.max(
+      30,
+      maxWidth - paddingX * 2
+    );
+
+
   const lines =
     wrapCanvasText(
       ctx,
       text,
-      maxTextWidth
+      availableTextWidth
     );
 
 
-  /*
-    Chips werden bei sehr langen
-    Einträgen auf maximal zwei Zeilen
-    begrenzt.
-  */
-
   const visibleLines =
-    lines.slice(0, 2);
+    lines.slice(0,2);
 
 
-  const lineHeight =
-    15;
+  if (
+    lines.length > 2 &&
+    visibleLines.length
+  ) {
 
+    let last =
+      visibleLines[
+        visibleLines.length - 1
+      ];
 
-  let chipWidth =
-    0;
+    while (
+      canvasTextWidth(
+        ctx,
+        `${last}…`
+      ) > availableTextWidth &&
+      last.length > 1
+    ) {
 
-
-  visibleLines.forEach(
-    line => {
-
-      chipWidth =
-        Math.max(
-          chipWidth,
-          canvasTextWidth(
-            ctx,
-            line
-          )
-        );
+      last =
+        last.slice(0,-1);
 
     }
-  );
+
+    visibleLines[
+      visibleLines.length - 1
+    ] =
+      `${last}…`;
+
+  }
 
 
-  chipWidth +=
-    paddingX * 2;
+  const lineHeight = 21;
 
 
-  chipWidth =
+  let textWidth = 0;
+
+  visibleLines.forEach(line => {
+
+    textWidth =
+      Math.max(
+        textWidth,
+        canvasTextWidth(
+          ctx,
+          line
+        )
+      );
+
+  });
+
+
+  const chipWidth =
     Math.min(
-      chipWidth,
-      maxWidth
+      maxWidth,
+      Math.max(
+        60,
+        textWidth + paddingX * 2
+      )
     );
 
 
@@ -404,7 +2777,7 @@ function drawCanvasChip(
 
 
   visibleLines.forEach(
-    (line, index) => {
+    (line,index) => {
 
       ctx.fillText(
         line,
@@ -419,15 +2792,15 @@ function drawCanvasChip(
 
 
   return {
-    width: chipWidth,
-    height: chipHeight
+    width:chipWidth,
+    height:chipHeight
   };
 
 }
 
 
 /* =========================================================
-   CHIP LIST
+   CANVAS CHIP LIST
 ========================================================= */
 
 function drawCanvasChipList(
@@ -440,26 +2813,13 @@ function drawCanvasChipList(
 ) {
 
   const {
-
-    gap = 7,
-
-    rowGap = 7,
-
-    font =
-      '700 12px Arial, sans-serif',
-
-    textColor =
-      '#24132e',
-
-    background =
-      'rgba(255,255,255,.53)',
-
-    paddingX = 9,
-
-    paddingY = 6,
-
-    lineHeight = 15
-
+    gap=9,
+    rowGap=9,
+    font='700 16px Arial, sans-serif',
+    textColor='#24132e',
+    background='rgba(255,255,255,.53)',
+    paddingX=12,
+    paddingY=8
   } = options;
 
 
@@ -470,7 +2830,12 @@ function drawCanvasChipList(
 
   for (const item of items) {
 
-    const chip =
+    /*
+      Erst mit der maximal verfügbaren
+      Breite messen.
+    */
+
+    const measured =
       drawCanvasChip(
         ctx,
         item,
@@ -482,20 +2847,21 @@ function drawCanvasChipList(
           textColor,
           background,
           paddingX,
-          paddingY,
-          radius:999
+          paddingY
         }
       );
 
 
     /*
-      Neue Zeile, wenn der Chip nicht
-      mehr in die aktuelle Zeile passt.
+      Passt der Chip nicht mehr in die
+      aktuelle Zeile, beginnt eine neue.
     */
 
     if (
       currentX !== x &&
-      currentX + chip.width > x + width
+      currentX +
+        measured.width >
+        x + width
     ) {
 
       currentX = x;
@@ -508,22 +2874,27 @@ function drawCanvasChipList(
     }
 
 
-    drawCanvasChip(
-      ctx,
-      item,
-      currentX,
-      currentY,
+    const remainingWidth =
+      x +
       width -
-        (currentX - x),
-      {
-        font,
-        textColor,
-        background,
-        paddingX,
-        paddingY,
-        radius:999
-      }
-    );
+      currentX;
+
+
+    const chip =
+      drawCanvasChip(
+        ctx,
+        item,
+        currentX,
+        currentY,
+        remainingWidth,
+        {
+          font,
+          textColor,
+          background,
+          paddingX,
+          paddingY
+        }
+      );
 
 
     currentX +=
@@ -540,50 +2911,38 @@ function drawCanvasChipList(
 
 
   return {
-    y:
-      currentY + rowHeight,
-
+    y:currentY + rowHeight,
     height:
       currentY +
       rowHeight -
       y
-
   };
 
 }
 
 
 /* =========================================================
-   EXPORT CARD TO CANVAS
+   CANVAS CARD RENDERER
 ========================================================= */
 
-async function renderCardToCanvas(
-  data
-) {
+async function renderCardToCanvas(data) {
 
   /*
-    Wir verwenden feste Exportmaße.
-
-    Dadurch hängt die Bildgröße nicht
-    von der aktuellen Bildschirmbreite,
-    dem mobilen Layout oder Zoom ab.
+    Feste Exportbreite.
+    Dadurch bleibt die PNG-Größe unabhängig
+    von Bildschirmbreite und Zoom.
   */
 
   const width = 1200;
-
   const padding = 48;
-
   const contentWidth =
-    width -
-    padding * 2;
+    width - padding * 2;
 
+  const scale = 2;
 
-  /*
-    Vorab die Inhalte bestimmen.
-  */
 
   const name =
-    data.name?.trim() ||
+    String(data.name || '').trim() ||
     (
       currentLanguage === 'en'
         ? 'Your name'
@@ -598,7 +2957,7 @@ async function renderCardToCanvas(
 
 
   const gender =
-    data.gender?.trim() ||
+    String(data.gender || '').trim() ||
     t('genderNotSpecified');
 
 
@@ -609,40 +2968,29 @@ async function renderCardToCanvas(
   const socialMedia =
     socialMediaFields.filter(
       ([key]) =>
-        data[key]?.trim()
+        String(data[key] || '').trim()
     );
 
 
   /*
-    Canvas zunächst mit einer
-    ausreichend großen Höhe erzeugen.
+    Die Canvas-Höhe wird zunächst großzügig
+    angelegt. Anschließend wird auf die
+    tatsächlich benötigte Höhe zugeschnitten.
   */
 
   const canvas =
-    document.createElement(
-      'canvas'
-    );
+    document.createElement('canvas');
 
-
-  const scale = 2;
 
   canvas.width =
     width * scale;
 
-  /*
-    2000px ist absichtlich großzügig.
-    Nach dem Rendern wird die tatsächliche
-    Höhe anhand des Inhalts bestimmt.
-  */
-
   canvas.height =
-    2400 * scale;
+    4000 * scale;
 
 
   const ctx =
-    canvas.getContext(
-      '2d'
-    );
+    canvas.getContext('2d');
 
 
   if (!ctx) {
@@ -652,10 +3000,7 @@ async function renderCardToCanvas(
   }
 
 
-  ctx.scale(
-    scale,
-    scale
-  );
+  ctx.scale(scale,scale);
 
 
   ctx.textBaseline =
@@ -664,7 +3009,7 @@ async function renderCardToCanvas(
 
   /*
     -------------------------------------------------------
-    CARD BACKGROUND
+    BACKGROUND
     -------------------------------------------------------
   */
 
@@ -673,7 +3018,7 @@ async function renderCardToCanvas(
       0,
       0,
       width,
-      900
+      1000
     );
 
 
@@ -693,14 +3038,8 @@ async function renderCardToCanvas(
   );
 
 
-  /*
-    Höhe wird später angepasst.
-    Für den ersten Durchlauf wird ein
-    ausreichend großer Bereich verwendet.
-  */
-
   const temporaryHeight =
-    2200;
+    3900;
 
 
   fillRoundRect(
@@ -714,14 +3053,10 @@ async function renderCardToCanvas(
   );
 
 
-  /*
-    Card border
-  */
-
   strokeRoundRect(
     ctx,
-    0.5,
-    0.5,
+    .5,
+    .5,
     width - 1,
     temporaryHeight - 1,
     44,
@@ -748,8 +3083,7 @@ async function renderCardToCanvas(
     Math.PI * 2
   );
 
-  ctx.lineWidth =
-    35;
+  ctx.lineWidth = 35;
 
   ctx.strokeStyle =
     'rgba(255,255,255,.33)';
@@ -783,11 +3117,10 @@ async function renderCardToCanvas(
 
 
   /*
-    Badge
+    AGE BADGE
   */
 
-  const badgeSize =
-    108;
+  const badgeSize = 108;
 
   const badgeX =
     width -
@@ -831,10 +3164,8 @@ async function renderCardToCanvas(
     age === null
       ? '—'
       : `${age} ${t('years')}`,
-    badgeX +
-      badgeSize / 2,
-    badgeY +
-      badgeSize / 2
+    badgeX + badgeSize / 2,
+    badgeY + badgeSize / 2
   );
 
 
@@ -846,7 +3177,7 @@ async function renderCardToCanvas(
 
 
   /*
-    Divider
+    DIVIDER
   */
 
   y += 75;
@@ -855,8 +3186,7 @@ async function renderCardToCanvas(
   ctx.strokeStyle =
     'rgba(75,33,100,.40)';
 
-  ctx.lineWidth =
-    1;
+  ctx.lineWidth = 1;
 
   ctx.beginPath();
 
@@ -882,8 +3212,7 @@ async function renderCardToCanvas(
   y += 38;
 
 
-  const avatarSize =
-    140;
+  const avatarSize = 140;
 
 
   fillRoundRect(
@@ -912,15 +3241,16 @@ async function renderCardToCanvas(
 
   ctx.fillText(
     initials(name),
-    padding +
-      avatarSize / 2,
-    y +
-      avatarSize / 2
+    padding + avatarSize / 2,
+    y + avatarSize / 2
   );
 
 
   ctx.textAlign =
     'left';
+
+  ctx.textBaseline =
+    'alphabetic';
 
 
   const identityX =
@@ -929,9 +3259,11 @@ async function renderCardToCanvas(
     28;
 
 
-  /*
-    Name
-  */
+  const identityWidth =
+    width -
+    identityX -
+    padding;
+
 
   ctx.fillStyle =
     '#24132e';
@@ -944,9 +3276,7 @@ async function renderCardToCanvas(
     wrapCanvasText(
       ctx,
       name,
-      width -
-        identityX -
-        padding
+      identityWidth
     );
 
 
@@ -955,26 +3285,19 @@ async function renderCardToCanvas(
 
 
   nameLines
-    .slice(0, 3)
-    .forEach(
-      line => {
+    .slice(0,3)
+    .forEach(line => {
 
-        ctx.fillText(
-          line,
-          identityX,
-          identityTextY
-        );
+      ctx.fillText(
+        line,
+        identityX,
+        identityTextY
+      );
 
-        identityTextY +=
-          58;
+      identityTextY += 58;
 
-      }
-    );
+    });
 
-
-  /*
-    Gender
-  */
 
   ctx.fillStyle =
     '#54226e';
@@ -991,37 +3314,22 @@ async function renderCardToCanvas(
 
 
   y +=
-    avatarSize +
-    34;
+    avatarSize + 34;
 
 
   /*
     -------------------------------------------------------
-    DETAIL SECTIONS
+    DETAIL BOX HELPER
     -------------------------------------------------------
   */
 
-  const detailX =
-    padding;
-
-  const detailWidth =
-    contentWidth;
-
-
-  /*
-    Helper für Detailboxen
-  */
-
-  function beginDetail(
-    title,
-    height
-  ) {
+  function beginDetail(title,height) {
 
     fillRoundRect(
       ctx,
-      detailX,
+      padding,
       y,
-      detailWidth,
+      contentWidth,
       height,
       18,
       'rgba(255,255,255,.53)'
@@ -1034,9 +3342,10 @@ async function renderCardToCanvas(
     ctx.font =
       '800 16px Arial, sans-serif';
 
+
     ctx.fillText(
       title.toUpperCase(),
-      detailX + 18,
+      padding + 18,
       y + 27
     );
 
@@ -1051,79 +3360,70 @@ async function renderCardToCanvas(
 
   if (socialMedia.length) {
 
-    /*
-      Chips zunächst messen.
-    */
-
     const socialItems =
       socialMedia.map(
         ([key,label]) =>
-          `${label}: ${data[key].trim()}`
+          `${label}: ${String(
+            data[key] || ''
+          ).trim()}`
       );
 
+
+    /*
+      Für die tatsächliche Höhe werden
+      die Chips wirklich gezeichnet.
+    */
 
     ctx.font =
       '700 16px Arial, sans-serif';
 
 
     /*
-      Grobe Berechnung der benötigten
-      Zeilenhöhe.
+      Zuerst auf einer unsichtbaren Position
+      messen. Dabei wird dieselbe Logik wie
+      beim eigentlichen Zeichnen verwendet.
     */
 
-    const chipGap =
-      9;
+    const measurementCanvas =
+      document.createElement('canvas');
 
-    const chipHeight =
-      34;
+    measurementCanvas.width =
+      width * scale;
 
-
-    let socialRows = 1;
-    let socialX = 18;
-
-
-    for (const item of socialItems) {
-
-      const estimatedWidth =
-        Math.min(
-          detailWidth - 36,
-          canvasTextWidth(
-            ctx,
-            item
-          ) + 28
-        );
+    measurementCanvas.height =
+      2000 * scale;
 
 
-      if (
-        socialX !== 18 &&
-        socialX +
-          estimatedWidth >
-          detailWidth - 18
-      ) {
-
-        socialRows++;
-
-        socialX = 18;
-
-      }
+    const measurementContext =
+      measurementCanvas.getContext('2d');
 
 
-      socialX +=
-        estimatedWidth +
-        chipGap;
+    measurementContext.scale(
+      scale,
+      scale
+    );
 
-    }
+
+    const socialMeasurement =
+      drawCanvasChipList(
+        measurementContext,
+        socialItems,
+        18,
+        0,
+        contentWidth - 36,
+        {
+          font:'700 16px Arial, sans-serif',
+          paddingX:12,
+          paddingY:8,
+          rowGap:9,
+          gap:9
+        }
+      );
 
 
     const socialHeight =
-      55 +
-      socialRows *
-        chipHeight +
-      Math.max(
-        0,
-        socialRows - 1
-      ) *
-        chipGap +
+      39 +
+      socialMeasurement.height +
       18;
 
 
@@ -1136,27 +3436,21 @@ async function renderCardToCanvas(
     drawCanvasChipList(
       ctx,
       socialItems,
-      detailX + 18,
+      padding + 18,
       y + 39,
-      detailWidth - 36,
+      contentWidth - 36,
       {
-        font:
-          '700 16px Arial, sans-serif',
-
+        font:'700 16px Arial, sans-serif',
         paddingX:12,
-
         paddingY:8,
-
         rowGap:9,
-
         gap:9
       }
     );
 
 
     y +=
-      socialHeight +
-      14;
+      socialHeight + 14;
 
   }
 
@@ -1171,69 +3465,51 @@ async function renderCardToCanvas(
 
     const preferenceItems =
       selections.map(
-        ([question, answer]) =>
+        ([question,answer]) =>
           `${question}: ${answer}`
       );
 
 
-    /*
-      Für die Höhenberechnung werden
-      die tatsächlichen Textbreiten
-      berücksichtigt.
-    */
+    const measurementCanvas =
+      document.createElement('canvas');
 
-    ctx.font =
-      '700 16px Arial, sans-serif';
+    measurementCanvas.width =
+      width * scale;
 
-
-    let preferenceRows = 1;
-
-    let preferenceX = 18;
+    measurementCanvas.height =
+      12000 * scale;
 
 
-    for (
-      const item of preferenceItems
-    ) {
-
-      const itemWidth =
-        Math.min(
-          detailWidth - 36,
-          canvasTextWidth(
-            ctx,
-            item
-          ) + 28
-        );
+    const measurementContext =
+      measurementCanvas.getContext('2d');
 
 
-      if (
-        preferenceX !== 18 &&
-        preferenceX +
-          itemWidth >
-          detailWidth - 18
-      ) {
-
-        preferenceRows++;
-
-        preferenceX = 18;
-
-      }
+    measurementContext.scale(
+      scale,
+      scale
+    );
 
 
-      preferenceX +=
-        itemWidth + 9;
-
-    }
+    const preferenceMeasurement =
+      drawCanvasChipList(
+        measurementContext,
+        preferenceItems,
+        18,
+        0,
+        contentWidth - 36,
+        {
+          font:'700 16px Arial, sans-serif',
+          paddingX:12,
+          paddingY:8,
+          rowGap:9,
+          gap:9
+        }
+      );
 
 
     const preferenceHeight =
-      55 +
-      preferenceRows *
-        34 +
-      Math.max(
-        0,
-        preferenceRows - 1
-      ) *
-        9 +
+      39 +
+      preferenceMeasurement.height +
       18;
 
 
@@ -1246,27 +3522,21 @@ async function renderCardToCanvas(
     drawCanvasChipList(
       ctx,
       preferenceItems,
-      detailX + 18,
+      padding + 18,
       y + 39,
-      detailWidth - 36,
+      contentWidth - 36,
       {
-        font:
-          '700 16px Arial, sans-serif',
-
+        font:'700 16px Arial, sans-serif',
         paddingX:12,
-
         paddingY:8,
-
         rowGap:9,
-
         gap:9
       }
     );
 
 
     y +=
-      preferenceHeight +
-      14;
+      preferenceHeight + 14;
 
   }
 
@@ -1280,16 +3550,13 @@ async function renderCardToCanvas(
   const finalHeight =
     Math.max(
       400,
-      y + padding
+      Math.ceil(y + padding)
     );
 
 
   /*
-    Canvas auf die tatsächliche Höhe
-    zuschneiden.
-
-    Dafür müssen wir den bereits
-    gerenderten Bereich sichern.
+    Canvas auf die tatsächlich benötigte
+    Höhe zuschneiden.
   */
 
   const imageData =
@@ -1304,9 +3571,7 @@ async function renderCardToCanvas(
 
 
   const finalCanvas =
-    document.createElement(
-      'canvas'
-    );
+    document.createElement('canvas');
 
 
   finalCanvas.width =
@@ -1319,9 +3584,14 @@ async function renderCardToCanvas(
 
 
   const finalContext =
-    finalCanvas.getContext(
-      '2d'
+    finalCanvas.getContext('2d');
+
+
+  if (!finalContext) {
+    throw new Error(
+      'Canvas context could not be created.'
     );
+  }
 
 
   finalContext.putImageData(
@@ -1346,7 +3616,7 @@ function downloadCanvas(
 ) {
 
   return new Promise(
-    (resolve, reject) => {
+    (resolve,reject) => {
 
       canvas.toBlob(
         blob => {
@@ -1365,15 +3635,11 @@ function downloadCanvas(
 
 
           const url =
-            URL.createObjectURL(
-              blob
-            );
+            URL.createObjectURL(blob);
 
 
           const link =
-            document.createElement(
-              'a'
-            );
+            document.createElement('a');
 
 
           link.href =
@@ -1384,9 +3650,9 @@ function downloadCanvas(
 
 
           /*
-            Der Link muss kurz im DOM
-            vorhanden sein. Das ist auf
-            Safari/Firefox zuverlässiger.
+            Der Link wird kurz in den DOM
+            eingefügt. Das ist insbesondere
+            für Firefox/Safari zuverlässiger.
           */
 
           document.body.appendChild(
@@ -1402,9 +3668,7 @@ function downloadCanvas(
 
           setTimeout(
             () =>
-              URL.revokeObjectURL(
-                url
-              ),
+              URL.revokeObjectURL(url),
             1000
           );
 
@@ -1449,12 +3713,12 @@ async function exportImage(
   try {
 
     /*
-      Bei normalen Browsern reicht ein
-      Canvas vollständig aus.
+      WICHTIG:
+      Hier wird kein SVG und kein
+      foreignObject verwendet.
 
-      Es wird keinerlei SVG,
-      foreignObject oder externe
-      Ressource verwendet.
+      Die Karte wird vollständig
+      direkt mit Canvas gezeichnet.
     */
 
     const canvas =
@@ -1465,9 +3729,7 @@ async function exportImage(
 
     await downloadCanvas(
       canvas,
-      imageFileName(
-        data.name
-      )
+      imageFileName(data.name)
     );
 
 
@@ -1543,7 +3805,7 @@ function copyLink() {
 function sharedData() {
 
   /*
-    Supports:
+    Unterstützt:
 
       #a=...
       #ausweis=...
@@ -1556,22 +3818,18 @@ function sharedData() {
 
 
   if (!match) {
-
     return null;
-
   }
 
 
   try {
 
     const data =
-      decode(
-        match[1]
-      );
+      decode(match[1]);
 
 
     /*
-      Language stored inside link.
+      Sprache aus dem Link übernehmen.
     */
 
     currentLanguage =
@@ -1657,6 +3915,7 @@ function sharedData() {
 
     return sanitized;
 
+
   } catch {
 
     return null;
@@ -1683,11 +3942,7 @@ function renderShared(data) {
     <section class="shared-view">
 
       <p class="preview-label">
-
-        ${escapeHtml(
-          t('sharedResult')
-        )}
-
+        ${escapeHtml(t('sharedResult'))}
       </p>
 
 
@@ -1701,11 +3956,7 @@ function renderShared(data) {
           class="export-button"
           type="button"
         >
-
-          ${escapeHtml(
-            t('exportImage')
-          )}
-
+          ${escapeHtml(t('exportImage'))}
         </button>
 
 
@@ -1715,11 +3966,7 @@ function renderShared(data) {
             location.href.split('#')[0]
           )}"
         >
-
-          ${escapeHtml(
-            t('createOwn')
-          )}
-
+          ${escapeHtml(t('createOwn'))}
         </a>
 
       </div>
@@ -1730,22 +3977,74 @@ function renderShared(data) {
 
 
   app
-    .querySelector(
-      '#export-image'
-    )
+    .querySelector('#export-image')
     .addEventListener(
       'click',
-      () =>
-        exportSharedImage(data)
+      () => exportSharedImage(data)
     );
 
 }
 
 
-async function exportSharedImage(
-  data
-) {
+async function exportSharedImage(data) {
 
   await exportImage(data);
 
 }
+
+
+/* =========================================================
+   LANGUAGE SWITCHER
+========================================================= */
+
+document
+  .querySelector('#language-select')
+  .addEventListener(
+    'change',
+    event => {
+
+      setLanguage(
+        event.target.value
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   APP
+========================================================= */
+
+const app =
+  document.querySelector('#app');
+
+
+/* =========================================================
+   START
+========================================================= */
+
+const data =
+  sharedData();
+
+
+if (data) {
+
+  renderShared(data);
+
+} else {
+
+  document.documentElement.lang =
+    currentLanguage;
+
+  renderEditor();
+
+}
+
+
+updateLanguageUI();
+
+</script>
+
+</body>
+</html>
+```
