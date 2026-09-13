@@ -1,11 +1,33 @@
-
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Slave ID Card</title>
+  <title>Slave ID Card Generator – BDSM Profile &amp; Preference Card</title>
+
+  <meta
+    name="description"
+    content="Create a customizable slave ID card for BDSM and kink profiles. Add preferences and limits, social profiles, then share or download your card."
+  >
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="./">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Slave ID Card Generator – BDSM Profile &amp; Preference Card">
+  <meta property="og:description" content="Create and share a customizable BDSM slave ID card with preferences, limits and profile information.">
+
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"WebApplication",
+    "name":"Slave ID Card Generator",
+    "applicationCategory":"LifestyleApplication",
+    "operatingSystem":"Web Browser",
+    "description":"A free online generator for creating customizable BDSM and kink profile cards with preferences, limits and social profile information.",
+    "inLanguage":["en","de"]
+  }
+  </script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 
@@ -467,6 +489,34 @@
       font-size:.88rem;
     }
 
+    .seo-content {
+      max-width:980px;
+      margin:2rem auto 0;
+      padding:clamp(1.25rem,3vw,2rem);
+      border:1px solid var(--line);
+      border-radius:20px;
+      background:rgba(33,26,45,.82);
+    }
+
+    .seo-content h2 {
+      margin:0 0 .75rem;
+      font-size:1.35rem;
+    }
+
+    .seo-content h2:not(:first-child) {
+      margin-top:1.5rem;
+    }
+
+    .seo-content p {
+      margin:.6rem 0 0;
+      color:var(--muted);
+      max-width:78ch;
+    }
+
+    body.is-shared .seo-content {
+      display:none;
+    }
+
     .shared-view {
       max-width:560px;
       margin:auto;
@@ -570,6 +620,29 @@
   </header>
 
   <section id="app" aria-live="polite"></section>
+
+  <section id="seo-content" class="seo-content">
+    <h2>Slave ID Card Generator</h2>
+    <p>
+      Create a customizable slave ID card for BDSM and kink profiles.
+      Add your name, age, gender, social profiles, preferences and limits.
+      The finished card can be shared with a link or downloaded as an image.
+    </p>
+
+    <h2>What is a BDSM slave ID card?</h2>
+    <p>
+      A BDSM slave ID card is a simple profile card for communicating
+      preferences, boundaries and relevant profile information. It can be
+      useful for private profile sharing between consenting adults.
+    </p>
+
+    <h2>Sklaven-Ausweis für BDSM &amp; Kink</h2>
+    <p>
+      Erstelle kostenlos einen persönlichen BDSM-Sklaven-Ausweis mit
+      Vorlieben, Grenzen und Profilangaben. Der fertige Ausweis kann als Bild
+      heruntergeladen und über einen persönlichen Link geteilt werden.
+    </p>
+  </section>
 
 </main>
 
@@ -812,11 +885,93 @@ function setLanguage(language) {
   updateLanguageUI();
 
   const shared = sharedData();
+  updatePageMetadata(Boolean(shared));
 
   if (shared) {
     renderShared(shared);
   } else {
     renderEditor();
+  }
+
+}
+
+
+function updatePageMetadata(isShared = false) {
+
+  const description =
+    document.querySelector('meta[name="description"]');
+
+  const robots =
+    document.querySelector('meta[name="robots"]');
+
+  const ogTitle =
+    document.querySelector('meta[property="og:title"]');
+
+  const ogDescription =
+    document.querySelector('meta[property="og:description"]');
+
+  const canonical =
+    document.querySelector('link[rel="canonical"]');
+
+  if (isShared) {
+
+    document.title =
+      currentLanguage === 'de'
+        ? 'Geteilter Sklaven-Ausweis'
+        : 'Shared Slave ID Card';
+
+    if (description) {
+      description.content =
+        currentLanguage === 'de'
+          ? 'Geteilter Sklaven-Ausweis. Dieser persönliche Ausweis ist für Personen mit dem geteilten Link bestimmt.'
+          : 'Shared slave ID card. This personal card is intended for people who have the shared link.';
+    }
+
+    if (robots) {
+      robots.content = 'noindex,nofollow,noarchive';
+    }
+
+    if (ogTitle) {
+      ogTitle.content = document.title;
+    }
+
+    if (ogDescription) {
+      ogDescription.content = description?.content || '';
+    }
+
+    document.body.classList.add('is-shared');
+
+    return;
+  }
+
+  document.body.classList.remove('is-shared');
+
+  document.title =
+    currentLanguage === 'de'
+      ? 'Sklaven-Ausweis Generator – BDSM Profil & Vorlieben'
+      : 'Slave ID Card Generator – BDSM Profile &amp; Preference Card';
+
+  if (description) {
+    description.content =
+      currentLanguage === 'de'
+        ? 'Erstelle kostenlos einen persönlichen BDSM-Sklaven-Ausweis mit Vorlieben, Grenzen und Profilangaben. Ausweis als Bild herunterladen und teilen.'
+        : 'Create a customizable slave ID card for BDSM and kink profiles. Add preferences and limits, social profiles, then share or download your card.';
+  }
+
+  if (robots) {
+    robots.content = 'index,follow,max-image-preview:large';
+  }
+
+  if (ogTitle) {
+    ogTitle.content = document.title;
+  }
+
+  if (ogDescription) {
+    ogDescription.content = description?.content || '';
+  }
+
+  if (canonical) {
+    canonical.href = location.href.split('#')[0];
   }
 
 }
@@ -3931,10 +4086,7 @@ function sharedData() {
 
 function renderShared(data) {
 
-  document.title =
-    currentLanguage === 'de'
-      ? 'Geteilter Sklaven-Ausweis'
-      : 'Shared Slave ID Card';
+  updatePageMetadata(true);
 
 
   app.innerHTML = `
@@ -4037,6 +4189,7 @@ if (data) {
     currentLanguage;
 
   renderEditor();
+  updatePageMetadata(false);
 
 }
 
