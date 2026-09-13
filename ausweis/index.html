@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Punkt 1: Aussagekräftiger Titel & SEO Meta-Tags -->
+  <!-- SEO Meta-Tags -->
   <title>Slave ID Card Generator – Sklaven-Ausweis erstellen</title>
   <meta name="description" content="Erstelle deinen eigenen Sklaven-Ausweis (Slave ID Card) mit Vorlieben, Grenzen und Social-Media-Profilen für den BDSM-Bereich. Kostenlos und direkt anpassbar.">
   <meta name="keywords" content="Slave ID Card, Sklaven Ausweis, BDSM Generator, Vorlieben und Grenzen, Submissive ID">
@@ -565,18 +565,11 @@
 
     </div>
 
-    <!-- Punkt 2: Statischer HTML-Inhalt, damit Suchmaschinen (Crawler) sofort Keywords erfassen -->
     <h1 id="page-title">Slave ID Card</h1>
-    <p id="page-subtitle">Create your slave id card – personal BDSM limits & preferences generator</p>
+
+    <p id="page-subtitle">Create your slave ID card</p>
 
   </header>
-
-  <!-- Statischer Fallback-Text für Suchmaschinen (wird beim Laden des JS überschrieben oder kann crawlbare Infos enthalten) -->
-  <noscript>
-    <div style="text-align: center; padding: 2rem; color: #cbc1d8;">
-      Please enable JavaScript to use the Slave ID Card Generator.
-    </div>
-  </noscript>
 
   <section id="app" aria-live="polite"></section>
 
@@ -1326,6 +1319,723 @@ const preferenceQuestionsEN = [
   "Straightjacket"
 
 ];
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function escapeHtml(value) {
+
+  return String(value || '').replace(
+    /[&<>'"]/g,
+    character => ({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      "'":'&#39;',
+      '"':'&quot;'
+    })[character]
+  );
+
+}
+
+
+function localizedPreferenceQuestion(question,index) {
+
+  if (currentLanguage === 'de') {
+    return question;
+  }
+
+  return preferenceQuestionsEN[index] || question;
+
+}
+
+
+/* =========================================================
+   COMPACT LINK ENCODING
+========================================================= */
+
+function encode(data) {
+
+  const preferences = [];
+
+  Object.entries(data.preferences || {}).forEach(
+    ([questionIndex,choice]) => {
+
+      const choiceIndex =
+        preferenceChoices.indexOf(choice);
+
+      if (
+        /^\d+$/.test(questionIndex) &&
+        choiceIndex !== -1 &&
+        Number(questionIndex) >= 0 &&
+        Number(questionIndex) < preferenceQuestions.length
+      ) {
+
+        preferences.push(
+          Number(questionIndex),
+          choiceIndex
+        );
+
+      }
+
+    }
+  );
+
+
+  const compactData = [
+
+    data.name || '',
+    data.birthdate || '',
+    data.gender || '',
+    data.x || '',
+    data.instagram || '',
+    data.reddit || '',
+    data.fet || '',
+    data.recon || '',
+    data.bluesky || '',
+    currentLanguage,
+    preferences
+
+  ];
+
+
+  return LZString.compressToEncodedURIComponent(
+    JSON.stringify(compactData)
+  );
+
+}
+
+
+/* =========================================================
+   DECODING
+========================================================= */
+
+function decode(value) {
+
+  const decompressed =
+    LZString.decompressFromEncodedURIComponent(value);
+
+  if (!decompressed) {
+    throw new Error('Link could not be decoded.');
+  }
+
+  const parsed = JSON.parse(decompressed);
+
+
+  if (Array.isArray(parsed)) {
+
+    const compactData = parsed;
+
+    const name = compactData[0] || '';
+    const birthdate = compactData[1] || '';
+    const gender = compactData[2] || '';
+    const x = compactData[3] || '';
+    const instagram = compactData[4] || '';
+    const reddit = compactData[5] || '';
+    const fet = compactData[6] || '';
+    const recon = compactData[7] || '';
+    const bluesky = compactData[8] || '';
+
+    let language = 'en';
+    let preferenceArray = [];
+
+    if (
+      compactData[9] === 'de' ||
+      compactData[9] === 'en'
+    ) {
+
+      language = compactData[9];
+
+      preferenceArray =
+        Array.isArray(compactData[10])
+          ? compactData[10]
+          : [];
+
+    } else {
+
+      preferenceArray =
+        Array.isArray(compactData[9])
+          ? compactData[9]
+          : [];
+
+    }
+
+
+    const preferences = {};
+
+    for (
+      let i = 0;
+      i + 1 < preferenceArray.length;
+      i += 2
+    ) {
+
+      const questionIndex =
+        Number(preferenceArray[i]);
+
+      const choiceIndex =
+        Number(preferenceArray[i + 1]);
+
+      if (
+        Number.isInteger(questionIndex) &&
+        Number.isInteger(choiceIndex) &&
+        questionIndex >= 0 &&
+        questionIndex < preferenceQuestions.length &&
+        choiceIndex >= 0 &&
+        choiceIndex < preferenceChoices.length
+      ) {
+
+        preferences[questionIndex] =
+          preferenceChoices[choiceIndex];
+
+      }
+
+    }
+
+
+    return {
+      name,
+      birthdate,
+      gender,
+      x,
+      instagram,
+      reddit,
+      fet,
+      recon,
+      bluesky,
+      language,
+      preferences
+    };
+
+  }
+
+
+  if (
+    parsed &&
+    typeof parsed === 'object'
+  ) {
+
+    return {
+
+      name:
+        typeof parsed.name === 'string'
+          ? parsed.name
+          : '',
+
+      birthdate:
+        typeof parsed.birthdate === 'string'
+          ? parsed.birthdate
+          : '',
+
+      gender:
+        typeof parsed.gender === 'string'
+          ? parsed.gender
+          : '',
+
+      x:
+        typeof parsed.x === 'string'
+          ? parsed.x
+          : '',
+
+      instagram:
+        typeof parsed.instagram === 'string'
+          ? parsed.instagram
+          : '',
+
+      reddit:
+        typeof parsed.reddit === 'string'
+          ? parsed.reddit
+          : '',
+
+      fet:
+        typeof parsed.fet === 'string'
+          ? parsed.fet
+          : '',
+
+      recon:
+        typeof parsed.recon === 'string'
+          ? parsed.recon
+          : '',
+
+      bluesky:
+        typeof parsed.bluesky === 'string'
+          ? parsed.bluesky
+          : '',
+
+      language:
+        parsed.language === 'de'
+          ? 'de'
+          : 'en',
+
+      preferences:
+        parsed.preferences &&
+        typeof parsed.preferences === 'object'
+          ? parsed.preferences
+          : {}
+
+    };
+
+  }
+
+
+  throw new Error('Invalid format.');
+
+}
+
+
+/* =========================================================
+   STATE & URL
+========================================================= */
+
+function sharedData() {
+
+  const hash = window.location.hash.slice(1);
+
+  if (!hash) {
+    return null;
+  }
+
+  try {
+    return decode(hash);
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+
+}
+
+
+function calculateAge(birthdate) {
+
+  if (!birthdate) return null;
+
+  const birth = new Date(birthdate);
+  const today = new Date();
+
+  if (isNaN(birth.getTime())) return null;
+
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+
+  if (
+    m < 0 ||
+    (m === 0 && today.getDate() < birth.getDate())
+  ) {
+    age--;
+  }
+
+  return age >= 0 ? age : null;
+
+}
+
+
+/* =========================================================
+   CARD HTML GENERATOR
+========================================================= */
+
+function renderCardHtml(data) {
+
+  const age = calculateAge(data.birthdate);
+  const ageText =
+    age !== null ? `${age} ${t('years')}` : t('ageUnknown');
+
+  const initial =
+    (data.name || '?').trim().charAt(0).toUpperCase();
+
+  const socialItems = socialMediaFields
+    .map(([key, label]) => {
+      const val = (data[key] || '').trim();
+      if (!val) return '';
+      return `<li><strong>${label}:</strong> ${escapeHtml(val)}</li>`;
+    })
+    .filter(Boolean);
+
+  const prefEntries = Object.entries(data.preferences || {})
+    .map(([qIdx, choice]) => {
+      const idx = Number(qIdx);
+      const questionText = localizedPreferenceQuestion(
+        preferenceQuestions[idx],
+        idx
+      );
+      if (!questionText || !choice) return '';
+      return `<li><strong>${escapeHtml(questionText)}:</strong> ${escapeHtml(choice)}</li>`;
+    })
+    .filter(Boolean);
+
+  return `
+    <div class="card" id="card-preview">
+      <div class="card-top">
+        <div>
+          <span class="preview-label">${t('cardTitle')}</span>
+          <h2 class="card-title">${escapeHtml(data.name || '')}</h2>
+        </div>
+        <div class="badge">${initial}</div>
+      </div>
+
+      <div class="identity">
+        <div class="avatar">${initial}</div>
+        <div>
+          <h3 class="name">${escapeHtml(data.name || '')}</h3>
+          <p class="role">${escapeHtml(data.gender || t('genderNotSpecified'))}</p>
+        </div>
+      </div>
+
+      <div class="details">
+        <div class="detail">
+          <strong>${t('birthdate')}</strong>
+          <span>${escapeHtml(data.birthdate || '-')} (${ageText})</span>
+        </div>
+      </div>
+
+      ${
+        socialItems.length
+          ? `
+        <div class="card-social-media">
+          <span class="preview-label">${t('socialMediaCard')}</span>
+          <ul>${socialItems.join('')}</ul>
+        </div>
+      `
+          : ''
+      }
+
+      ${
+        prefEntries.length
+          ? `
+        <div class="card-preferences">
+          <span class="preview-label">${t('preferencesCard')}</span>
+          <ul>${prefEntries.join('')}</ul>
+        </div>
+      `
+          : ''
+      }
+    </div>
+  `;
+
+}
+
+
+/* =========================================================
+   RENDER EDITOR
+========================================================= */
+
+function renderEditor() {
+
+  const app = document.querySelector('#app');
+
+  app.innerHTML = `
+    <div class="editor">
+      <div class="form-side">
+        <section aria-labelledby="sec-personal">
+          <h2 id="sec-personal">${t('dataCollection')}</h2>
+          <div class="fields">
+            <label class="full">
+              ${t('name')}
+              <input type="text" id="input-name" placeholder="${t('namePlaceholder')}">
+            </label>
+            <label>
+              ${t('birthdate')}
+              <input type="date" id="input-birthdate">
+            </label>
+            <label>
+              ${t('gender')}
+              <input type="text" id="input-gender" placeholder="${t('genderPlaceholder')}">
+            </label>
+          </div>
+        </section>
+
+        <section aria-labelledby="sec-social" style="margin-top:2rem;">
+          <h2 id="sec-social">${t('socialMedia')}</h2>
+          <p class="hint">${t('socialMediaDescription')}</p>
+          <div class="fields" style="margin-top:1rem;">
+            ${socialMediaFields
+              .map(([key, label]) => {
+                let ph = t('usernamePlaceholder');
+                if (key === 'reddit') ph = t('redditPlaceholder');
+                if (key === 'bluesky') ph = t('blueskyPlaceholder');
+                if (['instagram', 'fet', 'recon'].includes(key))
+                  ph = t('profilePlaceholder');
+                return `
+                  <label>
+                    ${label}
+                    <input type="text" id="input-${key}" placeholder="${ph}">
+                  </label>
+                `;
+              })
+              .join('')}
+          </div>
+        </section>
+
+        <section aria-labelledby="sec-prefs" style="margin-top:2rem;">
+          <h2 id="sec-prefs">${t('preferences')}</h2>
+          <p class="hint">${t('preferencesDescription')}</p>
+          
+          <div class="preferences" style="margin-top:1rem;">
+            <div class="preference-list">
+              <table class="preference-table">
+                <thead>
+                  <tr>
+                    <th>${t('practice')}</th>
+                    ${t('choiceLabels')
+                      .map(
+                        (lbl, i) =>
+                          `<th title="${t('choiceTitles')[i]}">${lbl}</th>`
+                      )
+                      .join('')}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${preferenceQuestions
+                    .map((q, qIndex) => {
+                      const localizedQ = localizedPreferenceQuestion(q, qIndex);
+                      return `
+                        <tr>
+                          <td class="preference-name">${escapeHtml(localizedQ)}</td>
+                          ${preferenceChoices
+                            .map(choice => {
+                              return `
+                                <td class="preference-option" data-choice="${choice}">
+                                  <label title="${choice}">
+                                    <input type="radio" name="pref-${qIndex}" value="${choice}">
+                                    <span class="preference-dot"></span>
+                                  </label>
+                                </td>
+                              `;
+                            })
+                            .join('')}
+                        </tr>
+                      `;
+                    })
+                    .join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="preview-side">
+        <h2 style="margin-bottom:.7rem;">${t('livePreview')}</h2>
+        <div id="preview-container"></div>
+
+        <div class="actions">
+          <button type="button" id="btn-export" class="export-button">${t('exportImage')}</button>
+          
+          <div class="share-row">
+            <button type="button" id="btn-create-link">${t('createLink')}</button>
+            <input type="text" id="input-share-link" readonly placeholder="${t('sharePlaceholder')}">
+          </div>
+          <p class="hint">${t('linkHint')}</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  bindEditorEvents();
+  updateEditorPreview();
+
+}
+
+
+/* =========================================================
+   EDITOR LOGIC & BINDINGS
+========================================================= */
+
+function collectEditorData() {
+
+  const data = {
+    name: document.querySelector('#input-name')?.value || '',
+    birthdate: document.querySelector('#input-birthdate')?.value || '',
+    gender: document.querySelector('#input-gender')?.value || '',
+    x: document.querySelector('#input-x')?.value || '',
+    instagram: document.querySelector('#input-instagram')?.value || '',
+    reddit: document.querySelector('#input-reddit')?.value || '',
+    fet: document.querySelector('#input-fet')?.value || '',
+    recon: document.querySelector('#input-recon')?.value || '',
+    bluesky: document.querySelector('#input-bluesky')?.value || '',
+    preferences: {}
+  };
+
+  preferenceQuestions.forEach((_, qIndex) => {
+    const checked = document.querySelector(
+      `input[name="pref-${qIndex}"]:checked`
+    );
+    if (checked) {
+      data.preferences[qIndex] = checked.value;
+    }
+  });
+
+  return data;
+
+}
+
+
+function updateEditorPreview() {
+
+  const data = collectEditorData();
+  const container = document.querySelector('#preview-container');
+
+  if (container) {
+    container.innerHTML = renderCardHtml(data);
+  }
+
+}
+
+
+function bindEditorEvents() {
+
+  const editorEl = document.querySelector('.editor');
+
+  if (!editorEl) return;
+
+  editorEl.addEventListener('input', () => {
+    updateEditorPreview();
+  });
+
+  editorEl.addEventListener('change', () => {
+    updateEditorPreview();
+  });
+
+  const btnLink = document.querySelector('#btn-create-link');
+  if (btnLink) {
+    btnLink.addEventListener('click', () => {
+      const data = collectEditorData();
+      const hash = encode(data);
+      const url = `${window.location.origin}${window.location.pathname}#${hash}`;
+
+      const shareInput = document.querySelector('#input-share-link');
+      if (shareInput) {
+        shareInput.value = url;
+        shareInput.select();
+      }
+
+      navigator.clipboard?.writeText(url).then(() => {
+        alert(t('linkCreated'));
+      }).catch(() => {
+        alert(t('copyFallback'));
+      });
+    });
+  }
+
+  const btnExport = document.querySelector('#btn-export');
+  if (btnExport) {
+    btnExport.addEventListener('click', async () => {
+      const card = document.querySelector('#card-preview');
+      if (!card) return;
+
+      btnExport.textContent = t('creatingImage');
+      btnExport.disabled = true;
+
+      try {
+        const svgString = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="${card.offsetWidth}" height="${card.offsetHeight}">
+            <foreignObject width="100%" height="100%">
+              <div xmlns="http://www.w3.org/1999/xhtml">
+                <style>
+                  ${document.querySelector('style').innerHTML}
+                </style>
+                ${card.outerHTML}
+              </div>
+            </foreignObject>
+          </svg>
+        `;
+
+        const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+        const URL = window.URL || window.webkitURL || window;
+        const blobURL = URL.createObjectURL(blob);
+
+        const image = new Image();
+        image.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = card.offsetWidth * 2;
+          canvas.height = card.offsetHeight * 2;
+          const context = canvas.getContext('2d');
+          context.scale(2, 2);
+          context.drawImage(image, 0, 0);
+
+          URL.revokeObjectURL(blobURL);
+
+          const png = canvas.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.href = png;
+          a.download = 'slave-id-card.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+
+          btnExport.textContent = t('exportImage');
+          btnExport.disabled = false;
+        };
+
+        image.onerror = () => {
+          throw new Error('Image rendering failed');
+        };
+
+        image.src = blobURL;
+
+      } catch (err) {
+        console.error(err);
+        alert(t('imageError'));
+        btnExport.textContent = t('exportImage');
+        btnExport.disabled = false;
+      }
+    });
+  }
+
+}
+
+
+/* =========================================================
+   RENDER SHARED VIEW
+========================================================= */
+
+function renderShared(data) {
+
+  const app = document.querySelector('#app');
+
+  app.innerHTML = `
+    <div class="shared-view">
+      <h2 style="text-align:center; margin-bottom:0.5rem;">${t('sharedResult')}</h2>
+      ${renderCardHtml(data)}
+      <div style="text-align:center; margin-top:1.5rem;">
+        <a href="${window.location.pathname}" class="link-button">${t('createOwn')}</a>
+      </div>
+    </div>
+  `;
+
+}
+
+
+/* =========================================================
+   INITIALIZATION
+========================================================= */
+
+window.addEventListener('DOMContentLoaded', () => {
+
+  const select = document.querySelector('#language-select');
+  if (select) {
+    select.value = currentLanguage;
+    select.addEventListener('change', (e) => {
+      setLanguage(e.target.value);
+    });
+  }
+
+  document.documentElement.lang = currentLanguage;
+  updateLanguageUI();
+
+  const shared = sharedData();
+
+  if (shared) {
+    if (shared.language && (shared.language === 'de' || shared.language === 'en')) {
+      currentLanguage = shared.language;
+      updateLanguageUI();
+    }
+    renderShared(shared);
+  } else {
+    renderEditor();
+  }
+
+});
 
 </script>
 </body>
