@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Habits & Protocols</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase 10+ Web SDK via CDN -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        window.firebaseModules = { initializeApp, getDatabase, ref, onValue, set };
+    </script>
+    <style>
+        :root {
+            --bg-base: #0d0d11;
+            --bg-surface: #16161e;
+            --bg-card: #1f1f2e;
+            --bg-card-hover: #28283d;
+            --border-color: #2e2e42;
+
+            --red-primary: #9d0208;
+            --red-accent: #e63946;
+            --red-glow: rgba(230, 57, 70, 0.25);
+
+            --gold-primary: #d4af37;
+            --gold-accent: #ffb703;
+            --gold-glow: rgba(255, 183, 3, 0.2);
+
+            --text-main: #f1f1f5;
+            --text-muted: #8e8e9f;
+            --text-gold: #f4d35e;
+
+            --success: #2ec4b6;
+            --warning: #ff9f1c;
+            --danger: #e63946;
+
+            --font-title: 'Cinzel', serif;
+            --font-body: 'Inter', sans-serif;
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --shadow-subtle: 0 4px 20px rgba(0,0,0,0.4);
+            --shadow-glow: 0 0 25px rgba(157, 2, 8, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 80px; /* Space for mobile nav */
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding-bottom: 20px;
+            }
+        }
+
+        /* HEADER */
+        header {
+            background: linear-gradient(180deg, rgba(22, 22, 30, 0.95) 0%, rgba(13, 13, 17, 0.95) 100%);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 12px 20px;
+        }
+
+        .header-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-title {
+            font-family: var(--font-title);
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #ffffff 0%, var(--gold-accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .role-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .role-badge.sub {
+            background: rgba(46, 196, 182, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(46, 196, 182, 0.4);
+        }
+
+        .role-badge.dom {
+            background: rgba(230, 57, 70, 0.2);
+            color: var(--red-accent);
+            border: 1px solid var(--red-accent);
+            box-shadow: 0 0 10px var(--red-glow);
+        }
+
+        .points-pill {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(255, 183, 3, 0.1) 100%);
+            border: 1px solid var(--gold-primary);
+            color: var(--gold-accent);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 0 12px var(--gold-glow);
+        }
+
+        /* DESKTOP NAV */
+        .desktop-nav {
+            display: none;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        @media (min-width: 768px) {
+            .desktop-nav {
+                display: flex;
+            }
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-btn.active {
+            color: var(--gold-accent);
+            background: var(--bg-card);
+            border-bottom: 2px solid var(--gold-accent);
+        }
+
+        /* MOBILE BOTTOM NAV */
+        .mobile-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(22, 22, 30, 0.98);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            z-index: 100;
+        }
+
+        @media (min-width: 768px) {
+            .mobile-nav {
+                display: none;
+            }
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            font-weight: 500;
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 20%;
+            transition: color 0.2s;
+        }
+
+        .tab-item icon {
+            font-size: 1.2rem;
+        }
+
+        .tab-item.active {
+            color: var(--gold-accent);
+        }
+
+        /* MAIN CONTAINER */
+        main {
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* SECTION STYLES */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: var(--font-title);
+            font-size: 1.4rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* CARDS & LISTS */
+        .card-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        @media (min-width: 600px) {
+            .card-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: rgba(212, 175, 55, 0.4);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-habit {
+            background: rgba(212, 175, 55, 0.15);
+            color: var(--gold-accent);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .badge-task {
+            background: rgba(46, 196, 182, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(46, 196, 182, 0.3);
+        }
+
+        .badge-pending {
+            background: rgba(255, 159, 28, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(255, 159, 28, 0.4);
+        }
+
+        .badge-active {
+            background: rgba(46, 196, 182, 0.15);
+            color: var(--success);
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* BUTTONS */
+        .btn {
+            background: var(--bg-surface);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--text-muted);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--red-primary) 0%, #ba181b 100%);
+            border: none;
+            color: #fff;
+            box-shadow: 0 0 12px var(--red-glow);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--red-accent) 0%, #e63946 100%);
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, var(--gold-primary) 0%, #b38b20 100%);
+            border: none;
+            color: #0d0d11;
+            font-weight: 700;
+        }
+
+        .btn-gold:hover {
+            background: linear-gradient(135deg, var(--gold-accent) 0%, var(--gold-primary) 100%);
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.78rem;
+        }
+
+        .btn-danger {
+            background: rgba(230, 57, 70, 0.2);
+            color: var(--red-accent);
+            border: 1px solid var(--red-accent);
+        }
+
+        .btn-danger:hover {
+            background: var(--red-accent);
+            color: #fff;
+        }
+
+        .btn-success {
+            background: rgba(46, 196, 182, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .btn-success:hover {
+            background: var(--success);
+            color: #0d0d11;
+        }
+
+        /* MODALS */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 450px;
+            padding: 24px;
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-family: var(--font-title);
+            font-size: 1.2rem;
+            color: var(--gold-accent);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .form-control {
+            background: var(--bg-base);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--gold-primary);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* PIN KEYPAD */
+        .pin-display {
+            font-size: 2rem;
+            letter-spacing: 12px;
+            text-align: center;
+            margin: 10px 0;
+            height: 40px;
+            color: var(--gold-accent);
+        }
+
+        .pin-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 260px;
+            margin: 0 auto;
+        }
+
+        .pin-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 1.2rem;
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .pin-btn:active {
+            background: var(--red-primary);
+        }
+
+        /* LOG LIST */
+        .log-item {
+            background: var(--bg-card);
+            border-left: 3px solid var(--border-color);
+            padding: 12px 16px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .log-item.APPROVAL { border-left-color: var(--success); }
+        .log-item.REWARD { border-left-color: var(--gold-accent); }
+        .log-item.PENALTY { border-left-color: var(--red-accent); }
+
+        .log-msg {
+            font-size: 0.88rem;
+            color: var(--text-main);
+        }
+
+        .log-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* EMPTY STATES */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .empty-state span {
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="header-content">
+            <div class="brand">
+                <span class="brand-title">HABITS</span>
+                <div id="roleBadge" class="role-badge sub" onclick="toggleRole()">
+                    <span id="roleText">SUB</span> 🔒
+                </div>
+            </div>
+
+            <div id="pointsDisplay" class="points-pill">
+                <span>👑</span> <span id="pointsValue">0</span> PTS
+            </div>
+        </div>
+
+        <nav class="desktop-nav">
+            <button class="nav-btn active" onclick="switchTab('tasks')">Aufgaben</button>
+            <button class="nav-btn" onclick="switchTab('rewards')">Belohnungen</button>
+            <button class="nav-btn" onclick="switchTab('rules')">Strafen & Regeln</button>
+            <button class="nav-btn" onclick="switchTab('logs')">Logbuch</button>
+            <button class="nav-btn" onclick="switchTab('setup')">Setup & Sync</button>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main>
+
+        <!-- MODULE A: TASKS & HABITS -->
+        <section id="tab-tasks" class="tab-content active">
+            <div class="section-header">
+                <h2 class="section-title"><span>📋</span> Protokolle & Aufgaben</h2>
+                <button class="btn btn-gold dom-only" onclick="openModal('modalAddTask')">+ Neue Aufgabe</button>
+            </div>
+            <div id="tasksList" class="card-grid">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- MODULE B: REWARDS -->
+        <section id="tab-rewards" class="tab-content">
+            <div class="section-header">
+                <h2 class="section-title"><span>🎁</span> Belohnungen Shop</h2>
+                <button class="btn btn-gold dom-only" onclick="openModal('modalAddReward')">+ Neue Belohnung</button>
+            </div>
+            <div id="rewardsList" class="card-grid">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- MODULE C: RULES & PUNISHMENTS -->
+        <section id="tab-rules" class="tab-content">
+            <div class="section-header">
+                <h2 class="section-title"><span>📜</span> Regelwerk</h2>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-danger" onclick="openModal('modalLogInfraction')">⚠️ Verstoß melden</button>
+                    <button class="btn btn-gold dom-only" onclick="openModal('modalAddRule')">+ Neue Regel</button>
+                </div>
+            </div>
+            <div id="rulesList" class="card-grid" style="margin-bottom: 30px;">
+                <!-- Dynamically populated rules -->
+            </div>
+
+            <div class="section-header">
+                <h2 class="section-title"><span>⚔️</span> Aktive Sanktionen</h2>
+                <button class="btn btn-danger dom-only" onclick="openModal('modalAddPunishment')">+ Sanktion erteilen</button>
+            </div>
+            <div id="punishmentsList" class="card-grid">
+                <!-- Dynamically populated punishments -->
+            </div>
+        </section>
+
+        <!-- MODULE LOGS -->
+        <section id="tab-logs" class="tab-content">
+            <div class="section-header">
+                <h2 class="section-title"><span>📜</span> Logbuch</h2>
+            </div>
+            <div id="logsList">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- MODULE D: SETUP & SYNC -->
+        <section id="tab-setup" class="tab-content">
+            <div class="section-header">
+                <h2 class="section-title"><span>⚙️</span> Sync & Einstellungen</h2>
+            </div>
+
+            <div class="card" style="margin-bottom: 20px;">
+                <h3 class="modal-title" style="margin-bottom: 10px;">🔐 Dominant PIN Schutz</h3>
+                <div class="form-group">
+                    <label>4-Stelliger Dom-PIN (Optional):</label>
+                    <input type="password" id="inputDomPin" class="form-control" maxlength="4" placeholder="z.B. 1234">
+                </div>
+                <button class="btn btn-primary dom-only" style="margin-top: 10px;" onclick="saveDomPin()">PIN Speichern</button>
+            </div>
+
+            <div class="card" style="margin-bottom: 20px;">
+                <h3 class="modal-title" style="margin-bottom: 10px;">🔥 Firebase & Partner Sync</h3>
+                <p class="card-desc" style="margin-bottom: 12px;">Gib hier die Firebase-Konfiguration und deine Room-ID ein, um geräteübergreifend in Echtzeit zu synchronisieren.</p>
+                <div class="form-group">
+                    <label>Room ID:</label>
+                    <input type="text" id="inputRoomId" class="form-control" placeholder="z.B. ds-space-2026">
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>Firebase Config (JSON):</label>
+                    <textarea id="inputFirebaseConfig" class="form-control" placeholder='{"apiKey": "...", "databaseURL": "...", ...}'></textarea>
+                </div>
+                <button class="btn btn-gold" style="margin-top: 12px;" onclick="saveFirebaseSettings()">Firebase Verbinden</button>
+            </div>
+
+            <div class="card dom-only">
+                <h3 class="modal-title" style="margin-bottom: 10px;">🔗 Partner 1-Klick Join-Code</h3>
+                <p class="card-desc" style="margin-bottom: 12px;">Generiere einen Einladungs-Code für dein Sub. Dieser enthält Raum-ID und Firebase-Verbindungsdaten.</p>
+                <button class="btn btn-primary" onclick="generateJoinCode()">Code Generieren</button>
+                <div id="joinCodeDisplay" style="margin-top: 12px; display: none;">
+                    <input type="text" id="outputJoinCode" class="form-control" readonly onclick="this.select()">
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <h3 class="modal-title" style="margin-bottom: 10px;">📥 Join-Code Eingeben</h3>
+                <div class="form-group">
+                    <input type="text" id="inputJoinCode" class="form-control" placeholder="Join Code hier einfügen...">
+                </div>
+                <button class="btn btn-gold" style="margin-top: 10px;" onclick="importJoinCode()">Raum Beitreten</button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MOBILE BOTTOM NAVBAR -->
+    <nav class="mobile-nav">
+        <button class="tab-item active" onclick="switchTab('tasks')">
+            <span>📋</span>
+            <span>Aufgaben</span>
+        </button>
+        <button class="tab-item" onclick="switchTab('rewards')">
+            <span>🎁</span>
+            <span>Shop</span>
+        </button>
+        <button class="tab-item" onclick="switchTab('rules')">
+            <span>📜</span>
+            <span>Strafen</span>
+        </button>
+        <button class="tab-item" onclick="switchTab('logs')">
+            <span>📜</span>
+            <span>Logs</span>
+        </button>
+        <button class="tab-item" onclick="switchTab('setup')">
+            <span>⚙️</span>
+            <span>Setup</span>
+        </button>
+    </nav>
+
+    <!-- MODALS -->
+
+    <!-- PIN Modal -->
+    <div id="modalPin" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">🔐 Dom Modus Freischalten</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalPin')">✕</button>
+            </div>
+            <p class="card-desc" style="text-align: center;">Gib deinen 4-stelligen PIN ein:</p>
+            <div id="pinDisplay" class="pin-display">••••</div>
+            <div class="pin-grid">
+                <button class="pin-btn" onclick="pressPin('1')">1</button>
+                <button class="pin-btn" onclick="pressPin('2')">2</button>
+                <button class="pin-btn" onclick="pressPin('3')">3</button>
+                <button class="pin-btn" onclick="pressPin('4')">4</button>
+                <button class="pin-btn" onclick="pressPin('5')">5</button>
+                <button class="pin-btn" onclick="pressPin('6')">6</button>
+                <button class="pin-btn" onclick="pressPin('7')">7</button>
+                <button class="pin-btn" onclick="pressPin('8')">8</button>
+                <button class="pin-btn" onclick="pressPin('9')">9</button>
+                <button class="pin-btn" onclick="clearPin()">C</button>
+                <button class="pin-btn" onclick="pressPin('0')">0</button>
+                <button class="pin-btn" onclick="verifyPin()">✓</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="modalAddTask" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Neue Aufgabe / Protokoll</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalAddTask')">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Titel:</label>
+                <input type="text" id="taskTitle" class="form-control" placeholder="z.B. Morgengruß">
+            </div>
+            <div class="form-group">
+                <label>Kategorie:</label>
+                <select id="taskCategory" class="form-control">
+                    <option value="Habit">Tägliches Habits (Gewohnheit)</option>
+                    <option value="Task">Einmalige Aufgabe</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Punkte Belohnung:</label>
+                <input type="number" id="taskPoints" class="form-control" value="10" min="1">
+            </div>
+            <button class="btn btn-gold" onclick="createTask()">Erstellen</button>
+        </div>
+    </div>
+
+    <!-- Add Reward Modal -->
+    <div id="modalAddReward" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Neue Belohnung</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalAddReward')">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Titel:</label>
+                <input type="text" id="rewardTitle" class="form-control" placeholder="z.B. Wunsch-Filmabend">
+            </div>
+            <div class="form-group">
+                <label>Kosten (Punkte):</label>
+                <input type="number" id="rewardCost" class="form-control" value="50" min="1">
+            </div>
+            <button class="btn btn-gold" onclick="createReward()">Erstellen</button>
+        </div>
+    </div>
+
+    <!-- Add Rule Modal -->
+    <div id="modalAddRule" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Neue Regel</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalAddRule')">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Regel Titel:</label>
+                <input type="text" id="ruleTitle" class="form-control" placeholder="z.B. Kein Handy nach 22 Uhr">
+            </div>
+            <div class="form-group">
+                <label>Beschreibung:</label>
+                <textarea id="ruleDesc" class="form-control" placeholder="Details zur Regel..."></textarea>
+            </div>
+            <button class="btn btn-gold" onclick="createRule()">Regel Hinzufügen</button>
+        </div>
+    </div>
+
+    <!-- Log Infraction Modal -->
+    <div id="modalLogInfraction" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">⚠️ Regelverstoß Melden</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalLogInfraction')">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Betroffene Regel:</label>
+                <select id="infractionRuleSelect" class="form-control"></select>
+            </div>
+            <div class="form-group">
+                <label>Anmerkung / Notiz:</label>
+                <textarea id="infractionNote" class="form-control" placeholder="Was ist vorgefallen?"></textarea>
+            </div>
+            <button class="btn btn-danger" onclick="submitInfraction()">Verstoß Registrieren</button>
+        </div>
+    </div>
+
+    <!-- Add Punishment / Sanction Modal -->
+    <div id="modalAddPunishment" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Sanktion Erteilen</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalAddPunishment')">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Titel / Grund:</label>
+                <input type="text" id="punishmentTitle" class="form-control" placeholder="z.B. Unpünktlichkeit">
+            </div>
+            <div class="form-group">
+                <label>Direkter Punkteabzug:</label>
+                <input type="number" id="punishmentPoints" class="form-control" value="0" min="0">
+            </div>
+            <div class="form-group">
+                <label>Zusätzliche Straf-Aufgabe (Optional):</label>
+                <input type="text" id="punishmentTask" class="form-control" placeholder="z.B. 50 Liegestütze">
+            </div>
+            <button class="btn btn-danger" onclick="createPunishment()">Sanktion Verhängen</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // APP STATE SCHEMA & INITIALIZATION
+        // ==========================================
+        let state = {
+            roomConfig: {
+                roomId: "default-room",
+                domPin: "",
+                points: 0
+            },
+            tasks: [],
+            rewards: [],
+            rules: [],
+            punishments: [],
+            logs: []
+        };
+
+        let currentRole = "Sub"; // "Sub" or "Dom"
+        let pinBuffer = "";
+
+        const LOCAL_STORAGE_KEY = "habits_app_state_v1";
+
+        // Initialize App
+        window.addEventListener("DOMContentLoaded", () => {
+            loadLocalState();
+            updateUI();
+        });
+
+        // Load State from LocalStorage
+        function loadLocalState() {
+            try {
+                const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    state = {
+                        roomConfig: { ...state.roomConfig, ...(parsed.roomConfig || {}) },
+                        tasks: parsed.tasks || [],
+                        rewards: parsed.rewards || [],
+                        rules: parsed.rules || [],
+                        punishments: parsed.punishments || [],
+                        logs: parsed.logs || []
+                    };
+                }
+            } catch (e) {
+                console.error("Failed to load local state:", e);
+            }
+        }
+
+        // Save State to LocalStorage (and sync to Firebase if available)
+        function saveState() {
+            try {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.error("Failed to save local state:", e);
+            }
+            if (typeof syncToFirebase === "function") {
+                syncToFirebase();
+            }
+            updateUI();
+        }
+
+        // Generate UUID
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // Log Event
+        function addLog(type, message) {
+            state.logs.unshift({
+                id: generateUUID(),
+                type: type, // APPROVAL | REWARD | PENALTY
+                message: message,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // ==========================================
+        // ROLE SWITCHER & DOM PIN PROTECTION
+        // ==========================================
+        function toggleRole() {
+            if (currentRole === "Sub") {
+                if (state.roomConfig.domPin && state.roomConfig.domPin.trim().length === 4) {
+                    clearPin();
+                    openModal("modalPin");
+                } else {
+                    currentRole = "Dom";
+                    updateUI();
+                }
+            } else {
+                currentRole = "Sub";
+                updateUI();
+            }
+        }
+
+        function pressPin(num) {
+            if (pinBuffer.length < 4) {
+                pinBuffer += num;
+                updatePinDisplay();
+            }
+        }
+
+        function clearPin() {
+            pinBuffer = "";
+            updatePinDisplay();
+        }
+
+        function updatePinDisplay() {
+            const display = document.getElementById("pinDisplay");
+            if (display) {
+                display.textContent = "•".repeat(pinBuffer.length) + "•".repeat(4 - pinBuffer.length);
+            }
+        }
+
+        function verifyPin() {
+            if (pinBuffer === state.roomConfig.domPin) {
+                currentRole = "Dom";
+                closeModal("modalPin");
+                clearPin();
+                updateUI();
+            } else {
+                alert("Falscher PIN!");
+                clearPin();
+            }
+        }
+
+        function saveDomPin() {
+            const input = document.getElementById("inputDomPin");
+            const pin = input ? input.value.trim() : "";
+            if (pin && !/^\d{4}$/.test(pin)) {
+                alert("Der PIN muss genau 4 Zahlen enthalten!");
+                return;
+            }
+            state.roomConfig.domPin = pin;
+            saveState();
+            alert("Dom-PIN erfolgreich gespeichert!");
+        }
+
+        // ==========================================
+        // NAVIGATION & UI UPDATES
+        // ==========================================
+        function switchTab(tabName) {
+            document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+            document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
+            document.querySelectorAll(".tab-item").forEach(el => el.classList.remove("active"));
+
+            const targetTab = document.getElementById(`tab-${tabName}`);
+            if (targetTab) targetTab.classList.add("active");
+
+            // Highlight nav buttons
+            const desktopNavBtn = Array.from(document.querySelectorAll(".nav-btn")).find(btn => btn.getAttribute("onclick").includes(tabName));
+            if (desktopNavBtn) desktopNavBtn.classList.add("active");
+
+            const mobileNavBtn = Array.from(document.querySelectorAll(".tab-item")).find(btn => btn.getAttribute("onclick").includes(tabName));
+            if (mobileNavBtn) mobileNavBtn.classList.add("active");
+        }
+
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add("active");
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove("active");
+        }
+
+        function updateUI() {
+            // Update points display
+            const ptsVal = document.getElementById("pointsValue");
+            if (ptsVal) ptsVal.textContent = state.roomConfig.points;
+
+            // Update Role Badge
+            const badge = document.getElementById("roleBadge");
+            const text = document.getElementById("roleText");
+            if (badge && text) {
+                if (currentRole === "Dom") {
+                    badge.className = "role-badge dom";
+                    text.textContent = "DOM";
+                } else {
+                    badge.className = "role-badge sub";
+                    text.textContent = "SUB";
+                }
+            }
+
+            // Hide/Show Dom-only elements
+            document.querySelectorAll(".dom-only").forEach(el => {
+                if (currentRole === "Dom") {
+                    el.style.display = "";
+                } else {
+                    el.style.display = "none";
+                }
+            });
+
+            // Update input fields in setup
+            const pinInput = document.getElementById("inputDomPin");
+            if (pinInput && document.activeElement !== pinInput) {
+                pinInput.value = state.roomConfig.domPin || "";
+            }
+
+            const roomInput = document.getElementById("inputRoomId");
+            if (roomInput && document.activeElement !== roomInput) {
+                roomInput.value = state.roomConfig.roomId || "";
+            }
+
+            // Render Modules
+            if (typeof renderTasks === "function") renderTasks();
+            if (typeof renderRewards === "function") renderRewards();
+            if (typeof renderRulesAndPunishments === "function") renderRulesAndPunishments();
+            if (typeof renderLogs === "function") renderLogs();
+        }
+
+        // ==========================================
+        // MODULE A: TASKS & HABITS
+        // ==========================================
+        function createTask() {
+            const titleInput = document.getElementById("taskTitle");
+            const catSelect = document.getElementById("taskCategory");
+            const ptsInput = document.getElementById("taskPoints");
+
+            const title = titleInput ? titleInput.value.trim() : "";
+            const category = catSelect ? catSelect.value : "Habit";
+            const points = ptsInput ? parseInt(ptsInput.value) || 10 : 10;
+
+            if (!title) {
+                alert("Bitte einen Titel für die Aufgabe eingeben!");
+                return;
+            }
+
+            const newTask = {
+                id: generateUUID(),
+                title: title,
+                category: category,
+                points: points,
+                status: "active", // active | pending | approved
+                streak: 0
+            };
+
+            state.tasks.push(newTask);
+            saveState();
+
+            if (titleInput) titleInput.value = "";
+            closeModal("modalAddTask");
+        }
+
+        function completeTask(taskId) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            task.status = "pending";
+            saveState();
+        }
+
+        function approveTask(taskId) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            state.roomConfig.points += task.points;
+            task.streak += 1;
+            task.status = "approved";
+
+            addLog("APPROVAL", `Aufgabe "${task.title}" genehmigt (+${task.points} PTS)`);
+            saveState();
+        }
+
+        function rejectTask(taskId) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            task.status = "active"; // reset back to active
+            addLog("APPROVAL", `Aufgabe "${task.title}" abgelehnt`);
+            saveState();
+        }
+
+        function resetTaskToActive(taskId) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            task.status = "active";
+            saveState();
+        }
+
+        function deleteTask(taskId) {
+            if (!confirm("Aufgabe wirklich löschen?")) return;
+            state.tasks = state.tasks.filter(t => t.id !== taskId);
+            saveState();
+        }
+
+        function renderTasks() {
+            const container = document.getElementById("tasksList");
+            if (!container) return;
+
+            if (state.tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span>📋</span>
+                        <p>Keine Aufgaben vorhanden.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = state.tasks.map(task => {
+                const badgeClass = task.category === "Habit" ? "badge-habit" : "badge-task";
+                const catLabel = task.category === "Habit" ? "Tägliches Habit" : "Aufgabe";
+
+                let actionHtml = "";
+                if (task.status === "active") {
+                    actionHtml = `<button class="btn btn-sm btn-primary" onclick="completeTask('${task.id}')">Als Erledigt Markieren</button>`;
+                } else if (task.status === "pending") {
+                    if (currentRole === "Dom") {
+                        actionHtml = `
+                            <div style="display:flex; gap:6px;">
+                                <button class="btn btn-sm btn-success" onclick="approveTask('${task.id}')">✓ Bestätigen (+${task.points} PTS)</button>
+                                <button class="btn btn-sm btn-danger" onclick="rejectTask('${task.id}')">✕ Ablehnen</button>
+                            </div>`;
+                    } else {
+                        actionHtml = `<span class="badge badge-pending">Wartet auf Dom Bestätigung</span>`;
+                    }
+                } else if (task.status === "approved") {
+                    actionHtml = `
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="badge badge-active" style="background:rgba(46,196,182,0.15); color:var(--success);">Erledigt ✓</span>
+                            ${task.category === "Habit" ? `<button class="btn btn-sm" onclick="resetTaskToActive('${task.id}')">Zurücksetzen</button>` : ''}
+                        </div>`;
+                }
+
+                const domDeleteBtn = currentRole === "Dom" ? `<button class="btn btn-sm btn-danger" style="padding:2px 6px;" onclick="deleteTask('${task.id}')">✕</button>` : '';
+
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <span class="badge ${badgeClass}">${catLabel}</span>
+                                <h3 class="card-title" style="margin-top:6px;">${escapeHtml(task.title)}</h3>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span style="font-weight:700; color:var(--gold-accent); font-size:0.9rem;">+${task.points} PTS</span>
+                                ${domDeleteBtn}
+                            </div>
+                        </div>
+                        ${task.category === "Habit" ? `<div style="font-size:0.8rem; color:var(--text-muted);">🔥 Streak: <strong>${task.streak} Tage</strong></div>` : ''}
+                        <div class="card-footer">
+                            ${actionHtml}
+                        </div>
+                    </div>`;
+            }).join("");
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // ==========================================
+        // MODULE B: REWARDS & PRIVILEGES SHOP
+        // ==========================================
+        function createReward() {
+            const titleInput = document.getElementById("rewardTitle");
+            const costInput = document.getElementById("rewardCost");
+
+            const title = titleInput ? titleInput.value.trim() : "";
+            const cost = costInput ? parseInt(costInput.value) || 50 : 50;
+
+            if (!title) {
+                alert("Bitte einen Titel für die Belohnung eingeben!");
+                return;
+            }
+
+            const newReward = {
+                id: generateUUID(),
+                title: title,
+                cost: cost,
+                status: "available" // available | requested | claimed
+            };
+
+            state.rewards.push(newReward);
+            saveState();
+
+            if (titleInput) titleInput.value = "";
+            closeModal("modalAddReward");
+        }
+
+        function requestReward(rewardId) {
+            const reward = state.rewards.find(r => r.id === rewardId);
+            if (!reward) return;
+
+            if (state.roomConfig.points < reward.cost) {
+                alert(`Nicht genügend Punkte! Du benötigst ${reward.cost} PTS (Aktuell: ${state.roomConfig.points} PTS).`);
+                return;
+            }
+
+            // Reserve points temporarily
+            state.roomConfig.points -= reward.cost;
+            reward.status = "requested";
+
+            addLog("REWARD", `Belohnung "${reward.title}" angefordert (${reward.cost} PTS reserviert)`);
+            saveState();
+        }
+
+        function approveReward(rewardId) {
+            const reward = state.rewards.find(r => r.id === rewardId);
+            if (!reward) return;
+
+            reward.status = "claimed";
+            addLog("REWARD", `Belohnung "${reward.title}" genehmigt!`);
+            saveState();
+        }
+
+        function denyReward(rewardId) {
+            const reward = state.rewards.find(r => r.id === rewardId);
+            if (!reward) return;
+
+            // Return reserved points
+            state.roomConfig.points += reward.cost;
+            reward.status = "available";
+
+            addLog("REWARD", `Belohnung "${reward.title}" abgelehnt (${reward.cost} PTS zurückerstattet)`);
+            saveState();
+        }
+
+        function resetRewardToAvailable(rewardId) {
+            const reward = state.rewards.find(r => r.id === rewardId);
+            if (!reward) return;
+
+            reward.status = "available";
+            saveState();
+        }
+
+        function deleteReward(rewardId) {
+            if (!confirm("Belohnung wirklich löschen?")) return;
+            const reward = state.rewards.find(r => r.id === rewardId);
+            if (reward && reward.status === "requested") {
+                // Refund points if requested and deleted by Dom
+                state.roomConfig.points += reward.cost;
+            }
+            state.rewards = state.rewards.filter(r => r.id !== rewardId);
+            saveState();
+        }
+
+        function renderRewards() {
+            const container = document.getElementById("rewardsList");
+            if (!container) return;
+
+            if (state.rewards.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span>🎁</span>
+                        <p>Keine Belohnungen im Shop.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = state.rewards.map(reward => {
+                let actionHtml = "";
+                if (reward.status === "available") {
+                    const canAfford = state.roomConfig.points >= reward.cost;
+                    actionHtml = `<button class="btn btn-sm btn-gold" ${!canAfford ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} onclick="requestReward('${reward.id}')">Anfordern (${reward.cost} PTS)</button>`;
+                } else if (reward.status === "requested") {
+                    if (currentRole === "Dom") {
+                        actionHtml = `
+                            <div style="display:flex; gap:6px;">
+                                <button class="btn btn-sm btn-success" onclick="approveReward('${reward.id}')">✓ Genehmigen</button>
+                                <button class="btn btn-sm btn-danger" onclick="denyReward('${reward.id}')">✕ Ablehnen (PTS Zurück)</button>
+                            </div>`;
+                    } else {
+                        actionHtml = `<span class="badge badge-pending">Wartet auf Dom Genehmigung</span>`;
+                    }
+                } else if (reward.status === "claimed") {
+                    actionHtml = `
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="badge badge-active" style="background:rgba(212,175,55,0.2); color:var(--gold-accent);">Eingelöst 👑</span>
+                            ${currentRole === "Dom" ? `<button class="btn btn-sm" onclick="resetRewardToAvailable('${reward.id}')">Wieder Anbieten</button>` : ''}
+                        </div>`;
+                }
+
+                const domDeleteBtn = currentRole === "Dom" ? `<button class="btn btn-sm btn-danger" style="padding:2px 6px;" onclick="deleteReward('${reward.id}')">✕</button>` : '';
+
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <span class="badge badge-habit">Belohnung</span>
+                                <h3 class="card-title" style="margin-top:6px;">${escapeHtml(reward.title)}</h3>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span style="font-weight:700; color:var(--gold-accent); font-size:0.9rem;">${reward.cost} PTS</span>
+                                ${domDeleteBtn}
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            ${actionHtml}
+                        </div>
+                    </div>`;
+            }).join("");
+        }
+
+        // ==========================================
+        // MODULE C: PUNISHMENTS & INFRACTIONS
+        // ==========================================
+        function createRule() {
+            const titleInput = document.getElementById("ruleTitle");
+            const descInput = document.getElementById("ruleDesc");
+
+            const title = titleInput ? titleInput.value.trim() : "";
+            const desc = descInput ? descInput.value.trim() : "";
+
+            if (!title) {
+                alert("Bitte einen Titel für die Regel eingeben!");
+                return;
+            }
+
+            const newRule = {
+                id: generateUUID(),
+                title: title,
+                description: desc
+            };
+
+            state.rules.push(newRule);
+            saveState();
+
+            if (titleInput) titleInput.value = "";
+            if (descInput) descInput.value = "";
+            closeModal("modalAddRule");
+        }
+
+        function deleteRule(ruleId) {
+            if (!confirm("Regel wirklich löschen?")) return;
+            state.rules = state.rules.filter(r => r.id !== ruleId);
+            saveState();
+        }
+
+        function submitInfraction() {
+            const select = document.getElementById("infractionRuleSelect");
+            const noteInput = document.getElementById("infractionNote");
+
+            const ruleTitle = select ? select.value : "Allgemeiner Verstoß";
+            const note = noteInput ? noteInput.value.trim() : "";
+
+            const msg = `Regelverstoß gemeldet: "${ruleTitle}"${note ? ` (${note})` : ''}`;
+            addLog("PENALTY", msg);
+            saveState();
+
+            if (noteInput) noteInput.value = "";
+            closeModal("modalLogInfraction");
+            alert("Verstoß wurde im Logbuch registriert!");
+        }
+
+        function createPunishment() {
+            const titleInput = document.getElementById("punishmentTitle");
+            const ptsInput = document.getElementById("punishmentPoints");
+            const taskInput = document.getElementById("punishmentTask");
+
+            const title = titleInput ? titleInput.value.trim() : "";
+            const pointDeduction = ptsInput ? parseInt(ptsInput.value) || 0 : 0;
+            const assignedTask = taskInput ? taskInput.value.trim() : "";
+
+            if (!title) {
+                alert("Bitte einen Grund / Titel für die Sanktion angeben!");
+                return;
+            }
+
+            if (pointDeduction > 0) {
+                state.roomConfig.points = Math.max(0, state.roomConfig.points - pointDeduction);
+            }
+
+            const newPunishment = {
+                id: generateUUID(),
+                title: title,
+                pointDeduction: pointDeduction,
+                assignedTask: assignedTask,
+                status: "active", // active | cleared
+                timestamp: new Date().toISOString()
+            };
+
+            state.punishments.push(newPunishment);
+
+            let logMsg = `Sanktion verhängt: "${title}"`;
+            if (pointDeduction > 0) logMsg += ` (-${pointDeduction} PTS)`;
+            if (assignedTask) logMsg += ` [Straf-Aufgabe: ${assignedTask}]`;
+
+            addLog("PENALTY", logMsg);
+            saveState();
+
+            if (titleInput) titleInput.value = "";
+            if (taskInput) taskInput.value = "";
+            closeModal("modalAddPunishment");
+        }
+
+        function clearPunishment(punishmentId) {
+            const p = state.punishments.find(p => p.id === punishmentId);
+            if (!p) return;
+
+            p.status = "cleared";
+            addLog("PENALTY", `Sanktion erlassen/erledigt: "${p.title}"`);
+            saveState();
+        }
+
+        function deletePunishment(punishmentId) {
+            if (!confirm("Sanktion aus Liste entfernen?")) return;
+            state.punishments = state.punishments.filter(p => p.id !== punishmentId);
+            saveState();
+        }
+
+        function renderRulesAndPunishments() {
+            // Render Rules
+            const rulesContainer = document.getElementById("rulesList");
+            const selectOptions = document.getElementById("infractionRuleSelect");
+
+            if (rulesContainer) {
+                if (state.rules.length === 0) {
+                    rulesContainer.innerHTML = `<div class="empty-state"><span>📜</span><p>Keine aktiven Regeln definiert.</p></div>`;
+                } else {
+                    rulesContainer.innerHTML = state.rules.map(rule => `
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">${escapeHtml(rule.title)}</h3>
+                                ${currentRole === "Dom" ? `<button class="btn btn-sm btn-danger" onclick="deleteRule('${rule.id}')">✕</button>` : ''}
+                            </div>
+                            ${rule.description ? `<p class="card-desc">${escapeHtml(rule.description)}</p>` : ''}
+                        </div>
+                    `).join("");
+                }
+            }
+
+            if (selectOptions) {
+                selectOptions.innerHTML = state.rules.length === 0
+                    ? `<option value="Allgemeiner Regelverstoß">Allgemeiner Regelverstoß</option>`
+                    : state.rules.map(r => `<option value="${escapeHtml(r.title)}">${escapeHtml(r.title)}</option>`).join("");
+            }
+
+            // Render Punishments
+            const punContainer = document.getElementById("punishmentsList");
+            if (punContainer) {
+                if (state.punishments.length === 0) {
+                    punContainer.innerHTML = `<div class="empty-state"><span>⚔️</span><p>Keine aktiven Sanktionen.</p></div>`;
+                } else {
+                    punContainer.innerHTML = state.punishments.map(p => {
+                        const isCleared = p.status === "cleared";
+                        return `
+                            <div class="card" style="${isCleared ? 'opacity:0.6;' : ''}">
+                                <div class="card-header">
+                                    <div>
+                                        <span class="badge ${isCleared ? 'badge-task' : 'badge-pending'}" style="${!isCleared ? 'background:rgba(230,57,70,0.2); color:var(--red-accent);' : ''}">
+                                            ${isCleared ? 'Erledigt' : 'Aktiv'}
+                                        </span>
+                                        <h3 class="card-title" style="margin-top:6px;">${escapeHtml(p.title)}</h3>
+                                    </div>
+                                    ${currentRole === "Dom" ? `<button class="btn btn-sm btn-danger" onclick="deletePunishment('${p.id}')">✕</button>` : ''}
+                                </div>
+                                ${p.pointDeduction > 0 ? `<div style="font-size:0.85rem; color:var(--red-accent);">Punkteabzug: -${p.pointDeduction} PTS</div>` : ''}
+                                ${p.assignedTask ? `<div style="font-size:0.85rem; color:var(--gold-accent);">Straf-Aufgabe: <strong>${escapeHtml(p.assignedTask)}</strong></div>` : ''}
+                                <div class="card-footer">
+                                    ${!isCleared
+                                        ? `<button class="btn btn-sm btn-success" onclick="clearPunishment('${p.id}')">Als Erledigt Markieren</button>`
+                                        : `<span class="badge badge-active">Erledigt ✓</span>`
+                                    }
+                                </div>
+                            </div>`;
+                    }).join("");
+                }
+            }
+        }
+
+        // ==========================================
+        // MODULE D: FIREBASE & ONBOARDING SETUP
+        // ==========================================
+        let firebaseDb = null;
+        let firebaseRoomRef = null;
+        let isSyncingFromFirebase = false;
+
+        function saveFirebaseSettings() {
+            const roomInput = document.getElementById("inputRoomId");
+            const configInput = document.getElementById("inputFirebaseConfig");
+
+            const roomId = roomInput ? roomInput.value.trim() : "";
+            const configStr = configInput ? configInput.value.trim() : "";
+
+            if (!roomId) {
+                alert("Bitte eine Room-ID eingeben!");
+                return;
+            }
+
+            state.roomConfig.roomId = roomId;
+
+            if (configStr) {
+                try {
+                    const parsedConfig = JSON.parse(configStr);
+                    localStorage.setItem("habits_firebase_config", JSON.stringify(parsedConfig));
+                    initFirebase(parsedConfig, roomId);
+                    alert("Firebase-Verbindung erfolgreich hergestellt!");
+                } catch (e) {
+                    alert("Ungültiges JSON-Format in der Firebase-Konfiguration!");
+                    return;
+                }
+            } else {
+                localStorage.removeItem("habits_firebase_config");
+                alert("Einstellungen gespeichert (Nur LocalStorage Aktiv).");
+            }
+
+            saveState();
+        }
+
+        function initFirebase(config, roomId) {
+            if (!window.firebaseModules) {
+                setTimeout(() => initFirebase(config, roomId), 500);
+                return;
+            }
+            try {
+                const { initializeApp, getDatabase, ref, onValue } = window.firebaseModules;
+                const app = initializeApp(config, "habitsApp_" + Math.random().toString(36).substring(2, 7));
+                firebaseDb = getDatabase(app);
+                firebaseRoomRef = ref(firebaseDb, 'rooms/' + roomId);
+
+                // Listen for Realtime updates
+                onValue(firebaseRoomRef, (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        isSyncingFromFirebase = true;
+                        state = data;
+                        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+                        updateUI();
+                        isSyncingFromFirebase = false;
+                    }
+                });
+            } catch (e) {
+                console.error("Firebase init error:", e);
+            }
+        }
+
+        function syncToFirebase() {
+            if (isSyncingFromFirebase || !firebaseDb || !firebaseRoomRef) return;
+            try {
+                const { set } = window.firebaseModules;
+                set(firebaseRoomRef, state);
+            } catch (e) {
+                console.error("Firebase sync error:", e);
+            }
+        }
+
+        // Auto-load Firebase if config exists on start
+        window.addEventListener("load", () => {
+            const savedFirebaseConfig = localStorage.getItem("habits_firebase_config");
+            if (savedFirebaseConfig && state.roomConfig.roomId) {
+                try {
+                    const config = JSON.parse(savedFirebaseConfig);
+                    const configInput = document.getElementById("inputFirebaseConfig");
+                    if (configInput) configInput.value = JSON.stringify(config, null, 2);
+                    initFirebase(config, state.roomConfig.roomId);
+                } catch (e) {}
+            }
+        });
+
+        // 1-Click Join Code Generation & Import
+        function generateJoinCode() {
+            const savedFirebaseConfig = localStorage.getItem("habits_firebase_config");
+            let fbConfig = {};
+            if (savedFirebaseConfig) {
+                try { fbConfig = JSON.parse(savedFirebaseConfig); } catch (e) {}
+            }
+
+            const joinData = {
+                roomId: state.roomConfig.roomId || "default-room",
+                firebaseConfig: fbConfig
+            };
+
+            const jsonStr = JSON.stringify(joinData);
+            const base64Code = btoa(unescape(encodeURIComponent(jsonStr)));
+
+            const display = document.getElementById("joinCodeDisplay");
+            const output = document.getElementById("outputJoinCode");
+            if (display && output) {
+                display.style.display = "block";
+                output.value = base64Code;
+            }
+        }
+
+        function importJoinCode() {
+            const input = document.getElementById("inputJoinCode");
+            const code = input ? input.value.trim() : "";
+
+            if (!code) {
+                alert("Bitte einen Join-Code eingeben!");
+                return;
+            }
+
+            try {
+                const jsonStr = decodeURIComponent(escape(atob(code)));
+                const data = JSON.parse(jsonStr);
+
+                if (data.roomId) {
+                    state.roomConfig.roomId = data.roomId;
+                    if (data.firebaseConfig && Object.keys(data.firebaseConfig).length > 0) {
+                        localStorage.setItem("habits_firebase_config", JSON.stringify(data.firebaseConfig));
+                        initFirebase(data.firebaseConfig, data.roomId);
+                    }
+                    saveState();
+                    alert(`Erfolgreich Raum "${data.roomId}" beigetreten!`);
+                    if (input) input.value = "";
+                } else {
+                    alert("Ungültiger Join-Code!");
+                }
+            } catch (e) {
+                alert("Fehler beim Dekodieren des Join-Codes!");
+            }
+        }
+
+        // ==========================================
+        // MODULE LOGS: IMMUTABLE HISTORY
+        // ==========================================
+        function renderLogs() {
+            const container = document.getElementById("logsList");
+            if (!container) return;
+
+            if (state.logs.length === 0) {
+                container.innerHTML = `<div class="empty-state"><span>📜</span><p>Keine Einträge im Logbuch.</p></div>`;
+                return;
+            }
+
+            container.innerHTML = state.logs.map(log => {
+                const dateStr = new Date(log.timestamp).toLocaleString("de-DE", {
+                    day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
+                });
+                return `
+                    <div class="log-item ${log.type}">
+                        <div>
+                            <div class="log-msg">${escapeHtml(log.message)}</div>
+                            <div class="log-time">${dateStr}</div>
+                        </div>
+                        <span class="badge" style="font-size:0.65rem;">${log.type}</span>
+                    </div>`;
+            }).join("");
+        }
+    </script>
+</body>
+</html>
