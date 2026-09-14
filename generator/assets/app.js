@@ -345,6 +345,65 @@ function buildContract() {
   return lines.join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
+function encodeContractData(data) {
+  if (typeof LZString === 'undefined') {
+    throw new Error('LZString ist nicht verfügbar.');
+  }
+  return LZString.compressToEncodedURIComponent(JSON.stringify(data));
+}
+
+function decodeContractData(value) {
+  if (typeof LZString === 'undefined') {
+    throw new Error('LZString ist nicht verfügbar.');
+  }
+  const decompressed = LZString.decompressFromEncodedURIComponent(value);
+  if (!decompressed) {
+    throw new Error('Link konnte nicht dekodiert werden.');
+  }
+  return JSON.parse(decompressed);
+}
+
+function createContractLink() {
+  try {
+    const data = {
+      form: state.form,
+      text: currentText()
+    };
+    const encoded = encodeContractData(data);
+    const link = `${location.href.split('#')[0]}#v=${encoded}`;
+    const shareInput = app.querySelector('#share-link');
+    if (shareInput) {
+      shareInput.value = link;
+    }
+    copyText(link, 'Der Ergebnis-Link wurde erstellt und kopiert.');
+  } catch (err) {
+    alert('Fehler beim Erstellen des Links: ' + err.message);
+  }
+}
+
+function copyContractLink() {
+  const input = app.querySelector('#share-link');
+  const link = input ? input.value : '';
+  if (!link) {
+    return alert('Erstelle zuerst einen Ergebnis-Link.');
+  }
+  copyText(link, 'Der Link wurde kopiert.');
+}
+
+async function copyText(text, successMessage) {
+  try {
+    await navigator.clipboard.writeText(text);
+    if (successMessage) alert(successMessage);
+  } catch {
+    const input = app.querySelector('#share-link');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+    if (successMessage) alert(successMessage);
+  }
+}
+
 function renderStep3() {
   const contract = buildContract();
   app.innerHTML = `
@@ -354,7 +413,24 @@ function renderStep3() {
       <div class="preview-mode-selector"><button type="button" id="preview-mode" class="mode-button selected">Vorschau</button><button type="button" id="edit-mode" class="mode-button">Bearbeiten</button></div>
       <div id="contract-preview" class="contract-preview">${formatContract(contract)}</div>
       <textarea id="contract-editor" class="contract-editor hidden">${escapeHtml(contract)}</textarea>
-      <div class="navigation-buttons"><button type="button" id="back" class="button secondary">Zurück</button><div class="action-buttons"><button type="button" id="save" class="button secondary">Offline speichern</button><button type="button" id="download" class="button secondary">Als Text herunterladen</button><button type="button" id="copy" class="button secondary">Kopieren</button><button type="button" id="print" class="button primary">Drucken / PDF</button></div></div>
+      <div class="navigation-buttons">
+        <button type="button" id="back" class="button secondary">Zurück</button>
+        <div class="action-buttons">
+          <button type="button" id="save" class="button secondary">Offline speichern</button>
+          <button type="button" id="create-link" class="button secondary">Link erstellen</button>
+          <button type="button" id="download" class="button secondary">Als Text herunterladen</button>
+          <button type="button" id="copy" class="button secondary">Kopieren</button>
+          <button type="button" id="print" class="button primary">Drucken / PDF</button>
+        </div>
+      </div>
+      <div class="share-section" style="margin-top: 1.5rem; padding: 1rem; background: var(--surface-2, rgba(255,255,255,0.05)); border-radius: 8px;">
+        <label style="display: block; font-weight: 600; margin-bottom: .5rem;">Ergebnis-Link teilen:</label>
+        <div class="input-group">
+          <input id="share-link" class="text-input" readonly placeholder="Der Link erscheint hier nach Klick auf 'Link erstellen'">
+          <button type="button" id="copy-link" class="button secondary">Link kopieren</button>
+        </div>
+        <p class="hint" style="font-size: .85rem; opacity: .8; margin-top: .5rem; margin-bottom: 0;">Der Link enthält diese Angaben. Jede Person mit dem Link kann sie sehen.</p>
+      </div>
     </div>`;
 
   const preview = app.querySelector('#contract-preview');
@@ -374,6 +450,8 @@ function renderStep3() {
   });
   app.querySelector('#back').addEventListener('click', () => setStep(2));
   app.querySelector('#save').addEventListener('click', saveContract);
+  app.querySelector('#create-link').addEventListener('click', createContractLink);
+  app.querySelector('#copy-link').addEventListener('click', copyContractLink);
   app.querySelector('#download').addEventListener('click', () => downloadText(currentText()));
   app.querySelector('#copy').addEventListener('click', async () => { await navigator.clipboard.writeText(currentText()); alert('Vertragstext wurde kopiert.'); });
   app.querySelector('#print').addEventListener('click', printContract);
@@ -434,9 +512,32 @@ function printContract() {
   popup.print();
 }
 
+function checkSharedLink() {
+  const match = location.hash.match(/^#(?:v|vertrag)=([^&]+)$/);
+  if (!match) return false;
+  try {
+    const data = decodeContractData(match[1]);
+    if (data && data.form) {
+      state.form = { ...state.form, ...data.form };
+      setStep(3);
+      const textToDisplay = data.text || buildContract();
+      const editor = app.querySelector('#contract-editor');
+      const preview = app.querySelector('#contract-preview');
+      if (editor) editor.value = textToDisplay;
+      if (preview) preview.innerHTML = formatContract(textToDisplay);
+      return true;
+    }
+  } catch (err) {
+    alert('Der Link konnte nicht gelesen werden: ' + err.message);
+  }
+  return false;
+}
+
 indicators.forEach((indicator) => indicator.addEventListener('click', () => {
   const target = Number(indicator.dataset.step);
   if (target <= state.step) setStep(target);
 }));
 
-setStep(1);
+if (!checkSharedLink()) {
+  setStep(1);
+}
