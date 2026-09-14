@@ -679,7 +679,10 @@
             </div>
 
             <div class="card" style="margin-bottom: 20px;">
-                <h3 class="modal-title" style="margin-bottom: 10px;">🔥 Firebase & Partner Sync</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 class="modal-title" style="margin: 0;">🔥 Firebase & Partner Sync</h3>
+                    <button class="btn btn-sm btn-gold" onclick="openModal('modalFirebaseHelp')">ℹ️ Anleitung</button>
+                </div>
                 <p class="card-desc" style="margin-bottom: 12px;">Gib hier die Firebase-Konfiguration und deine Room-ID ein, um geräteübergreifend in Echtzeit zu synchronisieren.</p>
                 <div class="form-group">
                     <label>Room ID:</label>
@@ -867,6 +870,72 @@
                 <input type="text" id="punishmentTask" class="form-control" placeholder="z.B. 50 Liegestütze">
             </div>
             <button class="btn btn-danger" onclick="createPunishment()">Sanktion Verhängen</button>
+        </div>
+    </div>
+
+    <!-- Firebase Help Modal -->
+    <div id="modalFirebaseHelp" class="modal-overlay">
+        <div class="modal" style="max-width: 550px; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 class="modal-title">ℹ️ Firebase Sync - Hilfe & Anleitung</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalFirebaseHelp')">✕</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 14px; font-size: 0.88rem; line-height: 1.5; color: var(--text-main);">
+
+                <div style="background: rgba(212, 175, 55, 0.1); border: 1px solid var(--gold-primary); padding: 12px; border-radius: var(--radius-sm);">
+                    <strong style="color: var(--gold-accent);">Wichtig / Wichtige Info:</strong>
+                    <ul style="margin-left: 18px; margin-top: 6px;">
+                        <li><strong>Nur EINE Person</strong> (z. B. Dom) benötigt einen Google-Account, um das Firebase-Projekt einmalig einzurichten.</li>
+                        <li><strong>Die zweite Person (Sub/Partner)</strong> benötigt <strong>KEINEN Google-Account</strong>, sondern nutzt einfach den generierten Join-Code.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 style="color: var(--gold-accent); margin-bottom: 6px;">1. Firebase Projekt erstellen (Person 1)</h4>
+                    <ol style="margin-left: 18px; display: flex; flex-direction: column; gap: 4px; color: var(--text-muted);">
+                        <li>Gehe auf <a href="https://console.firebase.google.com/" target="_blank" style="color: var(--gold-accent);">console.firebase.google.com</a> (kostenloser Google-Account).</li>
+                        <li>Klicke auf <strong>"Projekt hinzufügen"</strong> (z. B. Name "habits-app").</li>
+                        <li>Füge eine <strong>Web-App (&lt;/&gt;)</strong> zum Projekt hinzu.</li>
+                        <li>Kopiere die gezeigte <code>firebaseConfig</code> (JSON-Objekt) in das Feld <strong>Firebase Config (JSON)</strong>.</li>
+                    </ol>
+                </div>
+
+                <div>
+                    <h4 style="color: var(--gold-accent); margin-bottom: 6px;">2. Realtime Database aktivieren</h4>
+                    <ol style="margin-left: 18px; display: flex; flex-direction: column; gap: 4px; color: var(--text-muted);">
+                        <li>Wähle im linken Menü <strong>Build &gt; Realtime Database</strong> und klicke auf <strong>"Datenbank erstellen"</strong>.</li>
+                        <li>Gehe zum Reiter <strong>Regeln (Rules)</strong> und passe die Sicherheitsregeln an:</li>
+                    </ol>
+                    <pre style="background: var(--bg-base); border: 1px solid var(--border-color); padding: 8px; border-radius: var(--radius-sm); font-size: 0.75rem; color: var(--success); margin-top: 6px; overflow-x: auto;">{
+  "rules": {
+    "rooms": {
+      "$roomId": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}</pre>
+                </div>
+
+                <div>
+                    <h4 style="color: var(--gold-accent); margin-bottom: 6px;">3. Verbindung herstellen & Partner einladen</h4>
+                    <ol style="margin-left: 18px; display: flex; flex-direction: column; gap: 4px; color: var(--text-muted);">
+                        <li>Gib eine beliebige <strong>Room ID</strong> ein (z. B. <code>unser-raum-2026</code>) und klicke auf <strong>Firebase Verbinden</strong>.</li>
+                        <li>Klicke unter <i>Partner 1-Klick Join-Code</i> auf <strong>Code Generieren</strong> und sende den Code an deine(n) Partner(in).</li>
+                    </ol>
+                </div>
+
+                <div>
+                    <h4 style="color: var(--gold-accent); margin-bottom: 6px;">4. Beitreten (Person 2 / Partner)</h4>
+                    <ol style="margin-left: 18px; display: flex; flex-direction: column; gap: 4px; color: var(--text-muted);">
+                        <li>Öffne <i>habits</i> auf dem eigenen Gerät.</li>
+                        <li>Gehe zu <strong>Setup &amp; Sync</strong>, füge den Join-Code unten ein und klicke auf <strong>Raum Beitreten</strong>.</li>
+                    </ol>
+                </div>
+
+            </div>
+            <button class="btn btn-gold" style="margin-top: 10px;" onclick="closeModal('modalFirebaseHelp')">Verstanden</button>
         </div>
     </div>
 
