@@ -2,103 +2,169 @@ const STORAGE_SCHEMA_VERSION = 2;
 
 const contractData = {
   introductions: {
-    male: 'Der Herr übernimmt die führende und dominante Rolle in der Beziehung. Er verpflichtet sich, seine Macht stets im Rahmen der vereinbarten Grenzen, mit Umsicht und zum Wohle der Sicherheit beider Parteien auszuüben.',
-    female: 'Die Herrin übernimmt die führende und dominante Rolle in der Beziehung. Sie verpflichtet sich, ihre Macht stets im Rahmen der vereinbarten Grenzen, mit Umsicht und zum Wohle der Sicherheit beider Parteien auszuüben.'
+    male: 'Dieser Vertrag wird von beiden Vertragsparteien freiwillig geschlossen und akzeptiert. Beide Vertragspartner entscheiden sich bewusst zur strengen und konsequenten Einhaltung dieses Vertrages. Der Herr kann jederzeit auf Einhaltung dieses Vertrages mit allen vereinbarten Konsequenzen bestehen.',
+    female: 'Dieser Vertrag wird von beiden Vertragsparteien freiwillig geschlossen und akzeptiert. Beide Vertragspartner entscheiden sich bewusst zur strengen und konsequenten Einhaltung dieses Vertrages. Die Herrin kann jederzeit auf Einhaltung dieses Vertrages mit allen vereinbarten Konsequenzen bestehen.'
   },
   categories: [
     {
-      id: 'alltag',
-      name: 'Alltag & Verfügbarkeit',
-      description: 'Regelt Erreichbarkeit, Meldepflichten und Alltagsstruktur.',
+      id: 'allgemein',
+      name: 'Allgemeine Regeln',
+      description: 'Grundlegende Regeln und Vereinbarungen für den Vertrag',
       levels: [
-        { 
-          title: 'Flexibel', 
-          description: 'Einvernehmliche Kontaktaufnahme ohne feste Verpflichtungen.', 
-          content: 'Kontaktzeiten, kleine Dienstleistungen und zeitliche Verfügbarkeiten werden von Fall zu Fall abgesprochen. Berufliche und private Verpflichtungen beider Parteien haben stets Vorrang.' 
+        {
+          title: 'Stufe 1 (Basis)',
+          description: 'Grundlegende Demut und Verhaltensregeln.',
+          content: 'Der/Die Sklave/Sklavin ist gegenüber dem Herrn/der Herrin stets demütig und steht ihm/ihr mit seinem/ihrem Körper und Geist zur Verfügung. Die Befehle sind strikt zu befolgen.\n\nDem/Der Sklaven/Sklavin ist es untersagt, ohne Erlaubnis zum Orgasmus zu kommen.\n\nDer/Die Sklave/Sklavin hat auf alle gestellten Fragen ehrlich, in einem respektvollen ruhigen Tonfall und direkt zu antworten und darf dem Herrn/der Herrin nie widersprechen.'
         },
-        { 
-          title: 'Verbindlich', 
-          description: 'Feste Melderituale und definierte Reaktionszeiten.', 
-          content: 'Die submissive Person hält festgelegte Melderituale (z. B. Morgen- und Abendgruß) ein. Nachrichten der dominanten Person sind innerhalb eines vereinbarten Zeitfensters Priorität einzuräumen.' 
+        {
+          title: 'Stufe 2 (Erweitert)',
+          description: 'Körperpflege und Anredeformen.',
+          content: 'Der/Die Sklave/Sklavin hat den Körper sorgsam zu pflegen und täglich von sämtlichen Körperhaaren zu befreien.\n\nDer/Die Sklave/Sklavin wird mit gesenktem Kopf und mit "Herr/Herrin" die dominante Person demütigst ansprechen sowie jeden Satz mit „Ja Herr/Herrin" beenden.\n\nEs ist strengstens verboten, die Worte „du, nein, später, schimpf-/beleidigende" oder ähnliche Worte zu benutzen.'
         },
-        { 
-          title: 'Strukturiert', 
-          description: 'Detaillierte Führung von Tagesablauf und persönlichen Entscheidungsprozessen.', 
-          content: 'Die dominante Person nimmt aktiv Einfluss auf die Gestaltung des Tagesablaufs, Verhaltensregeln im Alltag sowie Entscheidungen bezüglich Kleidung, Ernährung oder Freizeitgestaltung der submissiven Person.' 
+        {
+          title: 'Stufe 3 (Intensiv)',
+          description: 'Vollständige Reduzierung persönlicher Bedürfnisse.',
+          content: 'Der/Die Sklave/Sklavin verpflichtet sich, alle persönlichen Ansichten, Wünsche, Bedürfnisse und Kritiken auf das absolut unumgängliche Maß zu reduzieren und übernimmt die Wertvorstellungen der dominanten Person.\n\nDer/Die Sklave/Sklavin gibt das Recht auf einen Vor- und Nachnamen auf und wird nur noch mit der Sklaven-Nummer oder einem zugeteilten Namen angesprochen.\n\nZiel ist es, ein absolut höriges, untergebenes Objekt zu formen, dessen Leben nur darin besteht, sich um das Wohlergehen des Herrn/der Herrin zu kümmern.'
         }
       ]
     },
     {
       id: 'gehorsam',
-      name: 'Gehorsam & Aufgaben',
-      description: 'Definiert Verhaltensregeln, Dienstpflichten und Korrekturmaßnahmen.',
+      name: 'Gehorsam und Unterwerfung',
+      description: 'Hierarchie und Verhaltensregeln',
       levels: [
-        { 
-          title: 'Grundgehorsam', 
-          description: 'Befolgung direkter Anweisungen während gemeinsamer Sessions.', 
-          content: 'Die submissive Person befolgt erteilte Anweisungen unverzüglich und gewissenhaft, sofern diese nicht gegen vereinbarte Tabus verstoßen. Unklarheiten sind direkt anzusprechen.' 
+        {
+          title: 'Stufe 1 (Basis)',
+          description: 'Widerspruchsloser Dienst.',
+          content: 'Der/Die Sklave/Sklavin wird seine/ihre Dienste in angemessener Art zur Verfügung stellen und stets sein/ihr Bestes geben. Anordnungen ist unverzüglich und widerspruchslos Folge zu leisten.\n\nGefühlsregungen wie Weinen, Schreien oder Betteln haben keinen Einfluss auf die Behandlung.'
         },
-        { 
-          title: 'Erweitertes Protokoll', 
-          description: 'Feste Dienstaufgaben, Haltungsvorschriften und korrigierende Maßnahmen.', 
-          content: 'Über das Spiel hinaus gelten festgelegte Verhaltens- und Dienstprotokolle (z. B. Anrede, Haltung, Aufgaben im Haushalt). Regelverstöße werden mit einvernahmlich festgelegten Disziplinierungsmaßnahmen geahndet.' 
+        {
+          title: 'Stufe 2 (Erweitert)',
+          description: 'Körperhaltung und Blickkontakt.',
+          content: 'Der/Die Sklave/Sklavin hält sich bedingungslos an alle Regeln und ist sich bewusst, dass jeder Regelbruch bestraft wird.\n\nIn Anwesenheit des Herrn/der Herrin befindet sich der/die Sklave/Sklavin auf den Knien, sofern keine Aufgabe das Stehen erfordert. Die Augen sind stets gesenkt, sodass nur auf die Füße geschaut wird.'
         },
-        { 
-          title: 'Umfassende Erziehung', 
-          description: 'Strenge Regeltreue mit lückenloser Rechenschaftspflicht.', 
-          content: 'Ein umfassendes Regelwerk steuert das tägliche Verhalten. Die dominante Person führt Buch über Pflichtverletzungen und behält sich das Recht vor, Erziehungs- und Strafmaßnahmen im festgelegten Rahmen durchzuführen.' 
+        {
+          title: 'Stufe 3 (Intensiv)',
+          description: 'Strenges Demutsprotokoll.',
+          content: 'Der/Die Sklave/Sklavin bemüht sich, vorausschauend zu dienen und schweigt, wenn er/sie nicht angesprochen wird.\n\nBeim Betreten des Raumes durch den Herrn/die Herrin fällt der/die Sklave/Sklavin auf die Knie, küsst die Füße und verharre in kniender Position mit gesenktem Blick, bis Bewegung wieder gestattet wird.'
         }
       ]
     },
     {
-      id: 'grenzen',
-      name: 'Grenzen & Sicherheit',
-      description: 'Gewährleistet den körperlichen und mentalen Schutz (SSC / RACK).',
+      id: 'kleidung',
+      name: 'Kleidung und Erscheinungsbild',
+      description: 'Regeln zur Kleidung und zum äußeren Erscheinungsbild',
       levels: [
-        { 
-          title: 'SSC-Basis', 
-          description: 'Safe, Sane, Consensual mit unanfechtbarem Abbruchsignal.', 
-          content: 'Alle Handlungen basieren auf Gegenseitigkeit und Konsens. Das vereinbarte Safeword führt zum unverzüglichen und kommentarlosen Abbruch jeder aktiven Handlung.' 
+        {
+          title: 'Stufe 1 (Basis)',
+          description: 'Bestimmungsrecht über Bekleidung.',
+          content: 'Der Herr/Die Herrin kann jederzeit über Kleidung, Schmuck und Make-up entscheiden, soweit dies mit dem Arbeitsplatz vereinbar ist.\n\nAuf Anordnung hat der/die Sklave/Sklavin jederzeit einzelne Kleidungsstücke abzulegen oder sich komplett nackt zu präsentieren.'
         },
-        { 
-          title: 'RACK & Nachsorge', 
-          description: 'Integrierte Fürsorgepflicht und verbindliche Aftercare.', 
-          content: 'Ergänzend zum Safeword verpflichten sich beide Parteien zur angemessenen emotionalen und physischen Nachsorge (Aftercare). Der Zustand der submissiven Person wird nach jeder Session aktiv überprüft.' 
+        {
+          title: 'Stufe 2 (Erweitert)',
+          description: 'Nacktheit und Fesseln im privaten Bereich.',
+          content: 'Der natürliche Zustand in Anwesenheit des Herrn/der Herrin ist Nacktheit. Ohne anderslautende Anordnung ist in der Wohnung komplett nackt zu sein.\n\nDas Tragen von Halsbändern, Hand- und Fußfesseln sowie Vorgaben zu Haar- und Nagellänge können angeordnet werden.'
         },
-        { 
-          title: 'Risikomanagement', 
-          description: 'Lückenlose medizinische Vorsorge und regelmäßige Review-Gespräche.', 
-          content: 'Gesundheitliche Risiken, Allergien und Notfalldaten sind schriftlich dokumentiert. Neben Abbruchsignalen werden regelmäßige Feedbackgespräche vereinbart, um Dynamik und Belastungsgrenzen kontinuierlich anzupassen.' 
+        {
+          title: 'Stufe 3 (Intensiv)',
+          description: 'Strenge Kleiderordnung und Registrierungsnummer.',
+          content: 'Bei Abwesenheit gilt eine strenge Kleiderordnung laut Anhang. Beim Sport im öffentlichen Raum wird enganliegende Kleidung getragen.\n\nDer/Die Sklave/Sklavin trägt auf Bestimmung die internationale Sklavenregistrierungsnummer im Nacken und auf dem Gesäß tätowiert.'
         }
       ]
     },
     {
-      id: 'diskretion',
-      name: 'Diskretion & Datenschutz',
-      description: 'Schützt die Privatsphäre und regelt den Umgang mit Bild- und Videomaterial.',
+      id: 'disziplin',
+      name: 'Bestrafung und Disziplin',
+      description: 'Regeln zu Bestrafungsmethoden und Disziplinarmaßnahmen',
       levels: [
-        { 
-          title: 'Absolute Vertraulichkeit', 
-          description: 'Stillschweigen gegenüber allen Außenstehenden.', 
-          content: 'Sämtliche Details dieses Verhältnisses, persönliche Informationen sowie der Inhalt dieser Vereinbarung bleiben gegenüber Dritten streng geheim.' 
+        {
+          title: 'Stufe 1 (Basis)',
+          description: 'Erziehungsrecht und Bestrafungsakzeptanz.',
+          content: 'Der Herr/Die Herrin kann Verfehlungen nach Ermessen bestrafen. Kritik am Strafmaß ist untersagt.\n\nEs besteht ein Erziehungsrecht; Ermahnungen, Züchtigungen und Erniedrigungen sind zulässige Mittel der Erziehung.'
         },
-        { 
-          title: 'Medien-Freigaben', 
-          description: 'Aufnahmen nur nach ausdrücklicher Einwilligung.', 
-          content: 'Foto-, Video- oder Tonaufnahmen dürfen ausschließlich nach vorheriger Zustimmung angefertigt werden. Jegliche Weitergabe oder Veröffentlichung ohne explizites Einverständnis ist untersagt.' 
+        {
+          title: 'Stufe 2 (Erweitert)',
+          description: 'Schmerzskala und Dankbarkeitsbezeugung.',
+          content: 'Der/Die Sklave/Sklavin unterwirft sich klaglos allen Zuchtmaßnahmen. Der Schmerzgrad ist auf Aufforderung von 1 bis 10 zu definieren, um die Belastbarkeit zu ermitteln.\n\nNach der Bestrafung vollzieht der/die Sklave/Sklavin zwei kniende Verbeugungen, kriecht nach vorne und küsst die Füße.'
         },
-        { 
-          title: 'Sichere Verwahrung & Löschung', 
-          description: 'Verschlüsselte Speicherung und Löschpflicht bei Beendigung.', 
-          content: 'Erstellte Medien werden auf geschützten bzw. verschlüsselten Datenträgern aufbewahrt. Bei Beendigung des Vertragsverhältnisses sind sämtliche Aufnahmen und Kopien unverzüglich und dauerhaft zu löschen.' 
+        {
+          title: 'Stufe 3 (Intensiv)',
+          description: 'Uneingeschränkte Züchtigung.',
+          content: 'Der Herr/Die Herrin kann den/die Sklaven/Sklavin zum Lustgewinn in jeder erdenklichen Weise züchtigen und Schmerzen zufügen.\n\nWährend der Züchtigung dürfen keine Laute von sich gegeben werden (Knebelung droht); leises Jammern und Weinen ist erlaubt. Ausreden werden nicht geduldet.'
+        }
+      ]
+    },
+    {
+      id: 'sexualitaet',
+      name: 'Sexualität',
+      description: 'Regeln und Vereinbarungen zu sexuellen Handlungen',
+      levels: [
+        {
+          title: 'Stufe 1 (Basis)',
+          description: 'Verzicht auf sexuelle Selbstbestimmung.',
+          content: 'Das Recht auf sexuelle Selbstbestimmung wird an die dominante Person abgetreten. Das Berühren des eigenen Intimbereichs ist ohne Aufforderung verboten.\n\nSexueller Kontakt zu Dritten ist ohne Anweisung untersagt.'
+        },
+        {
+          title: 'Stufe 2 (Erweitert)',
+          description: 'Ständige Verfügbarkeit.',
+          content: 'Die dominante Person ist jederzeit berechtigt, sexuelle Handlungen vorzunehmen oder zu verlangen. Der/Die Sklave/Sklavin hat sich ständig bereitzuhalten; Verweigerung ist untersagt.\n\nSelbstbefriedigung erfolgt nur auf Anordnung. Ein Recht auf eigene sexuelle Befriedigung besteht nicht.'
+        },
+        {
+          title: 'Stufe 3 (Intensiv)',
+          description: 'Keuschheit und Oraldienst.',
+          content: 'Zur Vermeidung eigener Lust wird grundsätzlich ein Keuschheitsgürtel (ggf. mit Ass Lock) getragen.\n\nDer/Die Sklave/Sklavin ist zu jeder sexuellen Knechtschaft gegenüber der dominanten Person oder Dritten verpflichtet und hat auf Verlangen den Intimbereich mit der Zunge zu reinigen.'
+        }
+      ]
+    },
+    {
+      id: 'freiheit',
+      name: 'Freiheitsentzug',
+      description: 'Vereinbarungen zu Einschränkung der Bewegungsfreiheit',
+      levels: [
+        {
+          title: 'Stufe 1 (Basis)',
+          description: 'Freiheitsentzug während der Spielzeit.',
+          content: 'Während der Spielzeit werden Freiheitsrechte aufgegeben (Fesselung, Fixierung, Anketten).\n\nKnebelung sowie das Verbinden von Augen und Ohren sind zulässig.'
+        },
+        {
+          title: 'Stufe 2 (Erweitert)',
+          description: 'Einsperren und Isolation.',
+          content: 'Der/Die Sklave/Sklavin kann jederzeit uneingeschränkt eingesperrt (Käfig, Blackbox, Zelle), gefesselt oder über Nacht in Ketten gelegt werden.\n\nKritik oder Betteln führt zur sofortigen Verschärfung der Maßnahmen.'
+        },
+        {
+          title: 'Stufe 3 (Intensiv)',
+          description: 'Elektronische Überwachung & Kontrolle.',
+          content: 'Anlegen einer elektronischen Fußfessel oder eines Schockhalsbands ist zulässig. Bei Fluchtversuchen oder Fehlverhalten dürfen Stromstöße ausgelöst werden.\n\nBewegung außerhalb des Hauses bedarf der Genehmigung. Der Zugang zu Medien und Elektronik ist ohne Erlaubnis untersagt.'
+        }
+      ]
+    },
+    {
+      id: 'koerper',
+      name: 'Körpermodifikation',
+      description: 'Vereinbarungen zu temporären oder permanenten Körperveränderungen',
+      levels: [
+        {
+          title: 'Stufe 1 (Basis)',
+          description: 'Körperpflege und Haarlänge.',
+          content: 'Verpflichtung zu intensiver Körperpflege und täglicher Ganzkörperrasur.\n\nFarbe und Länge von Haupthaar und Nägeln werden von der dominanten Person bestimmt.'
+        },
+        {
+          title: 'Stufe 2 (Erweitert)',
+          description: 'Piercings, Frisur und dauerhafter Schmuck.',
+          content: 'Alleiniges Bestimmungsrecht über das Äußere (inkl. Glatze, Piercings und Schmuck).\n\nFolgendes wird dauerhaft getragen: Ein Edelstahlhalsband sowie Brustwarzenringe.'
+        },
+        {
+          title: 'Stufe 3 (Intensiv)',
+          description: 'Tattoos, Branding und Kennzeichnung.',
+          content: 'Alleiniges Recht der dominanten Person über Tattoos, Narben, Piercings und Brandings zu entscheiden.\n\nDer/Die Sklave/Sklavin wird mit den Initialen gebrandet (jährliche Wiederholung am Geburtstag). Dauerhafte Kennzeichnungen können jederzeit angeordnet werden.'
         }
       ]
     }
   ],
   optionalSections: {
-    tabu: '**Tabus und Grenzen (Hard & Soft Limits)**\n\nHarte Grenzen (Absolute Tabus):\n________________________________________________________________\n\nWeiche Grenzen (Nur nach vorheriger Absprache):\n________________________________________________________________\n\nGesundheitliche Hinweise / Allergien / Einschränkungen:\n________________________________________________________________',
-    safeword: '**Safewort und Notfallregelung**\n\nSafewort (Sofortiger Stopp): ____________________\nNon-verbales Abbruchsignal: ____________________\n\nAmpelsystem:\n- GRÜN: Handlung ist angenehm / ok.\n- GELB: Belastungsgrenze erreicht, Aufmerksamkeit oder Verlangsamung erforderlich.\n- ROT: Sofortiger Abbruch aller Handlungen ohne Diskussion.',
-    customRules: '**Zusätzliche Vereinbarungen & Ausnahmen**\n\n________________________________________________________________\n________________________________________________________________\n________________________________________________________________'
+    tabu: '**Tabus und Grenzen (Hard & Soft Limits)**\n\nHarte Grenzen: ________________________________________________\nWeiche Grenzen: _______________________________________________\nGesundheitliche Hinweise: _____________________________________',
+    safeword: '**Safewort und Notfallregelung**\n\nSafewort: ____________________\nAmpelsystem: Grün = ok, Gelb = langsamer/prüfen, Rot = sofortiger Stopp. Ein Stopp wird ohne Diskussion respektiert.',
+    customRules: '**Zusätzliche Regeln und Vereinbarungen**\n\n________________________________________________________________\n________________________________________________________________'
   }
 };
 
