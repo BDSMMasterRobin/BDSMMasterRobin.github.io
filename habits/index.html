@@ -675,7 +675,7 @@
                     <label>4-Stelliger Dom-PIN (Optional):</label>
                     <input type="password" id="inputDomPin" class="form-control" maxlength="4" placeholder="z.B. 1234">
                 </div>
-                <button class="btn btn-primary dom-only" style="margin-top: 10px;" onclick="saveDomPin()">PIN Speichern</button>
+                <button class="btn btn-primary" style="margin-top: 10px;" onclick="saveDomPin()">PIN Speichern</button>
             </div>
 
             <div class="card" style="margin-bottom: 20px;">
@@ -963,6 +963,23 @@
 
         const LOCAL_STORAGE_KEY = "habits_app_state_v1";
 
+        // Ensure state data integrity (handles empty Firebase objects / missing arrays)
+        function ensureStateDefaults(data) {
+            if (!data || typeof data !== "object") data = {};
+            return {
+                roomConfig: {
+                    roomId: (data.roomConfig && data.roomConfig.roomId) || "default-room",
+                    domPin: (data.roomConfig && data.roomConfig.domPin) || "",
+                    points: (data.roomConfig && data.roomConfig.points) || 0
+                },
+                tasks: Array.isArray(data.tasks) ? data.tasks : [],
+                rewards: Array.isArray(data.rewards) ? data.rewards : [],
+                rules: Array.isArray(data.rules) ? data.rules : [],
+                punishments: Array.isArray(data.punishments) ? data.punishments : [],
+                logs: Array.isArray(data.logs) ? data.logs : []
+            };
+        }
+
         // Initialize App
         window.addEventListener("DOMContentLoaded", () => {
             loadLocalState();
@@ -975,22 +992,17 @@
                 const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
                 if (saved) {
                     const parsed = JSON.parse(saved);
-                    state = {
-                        roomConfig: { ...state.roomConfig, ...(parsed.roomConfig || {}) },
-                        tasks: parsed.tasks || [],
-                        rewards: parsed.rewards || [],
-                        rules: parsed.rules || [],
-                        punishments: parsed.punishments || [],
-                        logs: parsed.logs || []
-                    };
+                    state = ensureStateDefaults(parsed);
                 }
             } catch (e) {
                 console.error("Failed to load local state:", e);
+                state = ensureStateDefaults(state);
             }
         }
 
         // Save State to LocalStorage (and sync to Firebase if available)
         function saveState() {
+            state = ensureStateDefaults(state);
             try {
                 localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
             } catch (e) {
@@ -1660,7 +1672,7 @@
                     const data = snapshot.val();
                     if (data) {
                         isSyncingFromFirebase = true;
-                        state = data;
+                        state = ensureStateDefaults(data);
                         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
                         updateUI();
                         isSyncingFromFirebase = false;
