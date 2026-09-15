@@ -646,7 +646,10 @@
         <section id="tab-tasks" class="tab-content active">
             <div class="section-header">
                 <h2 class="section-title"><span>📋</span> <span data-i18n="titleTasks">Protocols & Tasks</span></h2>
-                <button class="btn btn-gold dom-only" onclick="openModal('modalAddTask')" data-i18n="btnNewTask">+ New Task</button>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn dom-only" onclick="openModal('modalManageTemplates')" data-i18n="btnTemplates">📁 Templates</button>
+                    <button class="btn btn-gold dom-only" onclick="openModal('modalAddTask')" data-i18n="btnNewTask">+ New Task</button>
+                </div>
             </div>
             <div id="tasksList" class="card-grid">
                 <!-- Dynamically populated -->
@@ -809,6 +812,73 @@
         </div>
     </div>
 
+    <!-- Manage Templates Modal -->
+    <div id="modalManageTemplates" class="modal-overlay">
+        <div class="modal" style="max-width: 600px; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="modalTemplatesTitle">Task Templates</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalManageTemplates')">✕</button>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <button class="btn btn-gold btn-sm" onclick="openModal('modalAddTemplate')" data-i18n="btnNewTemplate">+ New Template</button>
+            </div>
+            <div id="templatesList">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Template Modal -->
+    <div id="modalAddTemplate" class="modal-overlay">
+        <div class="modal" style="max-width: 500px; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="modalAddTemplateTitle">New Task Template</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalAddTemplate')">✕</button>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelTitle">Title:</label>
+                <input type="text" id="templateTitle" class="form-control" placeholder="e.g. Daily Cleaning" data-i18n-placeholder="phTemplateTitle">
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelCategory">Category:</label>
+                <select id="templateCategory" class="form-control">
+                    <option value="Habit" data-i18n="optHabit">Daily Habit</option>
+                    <option value="Task" data-i18n="optTask">One-time Task</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelPoints">Points Reward:</label>
+                <input type="number" id="templatePoints" class="form-control" value="10" min="1">
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelScheduleType">Automatic Schedule:</label>
+                <select id="templateScheduleType" class="form-control" onchange="toggleTemplateScheduleFields()">
+                    <option value="none" data-i18n="optScheduleNone">Manual Generation Only</option>
+                    <option value="daily" data-i18n="optScheduleDaily">Daily</option>
+                    <option value="weekly" data-i18n="optScheduleWeekly">Weekly</option>
+                    <option value="monthly" data-i18n="optScheduleMonthly">Monthly</option>
+                </select>
+            </div>
+            <div id="templateScheduleWeeklyGroup" class="form-group" style="display:none;">
+                <label data-i18n="labelDayOfWeek">Day of Week:</label>
+                <select id="templateDayOfWeek" class="form-control">
+                    <option value="1" data-i18n="dayMon">Monday</option>
+                    <option value="2" data-i18n="dayTue">Tuesday</option>
+                    <option value="3" data-i18n="dayWed">Wednesday</option>
+                    <option value="4" data-i18n="dayThu">Thursday</option>
+                    <option value="5" data-i18n="dayFri">Friday</option>
+                    <option value="6" data-i18n="daySat">Saturday</option>
+                    <option value="0" data-i18n="daySun">Sunday</option>
+                </select>
+            </div>
+            <div id="templateScheduleMonthlyGroup" class="form-group" style="display:none;">
+                <label data-i18n="labelDayOfMonth">Day of Month (1-31):</label>
+                <input type="number" id="templateDayOfMonth" class="form-control" min="1" max="31" value="1">
+            </div>
+            <button class="btn btn-gold" onclick="createTemplate()" data-i18n="btnCreate">Create Template</button>
+        </div>
+    </div>
+
     <!-- Add Task Modal -->
     <div id="modalAddTask" class="modal-overlay">
         <div class="modal">
@@ -825,6 +895,20 @@
                 <select id="taskCategory" class="form-control">
                     <option value="Habit" data-i18n="optHabit">Daily Habit</option>
                     <option value="Task" data-i18n="optTask">One-time Task</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelStartDate">Start Date / Time (Optional):</label>
+                <input type="datetime-local" id="taskStartDate" class="form-control">
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelEndDate">End Date / Time (Optional):</label>
+                <input type="datetime-local" id="taskEndDate" class="form-control">
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelDependsOn">Prerequisite Task (Optional):</label>
+                <select id="taskDependsOn" class="form-control">
+                    <option value="" data-i18n="optNoDependency">None (Available immediately)</option>
                 </select>
             </div>
             <div class="form-group">
@@ -999,6 +1083,7 @@
 
                 titleTasks: "Protocols & Tasks",
                 btnNewTask: "+ New Task",
+                btnTemplates: "📁 Templates",
                 titleRewards: "Rewards Shop",
                 btnNewReward: "+ New Reward",
                 titleRules: "Rules & Code",
@@ -1041,8 +1126,45 @@
                 labelCategory: "Category:",
                 optHabit: "Daily Habit",
                 optTask: "One-time Task",
+                labelStartDate: "Start Date / Time (Optional):",
+                labelEndDate: "End Date / Time (Optional):",
+                labelDependsOn: "Prerequisite Task (Optional):",
+                optNoDependency: "None (Available immediately)",
+                labelStart: "Start",
+                labelEnd: "End",
+                badgeWaitingFor: "Waiting for",
                 labelPoints: "Points Reward:",
                 btnCreate: "Create",
+
+                modalTemplatesTitle: "Task Templates",
+                modalAddTemplateTitle: "New Task Template",
+                btnNewTemplate: "+ New Template",
+                phTemplateTitle: "e.g. Daily Cleaning",
+                labelScheduleType: "Automatic Schedule:",
+                optScheduleNone: "Manual Generation Only",
+                optScheduleDaily: "Daily",
+                optScheduleWeekly: "Weekly",
+                optScheduleMonthly: "Monthly",
+                labelDayOfWeek: "Day of Week:",
+                labelDayOfMonth: "Day of Month (1-31):",
+                dayMon: "Monday",
+                dayTue: "Tuesday",
+                dayWed: "Wednesday",
+                dayThu: "Thursday",
+                dayFri: "Friday",
+                daySat: "Saturday",
+                daySun: "Sunday",
+                emptyTemplates: "No task templates created yet.",
+                btnGenerateTask: "Create Task",
+                schedNone: "Manual Generation Only",
+                schedDaily: "Daily Schedule",
+                schedWeekly: "Weekly on",
+                schedMonthly: "Monthly on day",
+                alertTitleTemplateRequired: "Please enter a title for the template!",
+                alertConfirmDeleteTemplate: "Delete this template?",
+                logGeneratedFromTemplate: 'Task created from template: "{title}"',
+                logAutoGeneratedTask: 'Scheduled task auto-generated: "{title}"',
+                alertTaskGeneratedSuccess: 'Task "{title}" created successfully!',
 
                 modalRewardTitle: "New Reward",
                 phRewardTitle: "e.g. Movie Choice Night",
@@ -1165,6 +1287,7 @@
 
                 titleTasks: "Protokolle & Aufgaben",
                 btnNewTask: "+ Neue Aufgabe",
+                btnTemplates: "📁 Vorlagen",
                 titleRewards: "Belohnungen Shop",
                 btnNewReward: "+ Neue Belohnung",
                 titleRules: "Regelwerk",
@@ -1207,8 +1330,45 @@
                 labelCategory: "Kategorie:",
                 optHabit: "Tägliches Habit (Gewohnheit)",
                 optTask: "Einmalige Aufgabe",
+                labelStartDate: "Startdatum / Zeit (Optional):",
+                labelEndDate: "Enddatum / Zeit (Optional):",
+                labelDependsOn: "Vorausgesetzte Aufgabe (Optional):",
+                optNoDependency: "Keine (Sofort verfügbar)",
+                labelStart: "Start",
+                labelEnd: "Ende",
+                badgeWaitingFor: "Wartet auf",
                 labelPoints: "Punkte Belohnung:",
                 btnCreate: "Erstellen",
+
+                modalTemplatesTitle: "Aufgaben-Vorlagen",
+                modalAddTemplateTitle: "Neue Aufgaben-Vorlage",
+                btnNewTemplate: "+ Neue Vorlage",
+                phTemplateTitle: "z.B. Tägliche Reinigung",
+                labelScheduleType: "Automatischer Zeitplan:",
+                optScheduleNone: "Nur manuelle Erstellung",
+                optScheduleDaily: "Täglich",
+                optScheduleWeekly: "Wöchentlich",
+                optScheduleMonthly: "Monatlich",
+                labelDayOfWeek: "Wochentag:",
+                labelDayOfMonth: "Tag des Monats (1-31):",
+                dayMon: "Montag",
+                dayTue: "Dienstag",
+                dayWed: "Mittwoch",
+                dayThu: "Donnerstag",
+                dayFri: "Freitag",
+                daySat: "Samstag",
+                daySun: "Sonntag",
+                emptyTemplates: "Noch keine Aufgaben-Vorlagen erstellt.",
+                btnGenerateTask: "Aufgabe Erstellen",
+                schedNone: "Nur manuelle Erstellung",
+                schedDaily: "Täglicher Zeitplan",
+                schedWeekly: "Wöchentlich am",
+                schedMonthly: "Monatlich am Tag",
+                alertTitleTemplateRequired: "Bitte einen Titel für die Vorlage eingeben!",
+                alertConfirmDeleteTemplate: "Vorlage wirklich löschen?",
+                logGeneratedFromTemplate: 'Aufgabe aus Vorlage erstellt: "{title}"',
+                logAutoGeneratedTask: 'Automatische Aufgabe erstellt: "{title}"',
+                alertTaskGeneratedSuccess: 'Aufgabe "{title}" erfolgreich erstellt!',
 
                 modalRewardTitle: "Neue Belohnung",
                 phRewardTitle: "z.B. Wunsch-Filmabend",
@@ -1380,6 +1540,7 @@
                 lang: "en"
             },
             tasks: [],
+            taskTemplates: [],
             rewards: [],
             rules: [],
             punishments: [],
@@ -1402,11 +1563,64 @@
                     lang: (data.roomConfig && data.roomConfig.lang) || "en"
                 },
                 tasks: Array.isArray(data.tasks) ? data.tasks : [],
+                taskTemplates: Array.isArray(data.taskTemplates) ? data.taskTemplates : [],
                 rewards: Array.isArray(data.rewards) ? data.rewards : [],
                 rules: Array.isArray(data.rules) ? data.rules : [],
                 punishments: Array.isArray(data.punishments) ? data.punishments : [],
                 logs: Array.isArray(data.logs) ? data.logs : []
             };
+        }
+
+        function checkScheduledTemplates() {
+            if (!state.taskTemplates || !Array.isArray(state.taskTemplates)) return;
+
+            const now = new Date();
+            const todayStr = now.toISOString().split("T")[0]; // "YYYY-MM-DD"
+            const currentDayOfWeek = now.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+            const currentDayOfMonth = now.getDate(); // 1 - 31
+
+            let updated = false;
+
+            state.taskTemplates.forEach(tmpl => {
+                if (!tmpl.schedule || tmpl.schedule.type === "none") return;
+                if (tmpl.lastGeneratedDate === todayStr) return; // Already generated today
+
+                let shouldGenerate = false;
+                if (tmpl.schedule.type === "daily") {
+                    shouldGenerate = true;
+                } else if (tmpl.schedule.type === "weekly") {
+                    if (tmpl.schedule.dayOfWeek === currentDayOfWeek) {
+                        shouldGenerate = true;
+                    }
+                } else if (tmpl.schedule.type === "monthly") {
+                    if (tmpl.schedule.dayOfMonth === currentDayOfMonth) {
+                        shouldGenerate = true;
+                    }
+                }
+
+                if (shouldGenerate) {
+                    const newTask = {
+                        id: generateUUID(),
+                        title: tmpl.title,
+                        category: tmpl.category,
+                        points: tmpl.points,
+                        startDate: "",
+                        endDate: "",
+                        dependsOnTaskId: "",
+                        templateId: tmpl.id,
+                        status: "active",
+                        streak: 0
+                    };
+                    state.tasks.push(newTask);
+                    tmpl.lastGeneratedDate = todayStr;
+                    updated = true;
+                    addLog("SCHEDULE", t("logAutoGeneratedTask", { title: tmpl.title }) || `Scheduled task auto-generated: ${tmpl.title}`);
+                }
+            });
+
+            if (updated) {
+                saveState();
+            }
         }
 
         // Initialize App
@@ -1415,6 +1629,7 @@
             currentLang = state.roomConfig.lang || "en";
             document.documentElement.lang = currentLang;
             applyStaticTranslations();
+            checkScheduledTemplates();
             updateUI();
         });
 
@@ -1547,9 +1762,38 @@
             if (mobileNavBtn) mobileNavBtn.classList.add("active");
         }
 
+        function populateTaskDependencyDropdown() {
+            const select = document.getElementById("taskDependsOn");
+            if (!select) return;
+            const currentVal = select.value;
+            select.innerHTML = `<option value="" data-i18n="optNoDependency">${t("optNoDependency") || "None (Available immediately)"}</option>`;
+            state.tasks.forEach(t => {
+                const opt = document.createElement("option");
+                opt.value = t.id;
+                opt.textContent = `${t.title} (${t.status})`;
+                select.appendChild(opt);
+            });
+            select.value = currentVal;
+        }
+
+        function toggleTemplateScheduleFields() {
+            const type = document.getElementById("templateScheduleType") ? document.getElementById("templateScheduleType").value : "none";
+            const weeklyGrp = document.getElementById("templateScheduleWeeklyGroup");
+            const monthlyGrp = document.getElementById("templateScheduleMonthlyGroup");
+            if (weeklyGrp) weeklyGrp.style.display = (type === "weekly") ? "block" : "none";
+            if (monthlyGrp) monthlyGrp.style.display = (type === "monthly") ? "block" : "none";
+        }
+
         function openModal(id) {
             const el = document.getElementById(id);
-            if (el) el.classList.add("active");
+            if (el) {
+                if (id === "modalAddTask") {
+                    populateTaskDependencyDropdown();
+                } else if (id === "modalManageTemplates") {
+                    renderTemplates();
+                }
+                el.classList.add("active");
+            }
         }
 
         function closeModal(id) {
@@ -1610,16 +1854,129 @@
         }
 
         // ==========================================
-        // MODULE A: TASKS & HABITS
+        // MODULE A: TASKS, TEMPLATES & HABITS
         // ==========================================
-        function createTask() {
-            const titleInput = document.getElementById("taskTitle");
-            const catSelect = document.getElementById("taskCategory");
-            const ptsInput = document.getElementById("taskPoints");
+        function createTemplate() {
+            const titleInput = document.getElementById("templateTitle");
+            const catSelect = document.getElementById("templateCategory");
+            const ptsInput = document.getElementById("templatePoints");
+            const schedSelect = document.getElementById("templateScheduleType");
+            const dayOfWeekSelect = document.getElementById("templateDayOfWeek");
+            const dayOfMonthInput = document.getElementById("templateDayOfMonth");
 
             const title = titleInput ? titleInput.value.trim() : "";
             const category = catSelect ? catSelect.value : "Habit";
             const points = ptsInput ? parseInt(ptsInput.value) || 10 : 10;
+            const scheduleType = schedSelect ? schedSelect.value : "none";
+            const dayOfWeek = dayOfWeekSelect ? parseInt(dayOfWeekSelect.value) : 1;
+            const dayOfMonth = dayOfMonthInput ? parseInt(dayOfMonthInput.value) : 1;
+
+            if (!title) {
+                alert(t("alertTitleTemplateRequired") || "Please enter a title for the template!");
+                return;
+            }
+
+            const newTemplate = {
+                id: generateUUID(),
+                title: title,
+                category: category,
+                points: points,
+                schedule: {
+                    type: scheduleType, // "none" | "daily" | "weekly" | "monthly"
+                    dayOfWeek: dayOfWeek,
+                    dayOfMonth: dayOfMonth
+                },
+                lastGeneratedDate: ""
+            };
+
+            state.taskTemplates.push(newTemplate);
+            saveState();
+
+            if (titleInput) titleInput.value = "";
+            closeModal("modalAddTemplate");
+            renderTemplates();
+        }
+
+        function deleteTemplate(templateId) {
+            if (!confirm(t("alertConfirmDeleteTemplate") || "Delete this template?")) return;
+            state.taskTemplates = state.taskTemplates.filter(tmpl => tmpl.id !== templateId);
+            saveState();
+            renderTemplates();
+        }
+
+        function generateTaskFromTemplate(templateId) {
+            const tmpl = state.taskTemplates.find(t => t.id === templateId);
+            if (!tmpl) return;
+
+            const newTask = {
+                id: generateUUID(),
+                title: tmpl.title,
+                category: tmpl.category,
+                points: tmpl.points,
+                startDate: "",
+                endDate: "",
+                dependsOnTaskId: "",
+                templateId: tmpl.id,
+                status: "active",
+                streak: 0
+            };
+
+            state.tasks.push(newTask);
+            saveState();
+
+            addLog("TASK", t("logGeneratedFromTemplate", { title: tmpl.title }) || `Task created from template: ${tmpl.title}`);
+            renderTasks();
+            alert(t("alertTaskGeneratedSuccess") || `Task "${tmpl.title}" created successfully!`);
+        }
+
+        function renderTemplates() {
+            const container = document.getElementById("templatesList");
+            if (!container) return;
+
+            if (!state.taskTemplates || state.taskTemplates.length === 0) {
+                container.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">${t("emptyTemplates") || "No task templates created yet."}</p>`;
+                return;
+            }
+
+            container.innerHTML = state.taskTemplates.map(tmpl => {
+                let schedText = t("schedNone") || "Manual Generation Only";
+                if (tmpl.schedule && tmpl.schedule.type === "daily") {
+                    schedText = t("schedDaily") || "Daily Schedule";
+                } else if (tmpl.schedule && tmpl.schedule.type === "weekly") {
+                    const days = [t("daySun")||"Sun", t("dayMon")||"Mon", t("dayTue")||"Tue", t("dayWed")||"Wed", t("dayThu")||"Thu", t("dayFri")||"Fri", t("daySat")||"Sat"];
+                    schedText = `${t("schedWeekly") || "Weekly on"} ${days[tmpl.schedule.dayOfWeek] || ""}`;
+                } else if (tmpl.schedule && tmpl.schedule.type === "monthly") {
+                    schedText = `${t("schedMonthly") || "Monthly on day"} ${tmpl.schedule.dayOfMonth}`;
+                }
+
+                return `
+                    <div style="background:var(--bg-card-inner); border:1px solid var(--border-color); border-radius:8px; padding:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-weight:600; font-size:1rem; color:var(--text-bright);">${escapeHtml(tmpl.title)}</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">${tmpl.category} • +${tmpl.points} PTS • 🕒 ${schedText}</div>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn btn-sm btn-primary" onclick="generateTaskFromTemplate('${tmpl.id}')" data-i18n="btnGenerateTask"> Create Task</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteTemplate('${tmpl.id}')">✕</button>
+                        </div>
+                    </div>`;
+            }).join("");
+        }
+
+        function createTask() {
+            const titleInput = document.getElementById("taskTitle");
+            const catSelect = document.getElementById("taskCategory");
+            const ptsInput = document.getElementById("taskPoints");
+            const startDateInput = document.getElementById("taskStartDate");
+            const endDateInput = document.getElementById("taskEndDate");
+            const dependsOnSelect = document.getElementById("taskDependsOn");
+
+            const title = titleInput ? titleInput.value.trim() : "";
+            const category = catSelect ? catSelect.value : "Habit";
+            const points = ptsInput ? parseInt(ptsInput.value) || 10 : 10;
+            const startDate = startDateInput ? startDateInput.value : "";
+            const endDate = endDateInput ? endDateInput.value : "";
+            const dependsOnTaskId = dependsOnSelect ? dependsOnSelect.value : "";
 
             if (!title) {
                 alert(t("alertTitleTaskRequired"));
@@ -1631,6 +1988,9 @@
                 title: title,
                 category: category,
                 points: points,
+                startDate: startDate,
+                endDate: endDate,
+                dependsOnTaskId: dependsOnTaskId,
                 status: "active", // active | pending | approved
                 streak: 0
             };
@@ -1639,6 +1999,9 @@
             saveState();
 
             if (titleInput) titleInput.value = "";
+            if (startDateInput) startDateInput.value = "";
+            if (endDateInput) endDateInput.value = "";
+            if (dependsOnSelect) dependsOnSelect.value = "";
             closeModal("modalAddTask");
         }
 
@@ -1702,8 +2065,29 @@
                 const badgeClass = task.category === "Habit" ? "badge-habit" : "badge-task";
                 const catLabel = task.category === "Habit" ? t("badgeHabit") : t("badgeTask");
 
+                // Check dependency
+                let isLockedByDependency = false;
+                let parentTaskTitle = "";
+                if (task.dependsOnTaskId) {
+                    const parentTask = state.tasks.find(pt => pt.id === task.dependsOnTaskId);
+                    if (parentTask && parentTask.status !== "approved") {
+                        isLockedByDependency = true;
+                        parentTaskTitle = parentTask.title;
+                    }
+                }
+
+                let datesHtml = "";
+                if (task.startDate || task.endDate) {
+                    const parts = [];
+                    if (task.startDate) parts.push(`📅 ${t("labelStart")||"Start"}: ${task.startDate.replace("T", " ")}`);
+                    if (task.endDate) parts.push(`⏳ ${t("labelEnd")||"End"}: ${task.endDate.replace("T", " ")}`);
+                    datesHtml = `<div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">${parts.join(" | ")}</div>`;
+                }
+
                 let actionHtml = "";
-                if (task.status === "active") {
+                if (isLockedByDependency) {
+                    actionHtml = `<span class="badge" style="background:rgba(231,76,60,0.15); color:var(--danger); border:1px solid rgba(231,76,60,0.3);">🔒 ${t("badgeWaitingFor") || "Waiting for"}: ${escapeHtml(parentTaskTitle)}</span>`;
+                } else if (task.status === "active") {
                     actionHtml = `<button class="btn btn-sm btn-primary" onclick="completeTask('${task.id}')">${t("btnMarkComplete")}</button>`;
                 } else if (task.status === "pending") {
                     if (currentRole === "Dom") {
@@ -1726,7 +2110,7 @@
                 const domDeleteBtn = currentRole === "Dom" ? `<button class="btn btn-sm btn-danger" style="padding:2px 6px;" onclick="deleteTask('${task.id}')">✕</button>` : '';
 
                 return `
-                    <div class="card">
+                    <div class="card" style="${isLockedByDependency ? 'opacity:0.85;' : ''}">
                         <div class="card-header">
                             <div>
                                 <span class="badge ${badgeClass}">${catLabel}</span>
@@ -1737,7 +2121,8 @@
                                 ${domDeleteBtn}
                             </div>
                         </div>
-                        ${task.category === "Habit" ? `<div style="font-size:0.8rem; color:var(--text-muted);">${t("streakPrefix")} <strong>${task.streak} ${t("streakDays")}</strong></div>` : ''}
+                        ${datesHtml}
+                        ${task.category === "Habit" ? `<div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">${t("streakPrefix")} <strong>${task.streak} ${t("streakDays")}</strong></div>` : ''}
                         <div class="card-footer">
                             ${actionHtml}
                         </div>
