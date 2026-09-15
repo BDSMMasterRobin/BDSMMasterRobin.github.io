@@ -689,8 +689,8 @@
                     <input type="text" id="inputRoomId" class="form-control" placeholder="z.B. ds-space-2026">
                 </div>
                 <div class="form-group" style="margin-top: 10px;">
-                    <label>Firebase Config (JSON):</label>
-                    <textarea id="inputFirebaseConfig" class="form-control" placeholder='{"apiKey": "...", "databaseURL": "...", ...}'></textarea>
+                    <label>Firebase Config (JSON oder Code-Snippet):</label>
+                    <textarea id="inputFirebaseConfig" class="form-control" placeholder='Kopierten Code aus Firebase-Konsole oder JSON hier einfügen...'></textarea>
                 </div>
                 <button class="btn btn-gold" style="margin-top: 12px;" onclick="saveFirebaseSettings()">Firebase Verbinden</button>
             </div>
@@ -1624,6 +1624,46 @@
         let firebaseRoomRef = null;
         let isSyncingFromFirebase = false;
 
+        function parseFirebaseConfigString(rawInput) {
+            if (!rawInput) return null;
+            let text = rawInput.trim();
+
+            // Extract object block if full JS snippet was pasted
+            if (text.includes("apiKey")) {
+                const apiKeyPos = text.indexOf("apiKey");
+                const braceBefore = text.lastIndexOf("{", apiKeyPos);
+                const braceAfter = text.indexOf("}", apiKeyPos);
+                if (braceBefore !== -1 && braceAfter !== -1 && braceAfter > braceBefore) {
+                    text = text.substring(braceBefore, braceAfter + 1);
+                }
+            } else {
+                const firstBrace = text.indexOf("{");
+                const lastBrace = text.lastIndexOf("}");
+                if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                    text = text.substring(firstBrace, lastBrace + 1);
+                }
+            }
+
+            // Remove comments
+            text = text.replace(/\/\/.*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+
+            let parsed = null;
+            try {
+                parsed = JSON.parse(text);
+            } catch (e) {
+                try {
+                    const jsonified = text
+                        .replace(/([{,]\s*)([a-zA-Z0-9_$]+)\s*:/g, '$1"$2":')
+                        .replace(/,\s*([}\]])/g, "$1");
+                    parsed = JSON.parse(jsonified);
+                } catch (err) {
+                    return null;
+                }
+            }
+
+            return parsed;
+        }
+
         function saveFirebaseSettings() {
             const roomInput = document.getElementById("inputRoomId");
             const configInput = document.getElementById("inputFirebaseConfig");
@@ -1639,33 +1679,23 @@
             state.roomConfig.roomId = roomId;
 
             if (configStr) {
-                let parsedConfig = null;
-                try {
-                    parsedConfig = JSON.parse(configStr);
-                } catch (e) {
-                    try {
-                        const jsonified = configStr
-                            .replace(/([{,]\s*)([a-zA-Z0-9_$]+)\s*:/g, '$1"$2":')
-                            .replace(/,\s*([}\]])/g, "$1");
-                        parsedConfig = JSON.parse(jsonified);
-                    } catch (err) {
-                        alert("Ungültiges JSON-Format in der Firebase-Konfiguration! Bitte stelle sicher, dass es sich um echtes JSON handelt.");
-                        return;
-                    }
-                }
+                const parsedConfig = parseFirebaseConfigString(configStr);
 
-                if (!parsedConfig || typeof parsedConfig !== "object") {
-                    alert("Ungültige Firebase-Konfiguration!");
+                if (!parsedConfig || typeof parsedConfig !== "object" || !parsedConfig.apiKey) {
+                    alert("Ungültige Firebase-Konfiguration! Bitte füge den kopierten Code aus der Firebase-Konsole ein.");
                     return;
                 }
 
-                if (!parsedConfig.databaseURL) {
-                    alert("Achtung: 'databaseURL' fehlt in deiner Firebase Config! Für die Realtime Database wird 'databaseURL' benötigt (z.B. https://<project-id>-default-rtdb.firebaseio.com).");
+                // Automatically construct default Realtime Database URL if missing
+                let autoDbNotice = "";
+                if (!parsedConfig.databaseURL && parsedConfig.projectId) {
+                    parsedConfig.databaseURL = `https://${parsedConfig.projectId}-default-rtdb.firebaseio.com`;
+                    autoDbNotice = `\n\n(Hinweis: 'databaseURL' wurde automatisch als '${parsedConfig.databaseURL}' ergänzt.)`;
                 }
 
                 localStorage.setItem("habits_firebase_config", JSON.stringify(parsedConfig));
                 initFirebase(parsedConfig, roomId);
-                alert("Firebase-Verbindung wird hergestellt!");
+                alert("Firebase-Verbindung wird hergestellt!" + autoDbNotice);
             } else {
                 localStorage.removeItem("habits_firebase_config");
                 alert("Einstellungen gespeichert (Nur LocalStorage Aktiv).");
