@@ -894,17 +894,18 @@
                     <h4 style="color: var(--gold-accent); margin-bottom: 6px;">1. Firebase Projekt erstellen (Person 1)</h4>
                     <ol style="margin-left: 18px; display: flex; flex-direction: column; gap: 4px; color: var(--text-muted);">
                         <li>Gehe auf <a href="https://console.firebase.google.com/" target="_blank" style="color: var(--gold-accent);">console.firebase.google.com</a> (kostenloser Google-Account).</li>
-                        <li>Klicke auf <strong>"Projekt hinzufügen"</strong> (z. B. Name "habits-app").</li>
-                        <li>Füge eine <strong>Web-App (&lt;/&gt;)</strong> zum Projekt hinzu.</li>
-                        <li>Kopiere die gezeigte <code>firebaseConfig</code> (JSON-Objekt) in das Feld <strong>Firebase Config (JSON)</strong>.</li>
+                        <li>Klicke auf <strong>"Projekt erstellen"</strong> oder <strong>"Projekt hinzufügen"</strong> (z. B. Name "habits-app").</li>
+                        <li>Klicke in der Projektübersicht auf das Web-Symbol <strong>(&lt;/&gt;)</strong>, um eine Web-App hinzuzufügen.</li>
+                        <li>Gib einen App-Namen ein, klicke auf <strong>"App registrieren"</strong> und kopiere das gezeigte <code>firebaseConfig</code>-Objekt (in geschweiften Klammern <code>{ ... }</code>) in das Feld <strong>Firebase Config (JSON)</strong>.</li>
                     </ol>
                 </div>
 
                 <div>
                     <h4 style="color: var(--gold-accent); margin-bottom: 6px;">2. Realtime Database aktivieren</h4>
                     <ol style="margin-left: 18px; display: flex; flex-direction: column; gap: 4px; color: var(--text-muted);">
-                        <li>Wähle im linken Menü <strong>Build &gt; Realtime Database</strong> und klicke auf <strong>"Datenbank erstellen"</strong>.</li>
-                        <li>Gehe zum Reiter <strong>Regeln (Rules)</strong> und passe die Sicherheitsregeln an:</li>
+                        <li>Wähle im linken Menü <strong>Erstellen / Build &gt; Realtime Database</strong> und klicke auf <strong>"Datenbank erstellen"</strong>.</li>
+                        <li>Wähle den Standort aus, behalte den Testmodus bei oder erstelle die Datenbank und wechsle zum Reiter <strong>Regeln (Rules)</strong>.</li>
+                        <li>Ersetze die Regeln durch folgenden Code und klicke auf <strong>"Veröffentlichen"</strong> (Publish):</li>
                     </ol>
                     <pre style="background: var(--bg-base); border: 1px solid var(--border-color); padding: 8px; border-radius: var(--radius-sm); font-size: 0.75rem; color: var(--success); margin-top: 6px; overflow-x: auto;">{
   "rules": {
