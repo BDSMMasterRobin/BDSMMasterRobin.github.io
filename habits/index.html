@@ -673,6 +673,574 @@
                 <h2 class="section-title"><span>📜</span> <span data-i18n="titleRules">Rules & Code</span></h2>
                 <div style="display:flex; gap:8px;">
                     <button class="btn btn-danger" onclick="openModal('modalLogInfraction')" data-i18n="btnLogInfraction">⚠️ Report Infraction</button>
+                    <button class="btn btn-gold dom-only" on            -webkit-text-fill-color: transparent;
+        }
+
+        .role-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .role-badge.sub {
+            background: rgba(46, 196, 182, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(46, 196, 182, 0.4);
+        }
+
+        .role-badge.dom {
+            background: rgba(230, 57, 70, 0.2);
+            color: var(--red-accent);
+            border: 1px solid var(--red-accent);
+            box-shadow: 0 0 10px var(--red-glow);
+        }
+
+        .points-pill {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(255, 183, 3, 0.1) 100%);
+            border: 1px solid var(--gold-primary);
+            color: var(--gold-accent);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 0 12px var(--gold-glow);
+        }
+
+        .lang-switch {
+            display: flex;
+            align-items: center;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2px;
+            gap: 2px;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .lang-btn.active {
+            background: var(--gold-primary);
+            color: #0d0d11;
+        }
+
+        /* DESKTOP NAV */
+        .desktop-nav {
+            display: none;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        @media (min-width: 768px) {
+            .desktop-nav {
+                display: flex;
+            }
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-btn.active {
+            color: var(--gold-accent);
+            background: var(--bg-card);
+            border-bottom: 2px solid var(--gold-accent);
+        }
+
+        /* MOBILE BOTTOM NAV */
+        .mobile-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(22, 22, 30, 0.98);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            z-index: 100;
+        }
+
+        @media (min-width: 768px) {
+            .mobile-nav {
+                display: none;
+            }
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            font-weight: 500;
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 20%;
+            transition: color 0.2s;
+        }
+
+        .tab-item icon {
+            font-size: 1.2rem;
+        }
+
+        .tab-item.active {
+            color: var(--gold-accent);
+        }
+
+        /* MAIN CONTAINER */
+        main {
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* SECTION STYLES */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: var(--font-title);
+            font-size: 1.4rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* CARDS & LISTS */
+        .card-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        @media (min-width: 600px) {
+            .card-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: rgba(212, 175, 55, 0.4);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-habit {
+            background: rgba(212, 175, 55, 0.15);
+            color: var(--gold-accent);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .badge-task {
+            background: rgba(46, 196, 182, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(46, 196, 182, 0.3);
+        }
+
+        .badge-pending {
+            background: rgba(255, 159, 28, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(255, 159, 28, 0.4);
+        }
+
+        .badge-active {
+            background: rgba(46, 196, 182, 0.15);
+            color: var(--success);
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* BUTTONS */
+        .btn {
+            background: var(--bg-surface);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--text-muted);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--red-primary) 0%, #ba181b 100%);
+            border: none;
+            color: #fff;
+            box-shadow: 0 0 12px var(--red-glow);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--red-accent) 0%, #e63946 100%);
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, var(--gold-primary) 0%, #b38b20 100%);
+            border: none;
+            color: #0d0d11;
+            font-weight: 700;
+        }
+
+        .btn-gold:hover {
+            background: linear-gradient(135deg, var(--gold-accent) 0%, var(--gold-primary) 100%);
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.78rem;
+        }
+
+        .btn-danger {
+            background: rgba(230, 57, 70, 0.2);
+            color: var(--red-accent);
+            border: 1px solid var(--red-accent);
+        }
+
+        .btn-danger:hover {
+            background: var(--red-accent);
+            color: #fff;
+        }
+
+        .btn-success {
+            background: rgba(46, 196, 182, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .btn-success:hover {
+            background: var(--success);
+            color: #0d0d11;
+        }
+
+        /* MODALS */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 450px;
+            padding: 24px;
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-family: var(--font-title);
+            font-size: 1.2rem;
+            color: var(--gold-accent);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .form-control {
+            background: var(--bg-base);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--gold-primary);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* PIN KEYPAD */
+        .pin-display {
+            font-size: 2rem;
+            letter-spacing: 12px;
+            text-align: center;
+            margin: 10px 0;
+            height: 40px;
+            color: var(--gold-accent);
+        }
+
+        .pin-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 260px;
+            margin: 0 auto;
+        }
+
+        .pin-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 1.2rem;
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .pin-btn:active {
+            background: var(--red-primary);
+        }
+
+        /* LOG LIST */
+        .log-item {
+            background: var(--bg-card);
+            border-left: 3px solid var(--border-color);
+            padding: 12px 16px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .log-item.APPROVAL { border-left-color: var(--success); }
+        .log-item.REWARD { border-left-color: var(--gold-accent); }
+        .log-item.PENALTY { border-left-color: var(--red-accent); }
+
+        .log-msg {
+            font-size: 0.88rem;
+            color: var(--text-main);
+        }
+
+        .log-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* EMPTY STATES */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .empty-state span {
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="header-content">
+            <div class="brand">
+                <span class="brand-title">HABITS</span>
+                <div id="roleBadge" class="role-badge sub" onclick="toggleRole()">
+                    <span id="roleText">SUB</span> 🔒
+                </div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="lang-switch">
+                    <button id="langBtnEn" class="lang-btn active" onclick="setLanguage('en')">EN</button>
+                    <button id="langBtnDe" class="lang-btn" onclick="setLanguage('de')">DE</button>
+                </div>
+                <div id="pointsDisplay" class="points-pill">
+                    <span>👑</span> <span id="pointsValue">0</span> PTS
+                </div>
+            </div>
+        </div>
+
+        <nav class="desktop-nav">
+            <button class="nav-btn active" onclick="switchTab('tasks')" data-i18n="navTasks">Tasks</button>
+            <button class="nav-btn" onclick="switchTab('rewards')" data-i18n="navRewards">Rewards</button>
+            <button class="nav-btn" onclick="switchTab('rules')" data-i18n="navRules">Rules & Penalties</button>
+            <button class="nav-btn" onclick="switchTab('logs')" data-i18n="navLogs">Logbook</button>
+            <button class="nav-btn" onclick="switchTab('setup')" data-i18n="navSetup">Setup & Sync</button>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main>
+
+        <!-- MODULE A: TASKS & HABITS -->
+        <section id="tab-tasks" class="tab-content active">
+            <div class="section-header">
+                <h2 class="section-title"><span>📋</span> <span data-i18n="titleTasks">Protocols & Tasks</span></h2>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn dom-only" onclick="openModal('modalManageTemplates')" data-i18n="btnTemplates">📁 Templates</button>
+                    <button class="btn btn-gold dom-only" onclick="openModal('modalAddTask')" data-i18n="btnNewTask">+ New Task</button>
+                </div>
+            </div>
+            <div id="tasksList" class="card-grid">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- MODULE B: REWARDS -->
+        <section id="tab-rewards" class="tab-content">
+            <div class="section-header">
+                <h2 class="section-title"><span>🎁</span> <span data-i18n="titleRewards">Rewards Shop</span></h2>
+                <button class="btn btn-gold dom-only" onclick="openModal('modalAddReward')" data-i18n="btnNewReward">+ New Reward</button>
+            </div>
+            <div id="rewardsList" class="card-grid">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- MODULE C: RULES & PUNISHMENTS -->
+        <section id="tab-rules" class="tab-content">
+            <div class="section-header">
+                <h2 class="section-title"><span>📜</span> <span data-i18n="titleRules">Rules & Code</span></h2>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-danger" onclick="openModal('modalLogInfraction')" data-i18n="btnLogInfraction">⚠️ Report Infraction</button>
                     <button class="btn btn-gold dom-only" onclick="openModal('modalAddRule')" data-i18n="btnNewRule">+ New Rule</button>
                 </div>
             </div>
