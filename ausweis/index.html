@@ -430,21 +430,47 @@
 
     .card-preferences { margin-top:.75rem; }
 
+    .pref-group {
+      margin-top:.6rem;
+    }
+
+    .pref-group-title {
+      display:inline-block;
+      font-size:.72rem;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      margin-bottom:.35rem;
+      padding:.2rem .55rem;
+      border-radius:6px;
+      color:#fff;
+    }
+
+    .pref-group-title.cat-must-have { background:#15803d; }
+    .pref-group-title.cat-waere-schoen { background:#b45309; }
+    .pref-group-title.cat-strafe { background:#6b21a8; }
+    .pref-group-title.cat-tabu { background:#991b1b; }
+    .pref-group-title.cat-muss-nicht { background:#be185d; }
+    .pref-group-title.cat-egal { background:#475569; }
+
     .card-preferences ul {
       display:flex;
       flex-wrap:wrap;
-      gap:.45rem;
-      margin:.5rem 0 0;
+      gap:.4rem;
+      margin:0;
       padding:0;
       list-style:none;
     }
 
     .card-preferences li {
-      padding:.3rem .5rem;
+      padding:.25rem .55rem;
       border-radius:999px;
-      background:#fff8;
+      background:rgba(255,255,255,.7);
       font-size:.78rem;
+      font-weight:600;
+      color:#24132e;
       overflow-wrap:anywhere;
+      border:1px solid rgba(255,255,255,.5);
     }
 
     .actions {
@@ -1771,6 +1797,50 @@ function selectedPreferences(data) {
 }
 
 
+const preferenceCategoryConfig = [
+  { choiceIndex: 5, categoryKey: 'must-have', color: '#15803d' },
+  { choiceIndex: 4, categoryKey: 'waere-schoen', color: '#b45309' },
+  { choiceIndex: 1, categoryKey: 'strafe', color: '#6b21a8' },
+  { choiceIndex: 0, categoryKey: 'tabu', color: '#991b1b' },
+  { choiceIndex: 2, categoryKey: 'muss-nicht', color: '#be185d' },
+  { choiceIndex: 3, categoryKey: 'egal', color: '#475569' }
+];
+
+
+function groupedPreferences(data) {
+
+  const selections = selectedPreferences(data);
+  const choiceTitles = t('choiceTitles');
+  const groupsMap = {};
+
+  preferenceChoices.forEach(choice => {
+    groupsMap[choice] = [];
+  });
+
+  selections.forEach(([question, answer]) => {
+    if (groupsMap[answer]) {
+      groupsMap[answer].push(question);
+    }
+  });
+
+  return preferenceCategoryConfig
+    .map(cfg => {
+      const choice = preferenceChoices[cfg.choiceIndex];
+      const title = choiceTitles[cfg.choiceIndex] || choice;
+      return {
+        choiceIndex: cfg.choiceIndex,
+        choice,
+        title,
+        categoryKey: cfg.categoryKey,
+        color: cfg.color,
+        items: groupsMap[choice] || []
+      };
+    })
+    .filter(group => group.items.length > 0);
+
+}
+
+
 function ageFromBirthdate(
   birthdate,
   today = new Date()
@@ -1865,24 +1935,37 @@ function card(data) {
       : '';
 
 
+  const preferenceGroups =
+    groupedPreferences(data);
+
+
   const preferenceHtml =
-    selections.length
+    preferenceGroups.length
       ? `
         <div class="detail card-preferences">
           <strong>${escapeHtml(t('preferencesCard'))}</strong>
-          <ul>
-            ${
-              selections
-                .map(
-                  ([question,answer]) =>
-                    `<li>
-                      ${escapeHtml(question)}:
-                      <b>${escapeHtml(answer)}</b>
-                    </li>`
-                )
-                .join('')
-            }
-          </ul>
+          ${
+            preferenceGroups
+              .map(
+                group => `
+                  <div class="pref-group">
+                    <span class="pref-group-title cat-${group.categoryKey}">
+                      ${escapeHtml(group.title)} (${group.items.length})
+                    </span>
+                    <ul>
+                      ${
+                        group.items
+                          .map(
+                            item => `<li>${escapeHtml(item)}</li>`
+                          )
+                          .join('')
+                      }
+                    </ul>
+                  </div>
+                `
+              )
+              .join('')
+          }
         </div>
       `
       : '';
@@ -3616,14 +3699,65 @@ async function renderCardToCanvas(data) {
     -------------------------------------------------------
   */
 
-  if (selections.length) {
+  function drawCanvasGroupedPreferences(targetCtx, groups, x, startY, availableWidth) {
+    let currentY = startY;
 
-    const preferenceItems =
-      selections.map(
-        ([question,answer]) =>
-          `${question}: ${answer}`
+    for (let i = 0; i < groups.length; i++) {
+      const group = groups[i];
+      const badgeText = `${group.title.toUpperCase()} (${group.items.length})`;
+
+      targetCtx.font = '800 14px Arial, sans-serif';
+      const textWidth = canvasTextWidth(targetCtx, badgeText);
+      const badgeWidth = textWidth + 20;
+      const badgeHeight = 24;
+
+      fillRoundRect(
+        targetCtx,
+        x,
+        currentY,
+        badgeWidth,
+        badgeHeight,
+        6,
+        group.color
       );
 
+      targetCtx.fillStyle = '#ffffff';
+      targetCtx.textBaseline = 'middle';
+      targetCtx.fillText(
+        badgeText,
+        x + 10,
+        currentY + badgeHeight / 2 + 1
+      );
+      targetCtx.textBaseline = 'alphabetic';
+
+      currentY += badgeHeight + 8;
+
+      const chipRes = drawCanvasChipList(
+        targetCtx,
+        group.items,
+        x,
+        currentY,
+        availableWidth,
+        {
+          font: '600 16px Arial, sans-serif',
+          textColor: '#24132e',
+          background: 'rgba(255,255,255,.7)',
+          paddingX: 12,
+          paddingY: 7,
+          rowGap: 8,
+          gap: 8
+        }
+      );
+
+      currentY = chipRes.y + (i < groups.length - 1 ? 16 : 0);
+    }
+
+    return currentY;
+  }
+
+  const prefGroups = groupedPreferences(data);
+
+  if (prefGroups.length) {
 
     const measurementCanvas =
       document.createElement('canvas');
@@ -3632,7 +3766,7 @@ async function renderCardToCanvas(data) {
       width * scale;
 
     measurementCanvas.height =
-      12000 * scale;
+      20000 * scale;
 
 
     const measurementContext =
@@ -3645,26 +3779,18 @@ async function renderCardToCanvas(data) {
     );
 
 
-    const preferenceMeasurement =
-      drawCanvasChipList(
-        measurementContext,
-        preferenceItems,
-        18,
-        0,
-        contentWidth - 36,
-        {
-          font:'700 16px Arial, sans-serif',
-          paddingX:12,
-          paddingY:8,
-          rowGap:9,
-          gap:9
-        }
-      );
+    const measuredEndY = drawCanvasGroupedPreferences(
+      measurementContext,
+      prefGroups,
+      0,
+      0,
+      contentWidth - 36
+    );
 
 
     const preferenceHeight =
       39 +
-      preferenceMeasurement.height +
+      measuredEndY +
       18;
 
 
@@ -3674,19 +3800,12 @@ async function renderCardToCanvas(data) {
     );
 
 
-    drawCanvasChipList(
+    drawCanvasGroupedPreferences(
       ctx,
-      preferenceItems,
+      prefGroups,
       padding + 18,
       y + 39,
-      contentWidth - 36,
-      {
-        font:'700 16px Arial, sans-serif',
-        paddingX:12,
-        paddingY:8,
-        rowGap:9,
-        gap:9
-      }
+      contentWidth - 36
     );
 
 
