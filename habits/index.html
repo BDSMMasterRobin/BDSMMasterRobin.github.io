@@ -1639,15 +1639,33 @@
             state.roomConfig.roomId = roomId;
 
             if (configStr) {
+                let parsedConfig = null;
                 try {
-                    const parsedConfig = JSON.parse(configStr);
-                    localStorage.setItem("habits_firebase_config", JSON.stringify(parsedConfig));
-                    initFirebase(parsedConfig, roomId);
-                    alert("Firebase-Verbindung erfolgreich hergestellt!");
+                    parsedConfig = JSON.parse(configStr);
                 } catch (e) {
-                    alert("Ungültiges JSON-Format in der Firebase-Konfiguration!");
+                    try {
+                        const jsonified = configStr
+                            .replace(/([{,]\s*)([a-zA-Z0-9_$]+)\s*:/g, '$1"$2":')
+                            .replace(/,\s*([}\]])/g, "$1");
+                        parsedConfig = JSON.parse(jsonified);
+                    } catch (err) {
+                        alert("Ungültiges JSON-Format in der Firebase-Konfiguration! Bitte stelle sicher, dass es sich um echtes JSON handelt.");
+                        return;
+                    }
+                }
+
+                if (!parsedConfig || typeof parsedConfig !== "object") {
+                    alert("Ungültige Firebase-Konfiguration!");
                     return;
                 }
+
+                if (!parsedConfig.databaseURL) {
+                    alert("Achtung: 'databaseURL' fehlt in deiner Firebase Config! Für die Realtime Database wird 'databaseURL' benötigt (z.B. https://<project-id>-default-rtdb.firebaseio.com).");
+                }
+
+                localStorage.setItem("habits_firebase_config", JSON.stringify(parsedConfig));
+                initFirebase(parsedConfig, roomId);
+                alert("Firebase-Verbindung wird hergestellt!");
             } else {
                 localStorage.removeItem("habits_firebase_config");
                 alert("Einstellungen gespeichert (Nur LocalStorage Aktiv).");
