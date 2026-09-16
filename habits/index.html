@@ -901,6 +901,14 @@
                 <label data-i18n="labelDayOfMonth">Day of Month (1-31):</label>
                 <input type="number" id="templateDayOfMonth" class="form-control" min="1" max="31" value="1">
             </div>
+            <div class="form-group">
+                <label data-i18n="labelProofRequirement">Proof of Completion:</label>
+                <select id="templateProofRequirement" class="form-control">
+                    <option value="optional" data-i18n="optProofOptional">Optional</option>
+                    <option value="required" data-i18n="optProofRequired">Required</option>
+                    <option value="none" data-i18n="optProofNone">Not possible / Not needed</option>
+                </select>
+            </div>
             <button class="btn btn-gold" onclick="createTemplate()" data-i18n="btnCreate">Create Template</button>
         </div>
     </div>
@@ -941,6 +949,14 @@
                 <label data-i18n="labelPoints">Points Reward:</label>
                 <input type="number" id="taskPoints" class="form-control" value="10" min="1">
             </div>
+            <div class="form-group">
+                <label data-i18n="labelProofRequirement">Proof of Completion:</label>
+                <select id="taskProofRequirement" class="form-control">
+                    <option value="optional" data-i18n="optProofOptional">Optional</option>
+                    <option value="required" data-i18n="optProofRequired">Required</option>
+                    <option value="none" data-i18n="optProofNone">Not possible / Not needed</option>
+                </select>
+            </div>
             <button class="btn btn-gold" onclick="createTask()" data-i18n="btnCreate">Create</button>
         </div>
     </div>
@@ -953,11 +969,11 @@
                 <button class="btn btn-sm" onclick="closeModal('modalTaskProof')">✕</button>
             </div>
             <div class="form-group">
-                <label data-i18n="labelProofNote">Note (optional):</label>
+                <label id="labelProofNoteEl" data-i18n="labelProofNote">Note (optional):</label>
                 <textarea id="proofNote" class="form-control" rows="3" placeholder="Describe what you did..." data-i18n-placeholder="phProofNote"></textarea>
             </div>
             <div class="form-group">
-                <label data-i18n="labelProofPhoto">Photo (optional):</label>
+                <label id="labelProofPhotoEl" data-i18n="labelProofPhoto">Photo (optional):</label>
                 <input type="file" id="proofPhoto" class="form-control" accept="image/*" capture="environment" onchange="handleProofPhotoSelect(this)">
                 <img id="proofPhotoPreview" src="" alt="" style="display:none; max-width:100%; max-height:220px; border-radius:8px; margin-top:8px;">
             </div>
@@ -1341,6 +1357,11 @@
                 labelEnd: "End",
                 badgeWaitingFor: "Waiting for",
                 labelPoints: "Points Reward:",
+                labelProofRequirement: "Proof of Completion:",
+                optProofOptional: "Optional",
+                optProofRequired: "Required",
+                optProofNone: "Not possible / Not needed",
+                alertProofRequired: "Please add a note or a photo before submitting proof.",
                 btnCreate: "Create",
 
                 modalTemplatesTitle: "Task Templates",
@@ -1446,8 +1467,10 @@
 
                 modalTaskProofTitle: "Submit Proof of Completion",
                 labelProofNote: "Note (optional):",
+                labelProofNoteRequired: "Note (add a note or a photo):",
                 phProofNote: "Describe what you did...",
                 labelProofPhoto: "Photo (optional):",
+                labelProofPhotoRequired: "Photo (add a photo or a note):",
                 btnSubmitProof: "Submit for Approval",
                 labelProofNoteShort: "Note",
                 proofPhotoAlt: "Proof photo",
@@ -1609,6 +1632,11 @@
                 labelEnd: "Ende",
                 badgeWaitingFor: "Wartet auf",
                 labelPoints: "Punkte Belohnung:",
+                labelProofRequirement: "Nachweis der Erledigung:",
+                optProofOptional: "Optional",
+                optProofRequired: "Erforderlich",
+                optProofNone: "Nicht möglich / Nicht nötig",
+                alertProofRequired: "Bitte füge eine Notiz oder ein Foto hinzu, bevor du den Nachweis einreichst.",
                 btnCreate: "Erstellen",
 
                 modalTemplatesTitle: "Aufgaben-Vorlagen",
@@ -1714,8 +1742,10 @@
 
                 modalTaskProofTitle: "Nachweis für Erledigung einreichen",
                 labelProofNote: "Notiz (optional):",
+                labelProofNoteRequired: "Notiz (füge eine Notiz oder ein Foto hinzu):",
                 phProofNote: "Beschreibe, was du getan hast...",
                 labelProofPhoto: "Foto (optional):",
+                labelProofPhotoRequired: "Foto (füge ein Foto oder eine Notiz hinzu):",
                 btnSubmitProof: "Zur Bestätigung einreichen",
                 labelProofNoteShort: "Notiz",
                 proofPhotoAlt: "Nachweisfoto",
@@ -1892,6 +1922,7 @@
                         startDate: "",
                         endDate: "",
                         dependsOnTaskId: "",
+                        proofRequirement: tmpl.proofRequirement || "optional",
                         templateId: tmpl.id,
                         status: "active",
                         streak: 0
@@ -2376,6 +2407,7 @@
             const schedSelect = document.getElementById("templateScheduleType");
             const dayOfWeekSelect = document.getElementById("templateDayOfWeek");
             const dayOfMonthInput = document.getElementById("templateDayOfMonth");
+            const proofReqSelect = document.getElementById("templateProofRequirement");
 
             const title = titleInput ? titleInput.value.trim() : "";
             const category = catSelect ? catSelect.value : "Habit";
@@ -2383,6 +2415,7 @@
             const scheduleType = schedSelect ? schedSelect.value : "none";
             const dayOfWeek = dayOfWeekSelect ? parseInt(dayOfWeekSelect.value) : 1;
             const dayOfMonth = dayOfMonthInput ? parseInt(dayOfMonthInput.value) : 1;
+            const proofRequirement = proofReqSelect ? proofReqSelect.value : "optional";
 
             if (!title) {
                 alert(t("alertTitleTemplateRequired") || "Please enter a title for the template!");
@@ -2394,6 +2427,7 @@
                 title: title,
                 category: category,
                 points: points,
+                proofRequirement: proofRequirement, // "none" | "optional" | "required"
                 schedule: {
                     type: scheduleType, // "none" | "daily" | "weekly" | "monthly"
                     dayOfWeek: dayOfWeek,
@@ -2429,6 +2463,7 @@
                 startDate: "",
                 endDate: "",
                 dependsOnTaskId: "",
+                proofRequirement: tmpl.proofRequirement || "optional",
                 templateId: tmpl.id,
                 status: "active",
                 streak: 0
@@ -2483,6 +2518,7 @@
             const startDateInput = document.getElementById("taskStartDate");
             const endDateInput = document.getElementById("taskEndDate");
             const dependsOnSelect = document.getElementById("taskDependsOn");
+            const proofReqSelect = document.getElementById("taskProofRequirement");
 
             const title = titleInput ? titleInput.value.trim() : "";
             const category = catSelect ? catSelect.value : "Habit";
@@ -2490,6 +2526,7 @@
             const startDate = startDateInput ? startDateInput.value : "";
             const endDate = endDateInput ? endDateInput.value : "";
             const dependsOnTaskId = dependsOnSelect ? dependsOnSelect.value : "";
+            const proofRequirement = proofReqSelect ? proofReqSelect.value : "optional";
 
             if (!title) {
                 alert(t("alertTitleTaskRequired"));
@@ -2504,6 +2541,7 @@
                 startDate: startDate,
                 endDate: endDate,
                 dependsOnTaskId: dependsOnTaskId,
+                proofRequirement: proofRequirement, // "none" | "optional" | "required"
                 status: "active", // active | pending | approved
                 streak: 0
             };
@@ -2515,28 +2553,40 @@
             if (startDateInput) startDateInput.value = "";
             if (endDateInput) endDateInput.value = "";
             if (dependsOnSelect) dependsOnSelect.value = "";
+            if (proofReqSelect) proofReqSelect.value = "optional";
             closeModal("modalAddTask");
         }
 
         // Proof-of-completion state (held in memory only until submitted)
         let currentProofTaskId = null;
+        let currentProofRequirement = "optional";
         let pendingProofPhotoDataUrl = null;
         const PROOF_PHOTO_MAX_DIM = 1024;
         const PROOF_PHOTO_QUALITY = 0.7;
 
+        function completeTaskWithoutProof(taskId) {
+            completeTask(taskId, null);
+        }
+
         function openTaskProofModal(taskId) {
+            const task = state.tasks.find(t => t.id === taskId);
             currentProofTaskId = taskId;
+            currentProofRequirement = (task && task.proofRequirement) || "optional";
             pendingProofPhotoDataUrl = null;
 
             const noteInput = document.getElementById("proofNote");
             const photoInput = document.getElementById("proofPhoto");
             const preview = document.getElementById("proofPhotoPreview");
+            const noteLabel = document.getElementById("labelProofNoteEl");
+            const photoLabel = document.getElementById("labelProofPhotoEl");
             if (noteInput) noteInput.value = "";
             if (photoInput) photoInput.value = "";
             if (preview) {
                 preview.src = "";
                 preview.style.display = "none";
             }
+            if (noteLabel) noteLabel.textContent = currentProofRequirement === "required" ? (t("labelProofNoteRequired") || t("labelProofNote")) : t("labelProofNote");
+            if (photoLabel) photoLabel.textContent = currentProofRequirement === "required" ? (t("labelProofPhotoRequired") || t("labelProofPhoto")) : t("labelProofPhoto");
 
             openModal("modalTaskProof");
         }
@@ -2586,6 +2636,12 @@
 
             const noteInput = document.getElementById("proofNote");
             const note = noteInput ? noteInput.value.trim() : "";
+
+            if (currentProofRequirement === "required" && !note && !pendingProofPhotoDataUrl) {
+                alert(t("alertProofRequired"));
+                return;
+            }
+
             const proof = (note || pendingProofPhotoDataUrl) ? {
                 note: note,
                 photo: pendingProofPhotoDataUrl || null,
@@ -2595,6 +2651,7 @@
             completeTask(currentProofTaskId, proof);
 
             currentProofTaskId = null;
+            currentProofRequirement = "optional";
             pendingProofPhotoDataUrl = null;
             closeModal("modalTaskProof");
         }
@@ -2697,7 +2754,10 @@
                 if (isLockedByDependency) {
                     actionHtml = `<span class="badge" style="background:rgba(231,76,60,0.15); color:var(--danger); border:1px solid rgba(231,76,60,0.3);">🔒 ${t("badgeWaitingFor") || "Waiting for"}: ${escapeHtml(parentTaskTitle)}</span>`;
                 } else if (task.status === "active") {
-                    actionHtml = `<button class="btn btn-sm btn-primary" onclick="openTaskProofModal('${task.id}')">${t("btnMarkComplete")}</button>`;
+                    const proofRequirement = task.proofRequirement || "optional";
+                    actionHtml = proofRequirement === "none"
+                        ? `<button class="btn btn-sm btn-primary" onclick="completeTaskWithoutProof('${task.id}')">${t("btnMarkComplete")}</button>`
+                        : `<button class="btn btn-sm btn-primary" onclick="openTaskProofModal('${task.id}')">${t("btnMarkComplete")}</button>`;
                 } else if (task.status === "pending") {
                     if (currentRole === "Dom") {
                         actionHtml = `
