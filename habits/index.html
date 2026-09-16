@@ -756,6 +756,16 @@
                 <button class="btn btn-gold" style="margin-top: 12px;" onclick="saveFirebaseSettings()" data-i18n="btnConnectFirebase">Connect Firebase</button>
             </div>
 
+            <div class="card" style="margin-bottom: 20px;">
+                <h3 class="modal-title" style="margin-bottom: 10px;" data-i18n="cardExportImportTitle">💾 Backup / Export & Import</h3>
+                <p class="card-desc" style="margin-bottom: 12px;" data-i18n="cardExportImportDesc">Export all app data (tasks, rewards, rules, logs, settings) as a JSON file, or import a previously exported file. Importing overwrites all current data.</p>
+                <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                    <button class="btn btn-gold" onclick="exportStateToJson()" data-i18n="btnExportJson">⬇️ Export as JSON</button>
+                    <button class="btn" onclick="document.getElementById('inputImportFile').click()" data-i18n="btnImportJson">⬆️ Import from JSON</button>
+                    <input type="file" id="inputImportFile" accept="application/json,.json" style="display:none;" onchange="importStateFromJson(this)">
+                </div>
+            </div>
+
             <div class="card dom-only">
                 <h3 class="modal-title" style="margin-bottom: 10px;" data-i18n="cardJoinGenTitle">🔗 Partner 1-Click Join Code</h3>
                 <p class="card-desc" style="margin-bottom: 12px;" data-i18n="cardJoinGenDesc">Generate an invitation code for your Sub. This includes Room ID and Firebase connection data.</p>
@@ -1290,6 +1300,14 @@
                 notifNewPunishment: 'New sanction issued: "{title}"',
                 notifInfractionReported: "Your Sub reported a rule infraction",
 
+                cardExportImportTitle: "💾 Backup / Export & Import",
+                cardExportImportDesc: "Export all app data (tasks, rewards, rules, logs, settings) as a JSON file, or import a previously exported file. Importing overwrites all current data.",
+                btnExportJson: "⬇️ Export as JSON",
+                btnImportJson: "⬆️ Import from JSON",
+                alertImportConfirm: "This will overwrite ALL current data (tasks, rewards, rules, logs, settings) with the content of the selected file. Continue?",
+                alertImportSuccess: "Data imported successfully!",
+                alertImportInvalid: "Invalid file! Please select a valid Habits & Protocols JSON export.",
+
                 cardFirebaseTitle: "🔥 Firebase & Partner Sync",
                 btnFirebaseGuide: "ℹ️ Instructions",
                 cardFirebaseDesc: "Enter your Firebase configuration and Room ID here to synchronize across devices in real time.",
@@ -1549,6 +1567,14 @@
                 notifNewRule: 'Neue Regel hinzugefügt: "{title}"',
                 notifNewPunishment: 'Neue Sanktion erteilt: "{title}"',
                 notifInfractionReported: "Dein Sub hat einen Regelverstoß gemeldet",
+
+                cardExportImportTitle: "💾 Backup / Export & Import",
+                cardExportImportDesc: "Exportiere alle App-Daten (Aufgaben, Belohnungen, Regeln, Logs, Einstellungen) als JSON-Datei oder importiere eine zuvor exportierte Datei. Der Import überschreibt alle aktuellen Daten.",
+                btnExportJson: "⬇️ Als JSON Exportieren",
+                btnImportJson: "⬆️ Aus JSON Importieren",
+                alertImportConfirm: "Dies überschreibt ALLE aktuellen Daten (Aufgaben, Belohnungen, Regeln, Logs, Einstellungen) mit dem Inhalt der ausgewählten Datei. Fortfahren?",
+                alertImportSuccess: "Daten erfolgreich importiert!",
+                alertImportInvalid: "Ungültige Datei! Bitte wähle einen gültigen Habits & Protocols JSON-Export aus.",
 
                 cardFirebaseTitle: "🔥 Firebase & Partner Sync",
                 btnFirebaseGuide: "ℹ️ Anleitung",
@@ -2091,6 +2117,55 @@
                 syncToFirebase();
             }
             updateUI();
+        }
+
+        // Export current state as a downloadable JSON file
+        function exportStateToJson() {
+            const dataStr = JSON.stringify(state, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const dateStr = new Date().toISOString().split("T")[0];
+            const roomId = (state.roomConfig && state.roomConfig.roomId) || "habits";
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `habits-backup-${roomId}-${dateStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Import state from a user-selected JSON file (overwrites current data)
+        function importStateFromJson(inputEl) {
+            const file = inputEl.files && inputEl.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (!parsed || typeof parsed !== "object") throw new Error("invalid");
+
+                    if (!confirm(t("alertImportConfirm"))) {
+                        inputEl.value = "";
+                        return;
+                    }
+
+                    state = ensureStateDefaults(parsed);
+                    if (state.roomConfig.lang) {
+                        currentLang = state.roomConfig.lang;
+                    }
+                    applyStaticTranslations();
+                    saveState();
+                    alert(t("alertImportSuccess"));
+                } catch (err) {
+                    console.error("Failed to import state:", err);
+                    alert(t("alertImportInvalid"));
+                } finally {
+                    inputEl.value = "";
+                }
+            };
+            reader.readAsText(file);
         }
 
         // Generate UUID
