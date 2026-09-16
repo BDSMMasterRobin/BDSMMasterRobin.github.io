@@ -690,6 +690,7 @@
             <div class="section-header">
                 <h2 class="section-title"><span>⚔️</span> <span data-i18n="titlePunishments">Active Sanctions</span></h2>
                 <div style="display:flex; gap:8px;">
+                    <button class="btn dom-only" onclick="openModal('modalManagePunishmentTemplates')" data-i18n="btnPunishmentTemplates">📁 Templates</button>
                     <button class="btn btn-danger dom-only" onclick="openModal('modalAddPunishment')" data-i18n="btnNewPunishment">+ Issue Sanction</button>
                     <button class="btn sub-only" onclick="openModal('modalProposePunishment')" data-i18n="btnProposePunishment">+ Propose Sanction</button>
                 </div>
@@ -913,6 +914,78 @@
         </div>
     </div>
 
+    <!-- Manage Punishment Templates Modal -->
+    <div id="modalManagePunishmentTemplates" class="modal-overlay">
+        <div class="modal" style="max-width: 600px; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="modalPunishmentTemplatesTitle">Sanction Templates</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalManagePunishmentTemplates')">✕</button>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <button class="btn btn-gold btn-sm" onclick="openModal('modalAddPunishmentTemplate')" data-i18n="btnNewTemplate">+ New Template</button>
+            </div>
+            <div id="punishmentTemplatesList">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Punishment Template Modal -->
+    <div id="modalAddPunishmentTemplate" class="modal-overlay">
+        <div class="modal" style="max-width: 500px; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="modalAddPunishmentTemplateTitle">New Sanction Template</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalAddPunishmentTemplate')">✕</button>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelPunishmentTitle">Title / Reason:</label>
+                <input type="text" id="punishmentTemplateTitle" class="form-control" placeholder="e.g. Late Arrival Penalty" data-i18n-placeholder="phPunishmentTemplateTitle">
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelPointDeduction">Direct Point Deduction:</label>
+                <input type="number" id="punishmentTemplatePoints" class="form-control" value="0" min="0">
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelExtraTask">Additional Punishment Task (Optional):</label>
+                <input type="text" id="punishmentTemplateTask" class="form-control" placeholder="e.g. 50 Push-ups" data-i18n-placeholder="phPunishmentTask">
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelScheduleType">Automatic Schedule:</label>
+                <select id="punishmentTemplateScheduleType" class="form-control" onchange="togglePunishmentTemplateScheduleFields()">
+                    <option value="none" data-i18n="optScheduleNone">Manual Generation Only</option>
+                    <option value="daily" data-i18n="optScheduleDaily">Daily</option>
+                    <option value="weekly" data-i18n="optScheduleWeekly">Weekly</option>
+                    <option value="monthly" data-i18n="optScheduleMonthly">Monthly</option>
+                </select>
+            </div>
+            <div id="punishmentTemplateScheduleWeeklyGroup" class="form-group" style="display:none;">
+                <label data-i18n="labelDayOfWeek">Day of Week:</label>
+                <select id="punishmentTemplateDayOfWeek" class="form-control">
+                    <option value="1" data-i18n="dayMon">Monday</option>
+                    <option value="2" data-i18n="dayTue">Tuesday</option>
+                    <option value="3" data-i18n="dayWed">Wednesday</option>
+                    <option value="4" data-i18n="dayThu">Thursday</option>
+                    <option value="5" data-i18n="dayFri">Friday</option>
+                    <option value="6" data-i18n="daySat">Saturday</option>
+                    <option value="0" data-i18n="daySun">Sunday</option>
+                </select>
+            </div>
+            <div id="punishmentTemplateScheduleMonthlyGroup" class="form-group" style="display:none;">
+                <label data-i18n="labelDayOfMonth">Day of Month (1-31):</label>
+                <input type="number" id="punishmentTemplateDayOfMonth" class="form-control" min="1" max="31" value="1">
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelProofRequirement">Proof of Completion:</label>
+                <select id="punishmentTemplateProofRequirement" class="form-control">
+                    <option value="optional" data-i18n="optProofOptional">Optional</option>
+                    <option value="required" data-i18n="optProofRequired">Required</option>
+                    <option value="none" data-i18n="optProofNone">Not possible / Not needed</option>
+                </select>
+            </div>
+            <button class="btn btn-gold" onclick="createPunishmentTemplate()" data-i18n="btnCreate">Create Template</button>
+        </div>
+    </div>
+
     <!-- Add Task Modal -->
     <div id="modalAddTask" class="modal-overlay">
         <div class="modal">
@@ -978,6 +1051,26 @@
                 <img id="proofPhotoPreview" src="" alt="" style="display:none; max-width:100%; max-height:220px; border-radius:8px; margin-top:8px;">
             </div>
             <button class="btn btn-gold" onclick="submitTaskCompletion()" data-i18n="btnSubmitProof">Submit for Approval</button>
+        </div>
+    </div>
+
+    <!-- Sanction Completion Proof Modal -->
+    <div id="modalPunishmentProof" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="modalPunishmentProofTitle">Submit Proof of Sanction Completion</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalPunishmentProof')">✕</button>
+            </div>
+            <div class="form-group">
+                <label id="labelPunishmentProofNoteEl" data-i18n="labelProofNote">Note (optional):</label>
+                <textarea id="punishmentProofNote" class="form-control" rows="3" placeholder="Describe what you did..." data-i18n-placeholder="phProofNote"></textarea>
+            </div>
+            <div class="form-group">
+                <label id="labelPunishmentProofPhotoEl" data-i18n="labelProofPhoto">Photo (optional):</label>
+                <input type="file" id="punishmentProofPhoto" class="form-control" accept="image/*" capture="environment" onchange="handlePunishmentProofPhotoSelect(this)">
+                <img id="punishmentProofPhotoPreview" src="" alt="" style="display:none; max-width:100%; max-height:220px; border-radius:8px; margin-top:8px;">
+            </div>
+            <button class="btn btn-gold" onclick="submitPunishmentCompletion()" data-i18n="btnSubmitProof">Submit for Approval</button>
         </div>
     </div>
 
@@ -1121,6 +1214,14 @@
                 <label data-i18n="labelExtraTask">Additional Punishment Task (Optional):</label>
                 <input type="text" id="proposalPunishmentTask" class="form-control" placeholder="e.g. 50 Push-ups" data-i18n-placeholder="phPunishmentTask">
             </div>
+            <div class="form-group">
+                <label data-i18n="labelProofRequirement">Proof of Completion:</label>
+                <select id="proposalPunishmentProofRequirement" class="form-control">
+                    <option value="optional" data-i18n="optProofOptional">Optional</option>
+                    <option value="required" data-i18n="optProofRequired">Required</option>
+                    <option value="none" data-i18n="optProofNone">Not possible / Not needed</option>
+                </select>
+            </div>
             <button class="btn btn-gold" onclick="proposePunishment()" data-i18n="btnSubmitProposal">Submit for Approval</button>
         </div>
     </div>
@@ -1162,6 +1263,14 @@
             <div class="form-group">
                 <label data-i18n="labelExtraTask">Additional Punishment Task (Optional):</label>
                 <input type="text" id="punishmentTask" class="form-control" placeholder="e.g. 50 Push-ups" data-i18n-placeholder="phPunishmentTask">
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelProofRequirement">Proof of Completion:</label>
+                <select id="punishmentProofRequirement" class="form-control">
+                    <option value="optional" data-i18n="optProofOptional">Optional</option>
+                    <option value="required" data-i18n="optProofRequired">Required</option>
+                    <option value="none" data-i18n="optProofNone">Not possible / Not needed</option>
+                </select>
             </div>
             <button class="btn btn-danger" onclick="createPunishment()" data-i18n="btnImposeSanction">Impose Sanction</button>
         </div>
@@ -1513,7 +1622,27 @@
                 logDeniedReward: 'Reward "{title}" rejected ({cost} PTS refunded)',
                 logInfraction: 'Rule infraction reported: "{rule}"',
                 logPunishmentImposed: 'Sanction imposed: "{title}"',
-                logPunishmentCleared: 'Sanction cleared/relieved: "{title}"'
+                logPunishmentCleared: 'Sanction cleared/relieved: "{title}"',
+
+                modalPunishmentTemplatesTitle: "Sanction Templates",
+                modalAddPunishmentTemplateTitle: "New Sanction Template",
+                btnPunishmentTemplates: "📁 Templates",
+                phPunishmentTemplateTitle: "e.g. Late Arrival Penalty",
+                emptyPunishmentTemplates: "No sanction templates created yet.",
+                btnGeneratePunishment: "Issue Sanction",
+                alertTitlePunishmentTemplateRequired: "Please enter a title for the sanction template!",
+                alertConfirmDeletePunishmentTemplate: "Delete this sanction template?",
+                logGeneratedPunishmentFromTemplate: 'Sanction issued from template: "{title}"',
+                logAutoGeneratedPunishment: 'Scheduled sanction auto-generated: "{title}"',
+                alertPunishmentGeneratedSuccess: 'Sanction "{title}" issued successfully!',
+
+                modalPunishmentProofTitle: "Submit Proof of Sanction Completion",
+                notifPunishmentCompleted: 'Sanction marked complete, awaiting your review: "{title}"',
+                notifPunishmentApproved: 'Sanction confirmed complete: "{title}"',
+                notifPunishmentRejected: 'Sanction completion rejected: "{title}"',
+                notifScheduledPunishmentGenerated: 'New scheduled sanction issued: "{title}"',
+                logApprovedPunishment: 'Sanction completion approved: "{title}"',
+                logRejectedPunishment: 'Sanction completion rejected: "{title}"'
             },
             de: {
                 navTasks: "Aufgaben",
@@ -1788,7 +1917,27 @@
                 logDeniedReward: 'Belohnung "{title}" abgelehnt ({cost} PTS zurückerstattet)',
                 logInfraction: 'Regelverstoß gemeldet: "{rule}"',
                 logPunishmentImposed: 'Sanktion verhängt: "{title}"',
-                logPunishmentCleared: 'Sanktion erlassen/erledigt: "{title}"'
+                logPunishmentCleared: 'Sanktion erlassen/erledigt: "{title}"',
+
+                modalPunishmentTemplatesTitle: "Sanktions-Vorlagen",
+                modalAddPunishmentTemplateTitle: "Neue Sanktions-Vorlage",
+                btnPunishmentTemplates: "📁 Vorlagen",
+                phPunishmentTemplateTitle: "z.B. Strafe für Verspätung",
+                emptyPunishmentTemplates: "Noch keine Sanktions-Vorlagen erstellt.",
+                btnGeneratePunishment: "Sanktion Erteilen",
+                alertTitlePunishmentTemplateRequired: "Bitte einen Titel für die Sanktions-Vorlage eingeben!",
+                alertConfirmDeletePunishmentTemplate: "Sanktions-Vorlage wirklich löschen?",
+                logGeneratedPunishmentFromTemplate: 'Sanktion aus Vorlage erteilt: "{title}"',
+                logAutoGeneratedPunishment: 'Automatische Sanktion erteilt: "{title}"',
+                alertPunishmentGeneratedSuccess: 'Sanktion "{title}" erfolgreich erteilt!',
+
+                modalPunishmentProofTitle: "Nachweis für Sanktions-Erfüllung einreichen",
+                notifPunishmentCompleted: 'Sanktion als erledigt markiert, wartet auf Bestätigung: "{title}"',
+                notifPunishmentApproved: 'Sanktion als erledigt bestätigt: "{title}"',
+                notifPunishmentRejected: 'Sanktions-Erfüllung abgelehnt: "{title}"',
+                notifScheduledPunishmentGenerated: 'Neue geplante Sanktion erteilt: "{title}"',
+                logApprovedPunishment: 'Sanktions-Erfüllung genehmigt: "{title}"',
+                logRejectedPunishment: 'Sanktions-Erfüllung abgelehnt: "{title}"'
             }
         };
 
@@ -1857,6 +2006,7 @@
             rewards: [],
             rules: [],
             punishments: [],
+            punishmentTemplates: [],
             proposals: [],
             logs: []
         };
@@ -1881,14 +2031,13 @@
                 rewards: Array.isArray(data.rewards) ? data.rewards : [],
                 rules: Array.isArray(data.rules) ? data.rules : [],
                 punishments: Array.isArray(data.punishments) ? data.punishments : [],
+                punishmentTemplates: Array.isArray(data.punishmentTemplates) ? data.punishmentTemplates : [],
                 proposals: Array.isArray(data.proposals) ? data.proposals : [],
                 logs: Array.isArray(data.logs) ? data.logs : []
             };
         }
 
         function checkScheduledTemplates() {
-            if (!state.taskTemplates || !Array.isArray(state.taskTemplates)) return;
-
             const now = new Date();
             const todayStr = now.toISOString().split("T")[0]; // "YYYY-MM-DD"
             const currentDayOfWeek = now.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
@@ -1896,44 +2045,87 @@
 
             let updated = false;
 
-            state.taskTemplates.forEach(tmpl => {
-                if (!tmpl.schedule || tmpl.schedule.type === "none") return;
-                if (tmpl.lastGeneratedDate === todayStr) return; // Already generated today
+            if (state.taskTemplates && Array.isArray(state.taskTemplates)) {
+                state.taskTemplates.forEach(tmpl => {
+                    if (!tmpl.schedule || tmpl.schedule.type === "none") return;
+                    if (tmpl.lastGeneratedDate === todayStr) return; // Already generated today
 
-                let shouldGenerate = false;
-                if (tmpl.schedule.type === "daily") {
-                    shouldGenerate = true;
-                } else if (tmpl.schedule.type === "weekly") {
-                    if (tmpl.schedule.dayOfWeek === currentDayOfWeek) {
+                    let shouldGenerate = false;
+                    if (tmpl.schedule.type === "daily") {
                         shouldGenerate = true;
+                    } else if (tmpl.schedule.type === "weekly") {
+                        if (tmpl.schedule.dayOfWeek === currentDayOfWeek) {
+                            shouldGenerate = true;
+                        }
+                    } else if (tmpl.schedule.type === "monthly") {
+                        if (tmpl.schedule.dayOfMonth === currentDayOfMonth) {
+                            shouldGenerate = true;
+                        }
                     }
-                } else if (tmpl.schedule.type === "monthly") {
-                    if (tmpl.schedule.dayOfMonth === currentDayOfMonth) {
-                        shouldGenerate = true;
-                    }
-                }
 
-                if (shouldGenerate) {
-                    const newTask = {
-                        id: generateUUID(),
-                        title: tmpl.title,
-                        category: tmpl.category,
-                        points: tmpl.points,
-                        startDate: "",
-                        endDate: "",
-                        dependsOnTaskId: "",
-                        proofRequirement: tmpl.proofRequirement || "optional",
-                        templateId: tmpl.id,
-                        status: "active",
-                        streak: 0
-                    };
-                    state.tasks.push(newTask);
-                    tmpl.lastGeneratedDate = todayStr;
-                    updated = true;
-                    addLog("SCHEDULE", t("logAutoGeneratedTask", { title: tmpl.title }) || `Scheduled task auto-generated: ${tmpl.title}`);
-                    sendNotification(t("notifScheduledTaskGenerated", { title: tmpl.title }));
-                }
-            });
+                    if (shouldGenerate) {
+                        const newTask = {
+                            id: generateUUID(),
+                            title: tmpl.title,
+                            category: tmpl.category,
+                            points: tmpl.points,
+                            startDate: "",
+                            endDate: "",
+                            dependsOnTaskId: "",
+                            proofRequirement: tmpl.proofRequirement || "optional",
+                            templateId: tmpl.id,
+                            status: "active",
+                            streak: 0
+                        };
+                        state.tasks.push(newTask);
+                        tmpl.lastGeneratedDate = todayStr;
+                        updated = true;
+                        addLog("SCHEDULE", t("logAutoGeneratedTask", { title: tmpl.title }) || `Scheduled task auto-generated: ${tmpl.title}`);
+                        sendNotification(t("notifScheduledTaskGenerated", { title: tmpl.title }));
+                    }
+                });
+            }
+
+            if (state.punishmentTemplates && Array.isArray(state.punishmentTemplates)) {
+                state.punishmentTemplates.forEach(tmpl => {
+                    if (!tmpl.schedule || tmpl.schedule.type === "none") return;
+                    if (tmpl.lastGeneratedDate === todayStr) return; // Already generated today
+
+                    let shouldGenerate = false;
+                    if (tmpl.schedule.type === "daily") {
+                        shouldGenerate = true;
+                    } else if (tmpl.schedule.type === "weekly") {
+                        if (tmpl.schedule.dayOfWeek === currentDayOfWeek) {
+                            shouldGenerate = true;
+                        }
+                    } else if (tmpl.schedule.type === "monthly") {
+                        if (tmpl.schedule.dayOfMonth === currentDayOfMonth) {
+                            shouldGenerate = true;
+                        }
+                    }
+
+                    if (shouldGenerate) {
+                        if (tmpl.pointDeduction > 0) {
+                            state.roomConfig.points = Math.max(0, state.roomConfig.points - tmpl.pointDeduction);
+                        }
+                        const newPunishment = {
+                            id: generateUUID(),
+                            title: tmpl.title,
+                            pointDeduction: tmpl.pointDeduction || 0,
+                            assignedTask: tmpl.assignedTask || "",
+                            proofRequirement: tmpl.proofRequirement || "optional",
+                            templateId: tmpl.id,
+                            status: "active",
+                            timestamp: new Date().toISOString()
+                        };
+                        state.punishments.push(newPunishment);
+                        tmpl.lastGeneratedDate = todayStr;
+                        updated = true;
+                        addLog("PENALTY", t("logAutoGeneratedPunishment", { title: tmpl.title }));
+                        sendNotification(t("notifScheduledPunishmentGenerated", { title: tmpl.title }));
+                    }
+                });
+            }
 
             if (updated) {
                 saveState();
@@ -2048,10 +2240,22 @@
                     }
                 });
 
-                const oldPunishmentIds = new Set((oldState.punishments || []).map(p => p.id));
+                const oldPunishments = new Map((oldState.punishments || []).map(p => [p.id, p]));
                 (newState.punishments || []).forEach(p => {
-                    if (!oldPunishmentIds.has(p.id) && currentRole === "Sub") {
-                        sendNotification(t("notifNewPunishment", { title: p.title }));
+                    const old = oldPunishments.get(p.id);
+                    if (!old) {
+                        if (currentRole === "Sub" && !p.templateId) {
+                            sendNotification(t("notifNewPunishment", { title: p.title }));
+                        }
+                        return;
+                    }
+                    if (old.status === p.status) return;
+                    if (currentRole === "Dom" && old.status === "active" && p.status === "pending") {
+                        sendNotification(t("notifPunishmentCompleted", { title: p.title }));
+                    } else if (currentRole === "Sub" && old.status === "pending" && p.status === "cleared") {
+                        sendNotification(t("notifPunishmentApproved", { title: p.title }));
+                    } else if (currentRole === "Sub" && old.status === "pending" && p.status === "active") {
+                        sendNotification(t("notifPunishmentRejected", { title: p.title }));
                     }
                 });
 
@@ -2326,6 +2530,8 @@
                     populateTaskDependencyDropdown();
                 } else if (id === "modalManageTemplates") {
                     renderTemplates();
+                } else if (id === "modalManagePunishmentTemplates") {
+                    renderPunishmentTemplates();
                 }
                 el.classList.add("active");
             }
@@ -2965,7 +3171,268 @@
             container.innerHTML = proposalsHtml + rewardsHtml;
         }
 
+
         // ==========================================
+        // PUNISHMENT TEMPLATES & PROOF LOGIC
+        // ==========================================
+        function togglePunishmentTemplateScheduleFields() {
+            const type = document.getElementById("punishmentTemplateScheduleType") ? document.getElementById("punishmentTemplateScheduleType").value : "none";
+            const weeklyGrp = document.getElementById("punishmentTemplateScheduleWeeklyGroup");
+            const monthlyGrp = document.getElementById("punishmentTemplateScheduleMonthlyGroup");
+            if (weeklyGrp) weeklyGrp.style.display = (type === "weekly") ? "block" : "none";
+            if (monthlyGrp) monthlyGrp.style.display = (type === "monthly") ? "block" : "none";
+        }
+
+        function createPunishmentTemplate() {
+            const titleInput = document.getElementById("punishmentTemplateTitle");
+            const ptsInput = document.getElementById("punishmentTemplatePoints");
+            const taskInput = document.getElementById("punishmentTemplateTask");
+            const schedSelect = document.getElementById("punishmentTemplateScheduleType");
+            const dayOfWeekSelect = document.getElementById("punishmentTemplateDayOfWeek");
+            const dayOfMonthInput = document.getElementById("punishmentTemplateDayOfMonth");
+            const proofReqSelect = document.getElementById("punishmentTemplateProofRequirement");
+
+            const title = titleInput ? titleInput.value.trim() : "";
+            const pointDeduction = ptsInput ? parseInt(ptsInput.value) || 0 : 0;
+            const assignedTask = taskInput ? taskInput.value.trim() : "";
+            const scheduleType = schedSelect ? schedSelect.value : "none";
+            const dayOfWeek = dayOfWeekSelect ? parseInt(dayOfWeekSelect.value) : 1;
+            const dayOfMonth = dayOfMonthInput ? parseInt(dayOfMonthInput.value) : 1;
+            const proofRequirement = proofReqSelect ? proofReqSelect.value : "optional";
+
+            if (!title) {
+                alert(t("alertTitlePunishmentTemplateRequired") || "Please enter a title for the sanction template!");
+                return;
+            }
+
+            const newTemplate = {
+                id: generateUUID(),
+                title: title,
+                pointDeduction: pointDeduction,
+                assignedTask: assignedTask,
+                proofRequirement: proofRequirement,
+                schedule: {
+                    type: scheduleType,
+                    dayOfWeek: dayOfWeek,
+                    dayOfMonth: dayOfMonth
+                },
+                lastGeneratedDate: ""
+            };
+
+            if (!state.punishmentTemplates) state.punishmentTemplates = [];
+            state.punishmentTemplates.push(newTemplate);
+            saveState();
+
+            if (titleInput) titleInput.value = "";
+            if (taskInput) taskInput.value = "";
+            closeModal("modalAddPunishmentTemplate");
+            renderPunishmentTemplates();
+        }
+
+        function deletePunishmentTemplate(templateId) {
+            if (!confirm(t("alertConfirmDeletePunishmentTemplate") || "Delete this sanction template?")) return;
+            state.punishmentTemplates = state.punishmentTemplates.filter(tmpl => tmpl.id !== templateId);
+            saveState();
+            renderPunishmentTemplates();
+        }
+
+        function generatePunishmentFromTemplate(templateId) {
+            const tmpl = (state.punishmentTemplates || []).find(t => t.id === templateId);
+            if (!tmpl) return;
+
+            if (tmpl.pointDeduction > 0) {
+                state.roomConfig.points = Math.max(0, state.roomConfig.points - tmpl.pointDeduction);
+            }
+
+            const newPunishment = {
+                id: generateUUID(),
+                title: tmpl.title,
+                pointDeduction: tmpl.pointDeduction || 0,
+                assignedTask: tmpl.assignedTask || "",
+                proofRequirement: tmpl.proofRequirement || "optional",
+                templateId: tmpl.id,
+                status: "active",
+                timestamp: new Date().toISOString()
+            };
+
+            state.punishments.push(newPunishment);
+            saveState();
+
+            addLog("PENALTY", t("logGeneratedPunishmentFromTemplate", { title: tmpl.title }) || `Sanction issued from template: ${tmpl.title}`);
+            renderRulesAndPunishments();
+            alert(t("alertPunishmentGeneratedSuccess", { title: tmpl.title }) || `Sanction "${tmpl.title}" issued successfully!`);
+        }
+
+        function renderPunishmentTemplates() {
+            const container = document.getElementById("punishmentTemplatesList");
+            if (!container) return;
+
+            if (!state.punishmentTemplates || state.punishmentTemplates.length === 0) {
+                container.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">${t("emptyPunishmentTemplates") || "No sanction templates created yet."}</p>`;
+                return;
+            }
+
+            container.innerHTML = state.punishmentTemplates.map(tmpl => {
+                let schedText = t("schedNone") || "Manual Generation Only";
+                if (tmpl.schedule && tmpl.schedule.type === "daily") {
+                    schedText = t("schedDaily") || "Daily Schedule";
+                } else if (tmpl.schedule && tmpl.schedule.type === "weekly") {
+                    const days = [t("daySun")||"Sun", t("dayMon")||"Mon", t("dayTue")||"Tue", t("dayWed")||"Wed", t("dayThu")||"Thu", t("dayFri")||"Fri", t("daySat")||"Sat"];
+                    schedText = `${t("schedWeekly") || "Weekly on"} ${days[tmpl.schedule.dayOfWeek] || ""}`;
+                } else if (tmpl.schedule && tmpl.schedule.type === "monthly") {
+                    schedText = `${t("schedMonthly") || "Monthly on day"} ${tmpl.schedule.dayOfMonth}`;
+                }
+
+                const details = [];
+                if (tmpl.pointDeduction > 0) details.push(`-${tmpl.pointDeduction} PTS`);
+                if (tmpl.assignedTask) details.push(escapeHtml(tmpl.assignedTask));
+
+                return `
+                    <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-weight:600; font-size:1rem; color:var(--text-main);">${escapeHtml(tmpl.title)}</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">${details.join(" • ")} ${details.length ? "•" : ""} 🕒 ${schedText}</div>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn btn-sm btn-danger" onclick="generatePunishmentFromTemplate('${tmpl.id}')" data-i18n="btnGeneratePunishment">${t("btnGeneratePunishment") || "Issue Sanction"}</button>
+                            <button class="btn btn-sm btn-danger" onclick="deletePunishmentTemplate('${tmpl.id}')">✕</button>
+                        </div>
+                    </div>`;
+            }).join("");
+        }
+
+        // Sanction Proof Logic
+        let currentProofPunishmentId = null;
+        let currentProofPunishmentRequirement = "optional";
+        let pendingPunishmentProofPhotoDataUrl = null;
+
+        function completePunishmentWithoutProof(punishmentId) {
+            completePunishment(punishmentId, null);
+        }
+
+        function openPunishmentProofModal(punishmentId) {
+            const punishment = state.punishments.find(p => p.id === punishmentId);
+            currentProofPunishmentId = punishmentId;
+            currentProofPunishmentRequirement = (punishment && punishment.proofRequirement) || "optional";
+            pendingPunishmentProofPhotoDataUrl = null;
+
+            const noteInput = document.getElementById("punishmentProofNote");
+            const photoInput = document.getElementById("punishmentProofPhoto");
+            const preview = document.getElementById("punishmentProofPhotoPreview");
+            const noteLabel = document.getElementById("labelPunishmentProofNoteEl");
+            const photoLabel = document.getElementById("labelPunishmentProofPhotoEl");
+            if (noteInput) noteInput.value = "";
+            if (photoInput) photoInput.value = "";
+            if (preview) {
+                preview.src = "";
+                preview.style.display = "none";
+            }
+            if (noteLabel) noteLabel.textContent = currentProofPunishmentRequirement === "required" ? (t("labelProofNoteRequired") || t("labelProofNote")) : t("labelProofNote");
+            if (photoLabel) photoLabel.textContent = currentProofPunishmentRequirement === "required" ? (t("labelProofPhotoRequired") || t("labelProofPhoto")) : t("labelProofPhoto");
+
+            openModal("modalPunishmentProof");
+        }
+
+        function handlePunishmentProofPhotoSelect(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    let { width, height } = img;
+                    if (width > PROOF_PHOTO_MAX_DIM || height > PROOF_PHOTO_MAX_DIM) {
+                        if (width > height) {
+                            height = Math.round(height * (PROOF_PHOTO_MAX_DIM / width));
+                            width = PROOF_PHOTO_MAX_DIM;
+                        } else {
+                            width = Math.round(width * (PROOF_PHOTO_MAX_DIM / height));
+                            height = PROOF_PHOTO_MAX_DIM;
+                        }
+                    }
+                    const canvas = document.createElement("canvas");
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+                    pendingPunishmentProofPhotoDataUrl = canvas.toDataURL("image/jpeg", PROOF_PHOTO_QUALITY);
+
+                    const preview = document.getElementById("punishmentProofPhotoPreview");
+                    if (preview) {
+                        preview.src = pendingPunishmentProofPhotoDataUrl;
+                        preview.style.display = "block";
+                    }
+                };
+                img.onerror = () => alert(t("alertProofPhotoReadError"));
+                img.src = e.target.result;
+            };
+            reader.onerror = () => alert(t("alertProofPhotoReadError"));
+            reader.readAsDataURL(file);
+        }
+
+        function submitPunishmentCompletion() {
+            if (!currentProofPunishmentId) return;
+
+            const noteInput = document.getElementById("punishmentProofNote");
+            const note = noteInput ? noteInput.value.trim() : "";
+
+            if (currentProofPunishmentRequirement === "required" && !note && !pendingPunishmentProofPhotoDataUrl) {
+                alert(t("alertProofRequired"));
+                return;
+            }
+
+            const proof = (note || pendingPunishmentProofPhotoDataUrl) ? {
+                note: note,
+                photo: pendingPunishmentProofPhotoDataUrl || null,
+                submittedAt: new Date().toISOString()
+            } : null;
+
+            completePunishment(currentProofPunishmentId, proof);
+
+            currentProofPunishmentId = null;
+            currentProofPunishmentRequirement = "optional";
+            pendingPunishmentProofPhotoDataUrl = null;
+            closeModal("modalPunishmentProof");
+        }
+
+        function completePunishment(punishmentId, proof) {
+            const p = state.punishments.find(x => x.id === punishmentId);
+            if (!p) return;
+
+            p.status = "pending";
+            p.proof = proof || null;
+            saveState();
+        }
+
+        function approvePunishment(punishmentId) {
+            const p = state.punishments.find(x => x.id === punishmentId);
+            if (!p) return;
+
+            p.status = "cleared";
+            addLog("PENALTY", t("logApprovedPunishment", { title: p.title }) || t("logPunishmentCleared", { title: p.title }));
+            saveState();
+        }
+
+        function rejectPunishment(punishmentId) {
+            const p = state.punishments.find(x => x.id === punishmentId);
+            if (!p) return;
+
+            p.status = "active";
+            p.proof = null;
+            addLog("PENALTY", t("logRejectedPunishment", { title: p.title }));
+            saveState();
+        }
+
+        function viewPunishmentProofPhoto(punishmentId) {
+            const p = state.punishments.find(x => x.id === punishmentId);
+            if (!p || !p.proof || !p.proof.photo) return;
+
+            const img = document.getElementById("proofPhotoFull");
+            if (img) img.src = p.proof.photo;
+            openModal("modalProofPhotoView");
+        }
+
+// ==========================================
         // MODULE C: PUNISHMENTS & INFRACTIONS
         // ==========================================
         function createRule() {
@@ -3020,10 +3487,12 @@
             const titleInput = document.getElementById("punishmentTitle");
             const ptsInput = document.getElementById("punishmentPoints");
             const taskInput = document.getElementById("punishmentTask");
+            const proofReqSelect = document.getElementById("punishmentProofRequirement");
 
             const title = titleInput ? titleInput.value.trim() : "";
             const pointDeduction = ptsInput ? parseInt(ptsInput.value) || 0 : 0;
             const assignedTask = taskInput ? taskInput.value.trim() : "";
+            const proofRequirement = proofReqSelect ? proofReqSelect.value : "optional";
 
             if (!title) {
                 alert(t("alertTitlePunishmentRequired"));
@@ -3039,7 +3508,8 @@
                 title: title,
                 pointDeduction: pointDeduction,
                 assignedTask: assignedTask,
-                status: "active", // active | cleared
+                proofRequirement: proofRequirement,
+                status: "active", // active | pending | cleared
                 timestamp: new Date().toISOString()
             };
 
@@ -3114,24 +3584,62 @@
                 } else {
                     const punishmentsHtml = state.punishments.map(p => {
                         const isCleared = p.status === "cleared";
+                        const isPending = p.status === "pending";
+
+                        let badgeHtml = "";
+                        if (isCleared) {
+                            badgeHtml = `<span class="badge badge-task">${t("badgeCleared")}</span>`;
+                        } else if (isPending) {
+                            badgeHtml = `<span class="badge badge-pending">${t("badgePending")}</span>`;
+                        } else {
+                            badgeHtml = `<span class="badge" style="background:rgba(230,57,70,0.2); color:var(--red-accent); border:1px solid var(--red-accent);">${t("badgeActive")}</span>`;
+                        }
+
+                        let actionHtml = "";
+                        if (p.status === "active") {
+                            const proofRequirement = p.proofRequirement || "optional";
+                            actionHtml = proofRequirement === "none"
+                                ? `<button class="btn btn-sm btn-success" onclick="completePunishmentWithoutProof('${p.id}')">${t("btnMarkComplete")}</button>`
+                                : `<button class="btn btn-sm btn-success" onclick="openPunishmentProofModal('${p.id}')">${t("btnMarkComplete")}</button>`;
+                        } else if (p.status === "pending") {
+                            if (currentRole === "Dom") {
+                                actionHtml = `
+                                    <div style="display:flex; gap:6px;">
+                                        <button class="btn btn-sm btn-success" onclick="approvePunishment('${p.id}')">${t("btnConfirm")}</button>
+                                        <button class="btn btn-sm btn-danger" onclick="rejectPunishment('${p.id}')">${t("btnReject")}</button>
+                                    </div>`;
+                            } else {
+                                actionHtml = `<span class="badge badge-pending">${t("badgePending")}</span>`;
+                            }
+                        } else if (p.status === "cleared") {
+                            actionHtml = `<span class="badge badge-active">${t("badgeApproved")}</span>`;
+                        }
+
+                        let proofHtml = "";
+                        if (p.status === "pending" && p.proof && (p.proof.note || p.proof.photo)) {
+                            const proofNoteHtml = p.proof.note
+                                ? `<div style="font-size:0.85rem;"><strong>${t("labelProofNoteShort")}:</strong> ${escapeHtml(p.proof.note)}</div>`
+                                : "";
+                            const proofPhotoHtml = p.proof.photo
+                                ? `<img src="${p.proof.photo}" alt="${t("proofPhotoAlt")}" style="max-width:110px; max-height:110px; border-radius:8px; margin-top:6px; cursor:pointer; display:block; object-fit:cover;" onclick="viewPunishmentProofPhoto('${p.id}')">`
+                                : "";
+                            proofHtml = `<div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px; margin-top:8px;">${proofNoteHtml}${proofPhotoHtml}</div>`;
+                        }
+
                         return `
                             <div class="card" style="${isCleared ? 'opacity:0.6;' : ''}">
                                 <div class="card-header">
                                     <div>
-                                        <span class="badge ${isCleared ? 'badge-task' : 'badge-pending'}" style="${!isCleared ? 'background:rgba(230,57,70,0.2); color:var(--red-accent);' : ''}">
-                                            ${isCleared ? t("badgeCleared") : t("badgeActive")}
-                                        </span>
+                                        ${badgeHtml}
                                         <h3 class="card-title" style="margin-top:6px;">${escapeHtml(p.title)}</h3>
                                     </div>
                                     ${currentRole === "Dom" ? `<button class="btn btn-sm btn-danger" onclick="deletePunishment('${p.id}')">✕</button>` : ''}
                                 </div>
                                 ${p.pointDeduction > 0 ? `<div style="font-size:0.85rem; color:var(--red-accent);">${t("pointDeductionPrefix")} -${p.pointDeduction} PTS</div>` : ''}
                                 ${p.assignedTask ? `<div style="font-size:0.85rem; color:var(--gold-accent);">${t("punishmentTaskPrefix")} <strong>${escapeHtml(p.assignedTask)}</strong></div>` : ''}
+                                ${proofHtml}
                                 <div class="card-footer">
-                                    ${!isCleared
-                                        ? `<button class="btn btn-sm btn-success" onclick="clearPunishment('${p.id}')">${t("btnMarkComplete")}</button>`
-                                        : `<span class="badge badge-active">${t("badgeApproved")}</span>`
-                                    }
+                                    ${actionHtml}
                                 </div>
                             </div>`;
                     }).join("");
@@ -3237,10 +3745,12 @@
             const titleInput = document.getElementById("proposalPunishmentTitle");
             const ptsInput = document.getElementById("proposalPunishmentPoints");
             const taskInput = document.getElementById("proposalPunishmentTask");
+            const proofReqSelect = document.getElementById("proposalPunishmentProofRequirement");
 
             const title = titleInput ? titleInput.value.trim() : "";
             const pointDeduction = ptsInput ? parseInt(ptsInput.value) || 0 : 0;
             const assignedTask = taskInput ? taskInput.value.trim() : "";
+            const proofRequirement = proofReqSelect ? proofReqSelect.value : "optional";
 
             if (!title) {
                 alert(t("alertTitleProposalRequired"));
@@ -3250,7 +3760,7 @@
             state.proposals.unshift({
                 id: generateUUID(),
                 type: "punishment",
-                data: { title, pointDeduction, assignedTask },
+                data: { title, pointDeduction, assignedTask, proofRequirement },
                 status: "pending",
                 timestamp: new Date().toISOString()
             });
@@ -3301,6 +3811,7 @@
                     title: proposal.data.title,
                     pointDeduction: proposal.data.pointDeduction,
                     assignedTask: proposal.data.assignedTask,
+                    proofRequirement: proposal.data.proofRequirement || "optional",
                     status: "active",
                     timestamp: new Date().toISOString()
                 });
