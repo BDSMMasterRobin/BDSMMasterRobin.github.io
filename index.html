@@ -3,13 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirect to Game</title>
-    <meta http-equiv="refresh" content="0; url=/game/index.html">
-    <script>
-        window.location.href = '/game/index.html';
-    </script>
+    <title>Übersicht</title>
+    <meta name="description" content="Navigator für BDSM-Tools: Würfelspiel, Slave-ID-Card-Generator, Vertrags-Generator und Habits &amp; Protocols.">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0d0d11;
+            --bg-surface: #16161e;
+            --bg-card: #1f1f2e;
+            --bg-card-hover: #28283d;
+            --border-color: #2e2e42;
+
+            --red-primary: #9d0208;
+            --red-accent: #e63946;
+
+            --gold-primary: #d4af37;
+            --gold-accent: #ffb703;
+
+            --text-main: #f1f1f5;
+            --text-muted: #8e8e9f;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 0%, #1a1420 0%, var(--bg-base) 55%);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 48px 20px 64px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            font-size: clamp(1.8rem, 5vw, 2.6rem);
+            margin: 0 0 10px;
+            background: linear-gradient(135deg, var(--gold-accent), var(--red-accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 0.03em;
+        }
+
+        header p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        nav.grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        a.card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 24px 22px;
+            text-decoration: none;
+            color: var(--text-main);
+            overflow: hidden;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+
+        a.card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(230,57,70,0.12), rgba(255,183,3,0.08));
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        a.card:hover,
+        a.card:focus-visible {
+            transform: translateY(-4px);
+            background: var(--bg-card-hover);
+            border-color: var(--gold-primary);
+        }
+
+        a.card:hover::before,
+        a.card:focus-visible::before {
+            opacity: 1;
+        }
+
+        .card-icon {
+            font-size: 1.8rem;
+            line-height: 1;
+        }
+
+        .card-title {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--gold-accent);
+            position: relative;
+        }
+
+        .card-desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.4;
+            position: relative;
+        }
+
+        footer {
+            margin-top: 48px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <p>Leite weiter zu <a href="/game/index.html">Game</a>...</p>
+    <header>
+        <h1>Übersicht</h1>
+        <p>Wähle einen Bereich</p>
+    </header>
+
+    <nav class="grid">
+        <a class="card" href="/game/index.html">
+            <span class="card-icon">🎲</span>
+            <span class="card-title">Würfelspiel</span>
+            <span class="card-desc">Das Würfelspiel spielen.</span>
+        </a>
+
+        <a class="card" href="/ausweis/index.html">
+            <span class="card-icon">🪪</span>
+            <span class="card-title">Slave ID Card</span>
+            <span class="card-desc">Profilkarte mit Vorlieben, Limits und Social-Profilen erstellen.</span>
+        </a>
+
+        <a class="card" href="/generator/index.html">
+            <span class="card-icon">📜</span>
+            <span class="card-title">Vertrags-Generator</span>
+            <span class="card-desc">Offline-Generator für eine BDSM-Vertragsvorlage.</span>
+        </a>
+
+        <a class="card" href="/habits/index.html">
+            <span class="card-icon">✅</span>
+            <span class="card-title">Habits &amp; Protocols</span>
+            <span class="card-desc">Gewohnheiten und Protokolle verwalten.</span>
+        </a>
+    </nav>
+
+    <footer>&copy; <span id="year"></span></footer>
+
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
 </body>
 </html>
