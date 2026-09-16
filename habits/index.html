@@ -580,6 +580,7 @@
         .log-item.APPROVAL { border-left-color: var(--success); }
         .log-item.REWARD { border-left-color: var(--gold-accent); }
         .log-item.PENALTY { border-left-color: var(--red-accent); }
+        .log-item.INFRACTION { border-left-color: var(--red-accent); }
         .log-item.PROPOSAL { border-left-color: var(--gold-accent); }
 
         .log-msg {
@@ -728,6 +729,12 @@
                     <button id="langSelectEn" class="btn btn-gold" onclick="setLanguage('en')">English (Default)</button>
                     <button id="langSelectDe" class="btn" onclick="setLanguage('de')">Deutsch</button>
                 </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 20px;">
+                <h3 class="modal-title" style="margin-bottom: 10px;" data-i18n="cardNotificationsTitle">🔔 Push Notifications</h3>
+                <p class="card-desc" style="margin-bottom: 12px;" data-i18n="cardNotificationsDesc">Get notified when your partner acts (proposals, tasks, rewards) or when a task is due soon. Works while this browser tab is open.</p>
+                <button id="btnNotifToggle" class="btn btn-gold" onclick="requestNotificationPermission()" data-i18n="btnEnableNotifications">🔔 Enable Notifications</button>
             </div>
 
             <div class="card" style="margin-bottom: 20px;">
@@ -1194,6 +1201,29 @@
                 phDomPin: "e.g. 1234",
                 btnSavePin: "Save PIN",
 
+                cardNotificationsTitle: "🔔 Push Notifications",
+                cardNotificationsDesc: "Get notified when your partner acts (proposals, tasks, rewards) or when a task is due soon. Works while this browser tab is open.",
+                btnEnableNotifications: "🔔 Enable Notifications",
+                btnNotificationsEnabled: "✅ Notifications Enabled",
+                btnNotificationsBlocked: "🚫 Blocked in Browser Settings",
+                btnNotificationsUnsupported: "Not supported by this browser",
+                notifEnabledConfirmation: "You'll now receive notifications from Habits & Protocols.",
+                notifNewProposal: 'New proposal: "{title}"',
+                notifProposalApproved: 'Proposal approved: "{title}"',
+                notifProposalRejected: 'Proposal rejected: "{title}"',
+                notifTaskCompleted: 'Task marked complete, awaiting your review: "{title}"',
+                notifTaskApproved: 'Task confirmed: "{title}" (+{pts} PTS)',
+                notifTaskRejected: 'Task rejected: "{title}"',
+                notifNewTask: 'New task assigned: "{title}"',
+                notifScheduledTaskGenerated: 'New scheduled task available: "{title}"',
+                notifTaskDueSoon: 'Task due soon: "{title}"',
+                notifRewardRequested: 'Reward requested: "{title}"',
+                notifRewardApproved: 'Reward approved: "{title}"',
+                notifRewardDenied: 'Reward denied: "{title}"',
+                notifNewRule: 'New rule added: "{title}"',
+                notifNewPunishment: 'New sanction issued: "{title}"',
+                notifInfractionReported: "Your Sub reported a rule infraction",
+
                 cardFirebaseTitle: "🔥 Firebase & Partner Sync",
                 btnFirebaseGuide: "ℹ️ Instructions",
                 cardFirebaseDesc: "Enter your Firebase configuration and Room ID here to synchronize across devices in real time.",
@@ -1418,6 +1448,29 @@
                 phDomPin: "z.B. 1234",
                 btnSavePin: "PIN Speichern",
 
+                cardNotificationsTitle: "🔔 Push-Benachrichtigungen",
+                cardNotificationsDesc: "Werde benachrichtigt, wenn dein Partner etwas tut (Vorschläge, Aufgaben, Belohnungen) oder eine Aufgabe bald fällig ist. Funktioniert, solange dieser Browser-Tab geöffnet ist.",
+                btnEnableNotifications: "🔔 Benachrichtigungen aktivieren",
+                btnNotificationsEnabled: "✅ Benachrichtigungen aktiv",
+                btnNotificationsBlocked: "🚫 In Browser-Einstellungen blockiert",
+                btnNotificationsUnsupported: "Von diesem Browser nicht unterstützt",
+                notifEnabledConfirmation: "Du erhältst ab jetzt Benachrichtigungen von Habits & Protocols.",
+                notifNewProposal: 'Neuer Vorschlag: "{title}"',
+                notifProposalApproved: 'Vorschlag genehmigt: "{title}"',
+                notifProposalRejected: 'Vorschlag abgelehnt: "{title}"',
+                notifTaskCompleted: 'Aufgabe als erledigt markiert, wartet auf Bestätigung: "{title}"',
+                notifTaskApproved: 'Aufgabe bestätigt: "{title}" (+{pts} PTS)',
+                notifTaskRejected: 'Aufgabe abgelehnt: "{title}"',
+                notifNewTask: 'Neue Aufgabe zugewiesen: "{title}"',
+                notifScheduledTaskGenerated: 'Neue geplante Aufgabe verfügbar: "{title}"',
+                notifTaskDueSoon: 'Aufgabe bald fällig: "{title}"',
+                notifRewardRequested: 'Belohnung angefordert: "{title}"',
+                notifRewardApproved: 'Belohnung genehmigt: "{title}"',
+                notifRewardDenied: 'Belohnung abgelehnt: "{title}"',
+                notifNewRule: 'Neue Regel hinzugefügt: "{title}"',
+                notifNewPunishment: 'Neue Sanktion erteilt: "{title}"',
+                notifInfractionReported: "Dein Sub hat einen Regelverstoß gemeldet",
+
                 cardFirebaseTitle: "🔥 Firebase & Partner Sync",
                 btnFirebaseGuide: "ℹ️ Anleitung",
                 cardFirebaseDesc: "Gib hier die Firebase-Konfiguration und deine Room-ID ein, um geräteübergreifend in Echtzeit zu synchronisieren.",
@@ -1640,6 +1693,9 @@
             const selectDe = document.getElementById("langSelectDe");
             if (selectEn) selectEn.className = currentLang === "en" ? "btn btn-gold" : "btn";
             if (selectDe) selectDe.className = currentLang === "de" ? "btn btn-gold" : "btn";
+
+            // Re-apply the (non-static) notification button label in the new language
+            updateNotificationButtonUI();
         }
 
         // ==========================================
@@ -1730,12 +1786,176 @@
                     tmpl.lastGeneratedDate = todayStr;
                     updated = true;
                     addLog("SCHEDULE", t("logAutoGeneratedTask", { title: tmpl.title }) || `Scheduled task auto-generated: ${tmpl.title}`);
+                    sendNotification(t("notifScheduledTaskGenerated", { title: tmpl.title }));
                 }
             });
 
             if (updated) {
                 saveState();
             }
+        }
+
+        // ==========================================
+        // PUSH NOTIFICATIONS (Browser Notification API)
+        // ==========================================
+        const REMINDED_TASKS_KEY = "habits_reminded_task_ids";
+        const DUE_SOON_WINDOW_MS = 60 * 60 * 1000; // remind within 1h of the deadline (or if already overdue)
+
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                alert(t("btnNotificationsUnsupported"));
+                return;
+            }
+            Notification.requestPermission().then((permission) => {
+                updateNotificationButtonUI();
+                if (permission === "granted") {
+                    sendNotification(t("notifEnabledConfirmation"));
+                }
+            });
+        }
+
+        function updateNotificationButtonUI() {
+            const btn = document.getElementById("btnNotifToggle");
+            if (!btn) return;
+            if (!("Notification" in window)) {
+                btn.textContent = t("btnNotificationsUnsupported");
+                btn.disabled = true;
+            } else if (Notification.permission === "granted") {
+                btn.textContent = t("btnNotificationsEnabled");
+                btn.disabled = true;
+            } else if (Notification.permission === "denied") {
+                btn.textContent = t("btnNotificationsBlocked");
+                btn.disabled = true;
+            } else {
+                btn.textContent = t("btnEnableNotifications");
+                btn.disabled = false;
+            }
+        }
+
+        function sendNotification(body) {
+            if (!("Notification" in window) || Notification.permission !== "granted") return;
+            try {
+                new Notification("Habits & Protocols", { body: body });
+            } catch (e) {
+                console.error("Notification error:", e);
+            }
+        }
+
+        // Compares the previous synced state to a freshly received one and notifies
+        // the current device's role about changes made by the other side.
+        function detectRemoteChangesAndNotify(oldState, newState) {
+            try {
+                const oldProposals = new Map((oldState.proposals || []).map(p => [p.id, p]));
+                (newState.proposals || []).forEach(p => {
+                    const old = oldProposals.get(p.id);
+                    if (!old) {
+                        if (currentRole === "Dom" && p.status === "pending") {
+                            sendNotification(t("notifNewProposal", { title: p.data.title }));
+                        }
+                    } else if (currentRole === "Sub" && old.status === "pending" && p.status !== old.status) {
+                        if (p.status === "approved") {
+                            sendNotification(t("notifProposalApproved", { title: p.data.title }));
+                        } else if (p.status === "rejected") {
+                            sendNotification(t("notifProposalRejected", { title: p.data.title }));
+                        }
+                    }
+                });
+
+                const oldTasks = new Map((oldState.tasks || []).map(x => [x.id, x]));
+                (newState.tasks || []).forEach(task => {
+                    const old = oldTasks.get(task.id);
+                    if (!old) {
+                        // Auto-generated (templated) tasks already trigger their own
+                        // notification from checkScheduledTemplates() on the device that
+                        // generates them; skip here to avoid a duplicate on that device.
+                        if (currentRole === "Sub" && !task.templateId) {
+                            sendNotification(t("notifNewTask", { title: task.title }));
+                        }
+                        return;
+                    }
+                    if (old.status === task.status) return;
+                    if (currentRole === "Dom" && old.status === "active" && task.status === "pending") {
+                        sendNotification(t("notifTaskCompleted", { title: task.title }));
+                    } else if (currentRole === "Sub" && old.status === "pending" && task.status === "approved") {
+                        sendNotification(t("notifTaskApproved", { title: task.title, pts: task.points }));
+                    } else if (currentRole === "Sub" && old.status === "pending" && task.status === "active") {
+                        sendNotification(t("notifTaskRejected", { title: task.title }));
+                    }
+                });
+
+                const oldRewards = new Map((oldState.rewards || []).map(x => [x.id, x]));
+                (newState.rewards || []).forEach(reward => {
+                    const old = oldRewards.get(reward.id);
+                    if (!old || old.status === reward.status) return;
+                    if (currentRole === "Dom" && old.status === "available" && reward.status === "requested") {
+                        sendNotification(t("notifRewardRequested", { title: reward.title }));
+                    } else if (currentRole === "Sub" && old.status === "requested" && reward.status === "claimed") {
+                        sendNotification(t("notifRewardApproved", { title: reward.title }));
+                    } else if (currentRole === "Sub" && old.status === "requested" && reward.status === "available") {
+                        sendNotification(t("notifRewardDenied", { title: reward.title }));
+                    }
+                });
+
+                const oldRuleIds = new Set((oldState.rules || []).map(r => r.id));
+                (newState.rules || []).forEach(rule => {
+                    if (!oldRuleIds.has(rule.id) && currentRole === "Sub") {
+                        sendNotification(t("notifNewRule", { title: rule.title }));
+                    }
+                });
+
+                const oldPunishmentIds = new Set((oldState.punishments || []).map(p => p.id));
+                (newState.punishments || []).forEach(p => {
+                    if (!oldPunishmentIds.has(p.id) && currentRole === "Sub") {
+                        sendNotification(t("notifNewPunishment", { title: p.title }));
+                    }
+                });
+
+                const oldLogIds = new Set((oldState.logs || []).map(l => l.id));
+                (newState.logs || []).forEach(log => {
+                    if (!oldLogIds.has(log.id) && log.type === "INFRACTION" && currentRole === "Dom") {
+                        sendNotification(t("notifInfractionReported"));
+                    }
+                });
+            } catch (e) {
+                console.error("Notification diff error:", e);
+            }
+        }
+
+        function loadRemindedTaskIds() {
+            try {
+                return new Set(JSON.parse(localStorage.getItem(REMINDED_TASKS_KEY) || "[]"));
+            } catch (e) {
+                return new Set();
+            }
+        }
+
+        function saveRemindedTaskIds(ids) {
+            try {
+                localStorage.setItem(REMINDED_TASKS_KEY, JSON.stringify(Array.from(ids)));
+            } catch (e) {}
+        }
+
+        // Reminds the Sub once per task when its deadline is within DUE_SOON_WINDOW_MS
+        // (or already passed while the task is still active).
+        function checkDueTasksAndNotify() {
+            if (currentRole !== "Sub" || !state.tasks) return;
+
+            const remindedIds = loadRemindedTaskIds();
+            const now = Date.now();
+            let changed = false;
+
+            state.tasks.forEach(task => {
+                if (task.status !== "active" || !task.endDate || remindedIds.has(task.id)) return;
+                const dueAt = new Date(task.endDate).getTime();
+                if (isNaN(dueAt)) return;
+                if (dueAt - now <= DUE_SOON_WINDOW_MS) {
+                    sendNotification(t("notifTaskDueSoon", { title: task.title }));
+                    remindedIds.add(task.id);
+                    changed = true;
+                }
+            });
+
+            if (changed) saveRemindedTaskIds(remindedIds);
         }
 
         // Initialize App
@@ -1745,7 +1965,13 @@
             document.documentElement.lang = currentLang;
             applyStaticTranslations();
             checkScheduledTemplates();
+            checkDueTasksAndNotify();
+            updateNotificationButtonUI();
             updateUI();
+            setInterval(() => {
+                checkScheduledTemplates();
+                checkDueTasksAndNotify();
+            }, 5 * 60 * 1000);
         });
 
         // Load State from LocalStorage
@@ -2445,7 +2671,7 @@
             const note = noteInput ? noteInput.value.trim() : "";
 
             const msg = t("logInfraction", { rule: ruleTitle }) + (note ? ` (${note})` : '');
-            addLog("PENALTY", msg);
+            addLog("INFRACTION", msg);
             saveState();
 
             if (noteInput) noteInput.value = "";
@@ -2836,14 +3062,20 @@
                 firebaseRoomRef = ref(firebaseDb, 'rooms/' + roomId);
 
                 // Listen for Realtime updates
+                let firstFirebaseSyncDone = false;
                 onValue(firebaseRoomRef, (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
+                        const newState = ensureStateDefaults(data);
+                        if (firstFirebaseSyncDone) {
+                            detectRemoteChangesAndNotify(state, newState);
+                        }
                         isSyncingFromFirebase = true;
-                        state = ensureStateDefaults(data);
+                        state = newState;
                         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
                         updateUI();
                         isSyncingFromFirebase = false;
+                        firstFirebaseSyncDone = true;
                     }
                 });
             } catch (e) {
