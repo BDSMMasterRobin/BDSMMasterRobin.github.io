@@ -490,6 +490,13 @@
         // Locktober-Modus Status
         var isLocktoberMode = false;
 
+        function getUnitLabel(unitType) {
+            if (unitType === 'days') return 'Tage';
+            if (unitType === 'minutes') return 'Minuten';
+            if (unitType === 'amount') return 'Anzahl';
+            return 'Stunden';
+        }
+
         // Spiel initialisieren
         window.onload = function() {
             loadLocktoberModeFromLocalStorage();
@@ -565,6 +572,11 @@
                 select.className = 'unit-select';
                 select.id = 'unit-' + i;
                 
+                var minuteOption = document.createElement('option');
+                minuteOption.value = 'minutes';
+                minuteOption.textContent = 'Minuten';
+                minuteOption.selected = timeUnits[i] === 'minutes';
+
                 var hourOption = document.createElement('option');
                 hourOption.value = 'hours';
                 hourOption.textContent = 'Stunden';
@@ -580,6 +592,7 @@
                 amountOption.textContent = 'Anzahl';
                 amountOption.selected = timeUnits[i] === 'amount';
                 
+                select.appendChild(minuteOption);
                 select.appendChild(hourOption);
                 select.appendChild(dayOption);
                 select.appendChild(amountOption);
@@ -613,6 +626,11 @@
                 select.className = 'unit-select';
                 select.id = 'unit-' + item.key;
                 
+                var minuteOption = document.createElement('option');
+                minuteOption.value = 'minutes';
+                minuteOption.textContent = 'Minuten';
+                minuteOption.selected = timeUnits[item.key] === 'minutes';
+
                 var hourOption = document.createElement('option');
                 hourOption.value = 'hours';
                 hourOption.textContent = 'Stunden';
@@ -628,6 +646,7 @@
                 amountOption.textContent = 'Anzahl';
                 amountOption.selected = timeUnits[item.key] === 'amount';
                 
+                select.appendChild(minuteOption);
                 select.appendChild(hourOption);
                 select.appendChild(dayOption);
                 select.appendChild(amountOption);
@@ -708,7 +727,7 @@
                 if (sum >= 2 && sum <= 10) {
                     var item = items[sum];
                     var unitType = timeUnits[sum];
-                    var unitLabel = unitType === 'days' ? 'Tage' : (unitType === 'amount' ? 'Anzahl' : 'Stunden');
+                    var unitLabel = getUnitLabel(unitType);
                     var promptLabel = unitType === 'amount' ? 'die Anzahl' : 'die Dauer';
                     
                     // Wenn Pasch, dann zuerst für den Gegenstand und danach für die Schläge/Sonderstrafe würfeln
@@ -800,7 +819,7 @@
                 resultContent.className = 'animated-result';
                 
                 var unitType = timeUnits[itemValue];
-                var unitLabel = unitType === 'days' ? 'Tage' : (unitType === 'amount' ? 'Anzahl' : 'Stunden');
+                var unitLabel = getUnitLabel(unitType);
                 var displayLabel = unitType === 'amount' ? 'Anzahl' : 'Dauer';
                 var buttonText = unitType === 'amount' ? 'Weiter und für Pasch würfeln' : 'Timer hinzufügen und für Pasch würfeln';
 
@@ -834,7 +853,7 @@
             resultContent.className = 'animated-result';
             
             var paschUnitType = timeUnits["pasch"];
-            var paschUnitLabel = paschUnitType === 'days' ? 'Tage' : (paschUnitType === 'amount' ? 'Anzahl' : 'Stunden');
+            var paschUnitLabel = getUnitLabel(paschUnitType);
             var paschPromptLabel = paschUnitType === 'amount' ? 'die Anzahl' : 'die Dauer';
 
             resultContent.innerHTML = `
@@ -870,7 +889,7 @@
                 resultContent.className = 'animated-result';
                 
                 var paschUnitType = timeUnits["pasch"];
-                var paschUnitLabel = paschUnitType === 'days' ? 'Tage' : (paschUnitType === 'amount' ? 'Anzahl' : 'Stunden');
+                var paschUnitLabel = getUnitLabel(paschUnitType);
                 var paschDisplayLabel = paschUnitType === 'amount' ? 'Anzahl' : 'Dauer';
                 var buttonText = paschUnitType === 'amount' ? 'Fertig' : 'Timer hinzufügen und Fertig';
 
@@ -923,7 +942,7 @@
                 durationDiceElement.classList.remove('dice-rolling');
 
                 var unitType = timeUnits[itemValue];
-                var unitLabel = unitType === 'days' ? 'Tage' : (unitType === 'amount' ? 'Anzahl' : 'Stunden');
+                var unitLabel = getUnitLabel(unitType);
                 var displayLabel = unitType === 'amount' ? 'Anzahl' : 'Dauer';
                 var buttonText = unitType === 'amount' ? 'Fertig' : 'Timer hinzufügen und Fertig';
 
@@ -958,6 +977,8 @@
 
             if (roll.unit === 'days') {
                 durationMs = roll.duration * 24 * 60 * 60 * 1000;
+            } else if (roll.unit === 'minutes') {
+                durationMs = roll.duration * 60 * 1000;
             } else {
                 durationMs = roll.duration * 60 * 60 * 1000;
             }
