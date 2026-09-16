@@ -636,6 +636,7 @@
             <button class="nav-btn active" onclick="switchTab('tasks')" data-i18n="navTasks">Tasks</button>
             <button class="nav-btn" onclick="switchTab('rewards')" data-i18n="navRewards">Rewards</button>
             <button class="nav-btn" onclick="switchTab('rules')" data-i18n="navRules">Rules & Penalties</button>
+            <button class="nav-btn" onclick="switchTab('journal')" data-i18n="navJournal">Journal</button>
             <button class="nav-btn" onclick="switchTab('logs')" data-i18n="navLogs">Logbook</button>
             <button class="nav-btn" onclick="switchTab('setup')" data-i18n="navSetup">Setup & Sync</button>
         </nav>
@@ -697,6 +698,58 @@
             </div>
             <div id="punishmentsList" class="card-grid">
                 <!-- Dynamically populated punishments -->
+            </div>
+        </section>
+
+        <!-- MODULE JOURNAL & CHECK-IN -->
+        <section id="tab-journal" class="tab-content">
+            <div class="section-header">
+                <h2 class="section-title"><span>📖</span> <span data-i18n="titleJournal">Daily Check-In & Journal</span></h2>
+            </div>
+
+            <!-- Sub Check-In Form -->
+            <div class="card sub-only" style="margin-bottom: 24px; border: 1px solid var(--gold-primary);">
+                <h3 class="modal-title" style="margin-bottom: 12px;" data-i18n="cardCheckInTitle">📝 Today's Check-In</h3>
+
+                <div class="form-group">
+                    <label data-i18n="labelMood">Mood / Wellbeing:</label>
+                    <div style="display: flex; gap: 12px; font-size: 1.5rem; justify-content: space-around; background: var(--bg-base); padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <label style="cursor: pointer;"><input type="radio" name="checkInMood" value="1"> 😫</label>
+                        <label style="cursor: pointer;"><input type="radio" name="checkInMood" value="2"> 🙁</label>
+                        <label style="cursor: pointer;"><input type="radio" name="checkInMood" value="3" checked> 😐</label>
+                        <label style="cursor: pointer;"><input type="radio" name="checkInMood" value="4"> 🙂</label>
+                        <label style="cursor: pointer;"><input type="radio" name="checkInMood" value="5"> 😊</label>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label data-i18n="labelChastity">Chastity / Lock Status:</label>
+                    <select id="checkInChastity" class="form-control">
+                        <option value="locked" data-i18n="optChastityLocked">🔒 Locked</option>
+                        <option value="unlocked" data-i18n="optChastityUnlocked">🔓 Unlocked / Cleaned</option>
+                        <option value="na" data-i18n="optChastityNA">➖ Not Applicable</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label data-i18n="labelReflection">Daily Notes / Reflection:</label>
+                    <textarea id="checkInNotes" class="form-control" rows="3" placeholder="How was your day? Any thoughts or notes for Dom..." data-i18n-placeholder="phCheckInNotes"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label data-i18n="labelJournalPhoto">Photo (Optional):</label>
+                    <input type="file" id="checkInPhoto" class="form-control" accept="image/*" capture="environment" onchange="handleJournalPhotoSelect(this)">
+                    <img id="checkInPhotoPreview" src="" alt="" style="display:none; max-width:100%; max-height:200px; border-radius:8px; margin-top:8px;">
+                </div>
+
+                <button class="btn btn-gold" style="margin-top: 14px;" onclick="submitCheckIn()" data-i18n="btnSubmitCheckIn">Submit Daily Check-In</button>
+            </div>
+
+            <div class="section-header">
+                <h3 class="section-title" style="font-size: 1.1rem;"><span>📚</span> <span data-i18n="titleJournalEntries">Journal Entries & Feedback</span></h3>
+            </div>
+            <div id="journalList" class="card-grid">
+                <!-- Dynamically populated -->
             </div>
         </section>
 
@@ -800,6 +853,10 @@
         <button class="tab-item" onclick="switchTab('rules')">
             <span>📜</span>
             <span data-i18n="navRulesShort">Rules</span>
+        </button>
+        <button class="tab-item" onclick="switchTab('journal')">
+            <span>📖</span>
+            <span data-i18n="navJournal">Journal</span>
         </button>
         <button class="tab-item" onclick="switchTab('logs')">
             <span>📜</span>
@@ -1642,7 +1699,33 @@
                 notifPunishmentRejected: 'Sanction completion rejected: "{title}"',
                 notifScheduledPunishmentGenerated: 'New scheduled sanction issued: "{title}"',
                 logApprovedPunishment: 'Sanction completion approved: "{title}"',
-                logRejectedPunishment: 'Sanction completion rejected: "{title}"'
+                logRejectedPunishment: 'Sanction completion rejected: "{title}"',
+
+                navJournal: "Journal",
+                titleJournal: "Daily Check-In & Journal",
+                cardCheckInTitle: "📝 Today's Check-In",
+                labelMood: "Mood / Wellbeing:",
+                labelChastity: "Chastity / Lock Status:",
+                optChastityLocked: "🔒 Locked",
+                optChastityUnlocked: "🔓 Unlocked / Cleaned",
+                optChastityNA: "➖ Not Applicable",
+                labelReflection: "Daily Notes / Reflection:",
+                phCheckInNotes: "How was your day? Any thoughts or notes for Dom...",
+                labelJournalPhoto: "Photo (Optional):",
+                btnSubmitCheckIn: "Submit Daily Check-In",
+                titleJournalEntries: "Journal Entries & Feedback",
+                emptyJournal: "No check-ins submitted yet.",
+                labelDomFeedback: "Dom Rating & Feedback:",
+                labelRating: "Rating:",
+                labelBonusPoints: "Bonus / Penalty Points (+/-):",
+                phDomComment: "Comment or words of encouragement/discipline...",
+                btnSaveFeedback: "Save Feedback",
+                alertCheckInSubmitted: "Daily check-in submitted successfully!",
+                alertConfirmDeleteJournal: "Delete this journal entry?",
+                logCheckInSubmitted: "Daily check-in submitted",
+                logCheckInReviewed: "Daily check-in reviewed by Dom ({pts} PTS)",
+                notifCheckInSubmitted: "Your Sub submitted a daily check-in",
+                notifCheckInReviewed: "Dom reviewed your daily check-in"
             },
             de: {
                 navTasks: "Aufgaben",
@@ -1937,7 +2020,33 @@
                 notifPunishmentRejected: 'Sanktions-Erfüllung abgelehnt: "{title}"',
                 notifScheduledPunishmentGenerated: 'Neue geplante Sanktion erteilt: "{title}"',
                 logApprovedPunishment: 'Sanktions-Erfüllung genehmigt: "{title}"',
-                logRejectedPunishment: 'Sanktions-Erfüllung abgelehnt: "{title}"'
+                logRejectedPunishment: 'Sanktions-Erfüllung abgelehnt: "{title}"',
+
+                navJournal: "Tagebuch",
+                titleJournal: "Tägliches Check-In & Tagebuch",
+                cardCheckInTitle: "📝 Heutiges Check-In",
+                labelMood: "Stimmung / Wohlbefinden:",
+                labelChastity: "Keuschheit / Schloss-Status:",
+                optChastityLocked: "🔒 Verschlossen",
+                optChastityUnlocked: "🔓 Aufgeschlossen / Gereinigt",
+                optChastityNA: "➖ Nicht zutreffend",
+                labelReflection: "Tägliche Notizen / Reflexion:",
+                phCheckInNotes: "Wie war dein Tag? Gedanken oder Notizen an Dom...",
+                labelJournalPhoto: "Foto (Optional):",
+                btnSubmitCheckIn: "Tägliches Check-In Einreichen",
+                titleJournalEntries: "Tagebuch-Einträge & Feedback",
+                emptyJournal: "Noch keine Check-Ins eingereicht.",
+                labelDomFeedback: "Dom-Bewertung & Feedback:",
+                labelRating: "Bewertung:",
+                labelBonusPoints: "Bonus- / Abzugspunkte (+/-):",
+                phDomComment: "Kommentar oder Worte des Lobs/der Disziplin...",
+                btnSaveFeedback: "Feedback Speichern",
+                alertCheckInSubmitted: "Tägliches Check-In erfolgreich eingereicht!",
+                alertConfirmDeleteJournal: "Diesen Tagebuch-Eintrag wirklich löschen?",
+                logCheckInSubmitted: "Tägliches Check-In eingereicht",
+                logCheckInReviewed: "Tägliches Check-In von Dom bewertet ({pts} PTS)",
+                notifCheckInSubmitted: "Dein Sub hat ein tägliches Check-In eingereicht",
+                notifCheckInReviewed: "Dom hat dein tägliches Check-In bewertet"
             }
         };
 
@@ -2008,7 +2117,8 @@
             punishments: [],
             punishmentTemplates: [],
             proposals: [],
-            logs: []
+            logs: [],
+            journalEntries: []
         };
 
         let currentRole = "Sub"; // "Sub" or "Dom"
@@ -2033,7 +2143,8 @@
                 punishments: Array.isArray(data.punishments) ? data.punishments : [],
                 punishmentTemplates: Array.isArray(data.punishmentTemplates) ? data.punishmentTemplates : [],
                 proposals: Array.isArray(data.proposals) ? data.proposals : [],
-                logs: Array.isArray(data.logs) ? data.logs : []
+                logs: Array.isArray(data.logs) ? data.logs : [],
+                journalEntries: Array.isArray(data.journalEntries) ? data.journalEntries : []
             };
         }
 
@@ -2263,6 +2374,18 @@
                 (newState.logs || []).forEach(log => {
                     if (!oldLogIds.has(log.id) && log.type === "INFRACTION" && currentRole === "Dom") {
                         sendNotification(t("notifInfractionReported"));
+                    }
+                });
+
+                const oldJournalEntries = new Map((oldState.journalEntries || []).map(j => [j.id, j]));
+                (newState.journalEntries || []).forEach(j => {
+                    const old = oldJournalEntries.get(j.id);
+                    if (!old) {
+                        if (currentRole === "Dom") {
+                            sendNotification(t("notifCheckInSubmitted"));
+                        }
+                    } else if (currentRole === "Sub" && !old.feedback && j.feedback) {
+                        sendNotification(t("notifCheckInReviewed"));
                     }
                 });
             } catch (e) {
@@ -2600,6 +2723,7 @@
             if (typeof renderTasks === "function") renderTasks();
             if (typeof renderRewards === "function") renderRewards();
             if (typeof renderRulesAndPunishments === "function") renderRulesAndPunishments();
+            if (typeof renderJournal === "function") renderJournal();
             if (typeof renderLogs === "function") renderLogs();
         }
 
@@ -4104,6 +4228,220 @@
             } catch (e) {
                 alert(t("alertDecodeError"));
             }
+        }
+
+        // ==========================================
+        // MODULE JOURNAL & CHECK-IN
+        // ==========================================
+        let pendingJournalPhotoDataUrl = null;
+
+        function handleJournalPhotoSelect(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    let { width, height } = img;
+                    if (width > PROOF_PHOTO_MAX_DIM || height > PROOF_PHOTO_MAX_DIM) {
+                        if (width > height) {
+                            height = Math.round(height * (PROOF_PHOTO_MAX_DIM / width));
+                            width = PROOF_PHOTO_MAX_DIM;
+                        } else {
+                            width = Math.round(width * (PROOF_PHOTO_MAX_DIM / height));
+                            height = PROOF_PHOTO_MAX_DIM;
+                        }
+                    }
+                    const canvas = document.createElement("canvas");
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+                    pendingJournalPhotoDataUrl = canvas.toDataURL("image/jpeg", PROOF_PHOTO_QUALITY);
+
+                    const preview = document.getElementById("checkInPhotoPreview");
+                    if (preview) {
+                        preview.src = pendingJournalPhotoDataUrl;
+                        preview.style.display = "block";
+                    }
+                };
+                img.onerror = () => alert(t("alertProofPhotoReadError"));
+                img.src = e.target.result;
+            };
+            reader.onerror = () => alert(t("alertProofPhotoReadError"));
+            reader.readAsDataURL(file);
+        }
+
+        function submitCheckIn() {
+            const moodInput = document.querySelector('input[name="checkInMood"]:checked');
+            const chastitySelect = document.getElementById("checkInChastity");
+            const notesInput = document.getElementById("checkInNotes");
+
+            const mood = moodInput ? parseInt(moodInput.value) || 3 : 3;
+            const chastity = chastitySelect ? chastitySelect.value : "na";
+            const notes = notesInput ? notesInput.value.trim() : "";
+
+            const newEntry = {
+                id: generateUUID(),
+                date: new Date().toISOString(),
+                mood: mood,
+                chastity: chastity,
+                notes: notes,
+                photo: pendingJournalPhotoDataUrl || null,
+                feedback: null
+            };
+
+            if (!state.journalEntries) state.journalEntries = [];
+            state.journalEntries.unshift(newEntry);
+
+            addLog("JOURNAL", t("logCheckInSubmitted"));
+            saveState();
+
+            if (notesInput) notesInput.value = "";
+            const photoInput = document.getElementById("checkInPhoto");
+            if (photoInput) photoInput.value = "";
+            const preview = document.getElementById("checkInPhotoPreview");
+            if (preview) {
+                preview.src = "";
+                preview.style.display = "none";
+            }
+            pendingJournalPhotoDataUrl = null;
+
+            alert(t("alertCheckInSubmitted"));
+        }
+
+        function saveJournalFeedback(entryId) {
+            const entry = (state.journalEntries || []).find(j => j.id === entryId);
+            if (!entry) return;
+
+            const ratingSelect = document.getElementById(`journalRating_${entryId}`);
+            const commentInput = document.getElementById(`journalComment_${entryId}`);
+            const pointsInput = document.getElementById(`journalPoints_${entryId}`);
+
+            const rating = ratingSelect ? parseInt(ratingSelect.value) || 5 : 5;
+            const comment = commentInput ? commentInput.value.trim() : "";
+            const bonusPoints = pointsInput ? parseInt(pointsInput.value) || 0 : 0;
+
+            const prevBonusPoints = (entry.feedback && typeof entry.feedback.bonusPoints === "number") ? entry.feedback.bonusPoints : 0;
+            const diffPoints = bonusPoints - prevBonusPoints;
+
+            if (diffPoints !== 0) {
+                state.roomConfig.points = Math.max(0, state.roomConfig.points + diffPoints);
+            }
+
+            entry.feedback = {
+                rating: rating,
+                comment: comment,
+                bonusPoints: bonusPoints,
+                reviewedAt: new Date().toISOString()
+            };
+
+            addLog("JOURNAL", t("logCheckInReviewed", { pts: bonusPoints >= 0 ? `+${bonusPoints}` : `${bonusPoints}` }));
+            saveState();
+        }
+
+        function deleteJournalEntry(entryId) {
+            if (!confirm(t("alertConfirmDeleteJournal"))) return;
+            state.journalEntries = (state.journalEntries || []).filter(j => j.id !== entryId);
+            saveState();
+        }
+
+        function renderJournal() {
+            const container = document.getElementById("journalList");
+            if (!container) return;
+
+            if (!state.journalEntries || state.journalEntries.length === 0) {
+                container.innerHTML = `<div class="empty-state"><span>📖</span><p>${t("emptyJournal")}</p></div>`;
+                return;
+            }
+
+            const dateLocale = currentLang === "de" ? "de-DE" : "en-US";
+            const moodEmojis = { 1: "😫", 2: "🙁", 3: "😐", 4: "🙂", 5: "😊" };
+            const chastityLabels = {
+                locked: t("optChastityLocked") || "🔒 Locked",
+                unlocked: t("optChastityUnlocked") || "🔓 Unlocked",
+                na: t("optChastityNA") || "➖ N/A"
+            };
+
+            container.innerHTML = state.journalEntries.map(entry => {
+                const dateStr = new Date(entry.date).toLocaleString(dateLocale, {
+                    day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+                });
+
+                const moodEmoji = moodEmojis[entry.mood] || "😐";
+                const chastityText = chastityLabels[entry.chastity] || entry.chastity || "";
+
+                let photoHtml = "";
+                if (entry.photo) {
+                    photoHtml = `<img src="${entry.photo}" alt="${t("proofPhotoAlt")}" style="max-width:120px; max-height:120px; border-radius:8px; margin-top:8px; cursor:pointer; display:block; object-fit:cover;" onclick="viewProofPhotoFull('${entry.photo}')">`;
+                }
+
+                let feedbackHtml = "";
+                if (entry.feedback) {
+                    const stars = "⭐".repeat(entry.feedback.rating || 5);
+                    const ptsSign = entry.feedback.bonusPoints > 0 ? `+${entry.feedback.bonusPoints}` : `${entry.feedback.bonusPoints}`;
+                    feedbackHtml = `
+                        <div style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.3); border-radius:8px; padding:10px; margin-top:10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <span style="font-weight:700; color:var(--gold-accent); font-size:0.9rem;">👑 ${t("labelDomFeedback")} ${stars}</span>
+                                <span style="font-weight:700; color:${entry.feedback.bonusPoints >= 0 ? 'var(--gold-accent)' : 'var(--red-accent)'}; font-size:0.85rem;">${ptsSign} PTS</span>
+                            </div>
+                            ${entry.feedback.comment ? `<div style="font-size:0.85rem; color:var(--text-main); font-style:italic;">"${escapeHtml(entry.feedback.comment)}"</div>` : ''}
+                        </div>`;
+                } else if (currentRole === "Dom") {
+                    feedbackHtml = `
+                        <div style="background:rgba(255,255,255,0.03); border:1px dashed var(--border-color); border-radius:8px; padding:10px; margin-top:10px;">
+                            <div style="font-weight:600; font-size:0.85rem; color:var(--gold-accent); margin-bottom:8px;">${t("labelDomFeedback")}</div>
+                            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
+                                <div style="flex:1; min-width:120px;">
+                                    <label style="font-size:0.75rem; color:var(--text-muted);">${t("labelRating")}</label>
+                                    <select id="journalRating_${entry.id}" class="form-control" style="padding:4px 8px; font-size:0.82rem;">
+                                        <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+                                        <option value="4">⭐⭐⭐⭐ (4/5)</option>
+                                        <option value="3">⭐⭐⭐ (3/5)</option>
+                                        <option value="2">⭐⭐ (2/5)</option>
+                                        <option value="1">⭐ (1/5)</option>
+                                    </select>
+                                </div>
+                                <div style="flex:1; min-width:120px;">
+                                    <label style="font-size:0.75rem; color:var(--text-muted);">${t("labelBonusPoints")}</label>
+                                    <input type="number" id="journalPoints_${entry.id}" class="form-control" value="10" style="padding:4px 8px; font-size:0.82rem;">
+                                </div>
+                            </div>
+                            <div style="margin-bottom:8px;">
+                                <textarea id="journalComment_${entry.id}" class="form-control" rows="2" placeholder="${escapeHtml(t("phDomComment"))}" style="font-size:0.82rem; padding:6px;"></textarea>
+                            </div>
+                            <button class="btn btn-sm btn-gold" onclick="saveJournalFeedback('${entry.id}')">${t("btnSaveFeedback")}</button>
+                        </div>`;
+                } else {
+                    feedbackHtml = `<div style="font-size:0.8rem; color:var(--text-muted); margin-top:8px; font-style:italic;">⏳ ${t("badgePending")}</div>`;
+                }
+
+                const domDeleteBtn = currentRole === "Dom" ? `<button class="btn btn-sm btn-danger" style="padding:2px 6px;" onclick="deleteJournalEntry('${entry.id}')">✕</button>` : '';
+
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <span style="font-size:1.2rem;">${moodEmoji}</span>
+                                <span class="badge badge-task" style="margin-left:6px;">${escapeHtml(chastityText)}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:0.78rem; color:var(--text-muted);">${dateStr}</span>
+                                ${domDeleteBtn}
+                            </div>
+                        </div>
+                        ${entry.notes ? `<div style="font-size:0.9rem; color:var(--text-main); line-height:1.4; margin-top:6px;">${escapeHtml(entry.notes)}</div>` : ''}
+                        ${photoHtml}
+                        ${feedbackHtml}
+                    </div>`;
+            }).join("");
+        }
+
+        function viewProofPhotoFull(photoUrl) {
+            const img = document.getElementById("proofPhotoFull");
+            if (img) img.src = photoUrl;
+            openModal("modalProofPhotoView");
         }
 
         // ==========================================
