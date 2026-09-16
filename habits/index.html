@@ -935,6 +935,37 @@
         </div>
     </div>
 
+    <!-- Task Completion Proof Modal -->
+    <div id="modalTaskProof" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="modalTaskProofTitle">Submit Proof of Completion</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalTaskProof')">✕</button>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelProofNote">Note (optional):</label>
+                <textarea id="proofNote" class="form-control" rows="3" placeholder="Describe what you did..." data-i18n-placeholder="phProofNote"></textarea>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelProofPhoto">Photo (optional):</label>
+                <input type="file" id="proofPhoto" class="form-control" accept="image/*" capture="environment" onchange="handleProofPhotoSelect(this)">
+                <img id="proofPhotoPreview" src="" alt="" style="display:none; max-width:100%; max-height:220px; border-radius:8px; margin-top:8px;">
+            </div>
+            <button class="btn btn-gold" onclick="submitTaskCompletion()" data-i18n="btnSubmitProof">Submit for Approval</button>
+        </div>
+    </div>
+
+    <!-- Proof Photo Lightbox -->
+    <div id="modalProofPhotoView" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="proofPhotoAlt">Proof photo</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalProofPhotoView')">✕</button>
+            </div>
+            <img id="proofPhotoFull" src="" alt="" style="display:block; max-width:100%; max-height:70vh; border-radius:8px; margin:0 auto;">
+        </div>
+    </div>
+
     <!-- Add Reward Modal -->
     <div id="modalAddReward" class="modal-overlay">
         <div class="modal">
@@ -1395,6 +1426,15 @@
                 btnDeny: "✕ Reject (Refund PTS)",
                 btnRelist: "Offer Again",
 
+                modalTaskProofTitle: "Submit Proof of Completion",
+                labelProofNote: "Note (optional):",
+                phProofNote: "Describe what you did...",
+                labelProofPhoto: "Photo (optional):",
+                btnSubmitProof: "Submit for Approval",
+                labelProofNoteShort: "Note",
+                proofPhotoAlt: "Proof photo",
+                alertProofPhotoReadError: "Could not read photo. Please try a different file.",
+
                 streakPrefix: "🔥 Streak:",
                 streakDays: "Days",
                 pointDeductionPrefix: "Point Deduction:",
@@ -1645,6 +1685,15 @@
                 btnApprove: "✓ Genehmigen",
                 btnDeny: "✕ Ablehnen (PTS Zurück)",
                 btnRelist: "Wieder Anbieten",
+
+                modalTaskProofTitle: "Nachweis für Erledigung einreichen",
+                labelProofNote: "Notiz (optional):",
+                phProofNote: "Beschreibe, was du getan hast...",
+                labelProofPhoto: "Foto (optional):",
+                btnSubmitProof: "Zur Bestätigung einreichen",
+                labelProofNoteShort: "Notiz",
+                proofPhotoAlt: "Nachweisfoto",
+                alertProofPhotoReadError: "Foto konnte nicht gelesen werden. Bitte versuche eine andere Datei.",
 
                 streakPrefix: "🔥 Streak:",
                 streakDays: "Tage",
@@ -2394,11 +2443,102 @@
             closeModal("modalAddTask");
         }
 
-        function completeTask(taskId) {
+        // Proof-of-completion state (held in memory only until submitted)
+        let currentProofTaskId = null;
+        let pendingProofPhotoDataUrl = null;
+        const PROOF_PHOTO_MAX_DIM = 1024;
+        const PROOF_PHOTO_QUALITY = 0.7;
+
+        function openTaskProofModal(taskId) {
+            currentProofTaskId = taskId;
+            pendingProofPhotoDataUrl = null;
+
+            const noteInput = document.getElementById("proofNote");
+            const photoInput = document.getElementById("proofPhoto");
+            const preview = document.getElementById("proofPhotoPreview");
+            if (noteInput) noteInput.value = "";
+            if (photoInput) photoInput.value = "";
+            if (preview) {
+                preview.src = "";
+                preview.style.display = "none";
+            }
+
+            openModal("modalTaskProof");
+        }
+
+        // Downscale/compress the photo client-side before it ever touches
+        // LocalStorage or the synced Firebase state, since both are shared,
+        // size-limited blobs, not blob storage.
+        function handleProofPhotoSelect(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    let { width, height } = img;
+                    if (width > PROOF_PHOTO_MAX_DIM || height > PROOF_PHOTO_MAX_DIM) {
+                        if (width > height) {
+                            height = Math.round(height * (PROOF_PHOTO_MAX_DIM / width));
+                            width = PROOF_PHOTO_MAX_DIM;
+                        } else {
+                            width = Math.round(width * (PROOF_PHOTO_MAX_DIM / height));
+                            height = PROOF_PHOTO_MAX_DIM;
+                        }
+                    }
+                    const canvas = document.createElement("canvas");
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+                    pendingProofPhotoDataUrl = canvas.toDataURL("image/jpeg", PROOF_PHOTO_QUALITY);
+
+                    const preview = document.getElementById("proofPhotoPreview");
+                    if (preview) {
+                        preview.src = pendingProofPhotoDataUrl;
+                        preview.style.display = "block";
+                    }
+                };
+                img.onerror = () => alert(t("alertProofPhotoReadError"));
+                img.src = e.target.result;
+            };
+            reader.onerror = () => alert(t("alertProofPhotoReadError"));
+            reader.readAsDataURL(file);
+        }
+
+        function submitTaskCompletion() {
+            if (!currentProofTaskId) return;
+
+            const noteInput = document.getElementById("proofNote");
+            const note = noteInput ? noteInput.value.trim() : "";
+            const proof = (note || pendingProofPhotoDataUrl) ? {
+                note: note,
+                photo: pendingProofPhotoDataUrl || null,
+                submittedAt: new Date().toISOString()
+            } : null;
+
+            completeTask(currentProofTaskId, proof);
+
+            currentProofTaskId = null;
+            pendingProofPhotoDataUrl = null;
+            closeModal("modalTaskProof");
+        }
+
+        function viewProofPhoto(taskId) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (!task || !task.proof || !task.proof.photo) return;
+
+            const img = document.getElementById("proofPhotoFull");
+            if (img) img.src = task.proof.photo;
+            openModal("modalProofPhotoView");
+        }
+
+        function completeTask(taskId, proof) {
             const task = state.tasks.find(t => t.id === taskId);
             if (!task) return;
 
             task.status = "pending";
+            task.proof = proof || null;
             saveState();
         }
 
@@ -2419,6 +2559,7 @@
             if (!task) return;
 
             task.status = "active"; // reset back to active
+            task.proof = null;
             addLog("APPROVAL", t("logRejectedTask", { title: task.title }));
             saveState();
         }
@@ -2428,6 +2569,7 @@
             if (!task) return;
 
             task.status = "active";
+            task.proof = null;
             saveState();
         }
 
@@ -2480,7 +2622,7 @@
                 if (isLockedByDependency) {
                     actionHtml = `<span class="badge" style="background:rgba(231,76,60,0.15); color:var(--danger); border:1px solid rgba(231,76,60,0.3);">🔒 ${t("badgeWaitingFor") || "Waiting for"}: ${escapeHtml(parentTaskTitle)}</span>`;
                 } else if (task.status === "active") {
-                    actionHtml = `<button class="btn btn-sm btn-primary" onclick="completeTask('${task.id}')">${t("btnMarkComplete")}</button>`;
+                    actionHtml = `<button class="btn btn-sm btn-primary" onclick="openTaskProofModal('${task.id}')">${t("btnMarkComplete")}</button>`;
                 } else if (task.status === "pending") {
                     if (currentRole === "Dom") {
                         actionHtml = `
@@ -2501,6 +2643,17 @@
 
                 const domDeleteBtn = currentRole === "Dom" ? `<button class="btn btn-sm btn-danger" style="padding:2px 6px;" onclick="deleteTask('${task.id}')">✕</button>` : '';
 
+                let proofHtml = "";
+                if (task.status === "pending" && task.proof && (task.proof.note || task.proof.photo)) {
+                    const proofNoteHtml = task.proof.note
+                        ? `<div style="font-size:0.85rem;"><strong>${t("labelProofNoteShort")}:</strong> ${escapeHtml(task.proof.note)}</div>`
+                        : "";
+                    const proofPhotoHtml = task.proof.photo
+                        ? `<img src="${task.proof.photo}" alt="${t("proofPhotoAlt")}" style="max-width:110px; max-height:110px; border-radius:8px; margin-top:6px; cursor:pointer; display:block; object-fit:cover;" onclick="viewProofPhoto('${task.id}')">`
+                        : "";
+                    proofHtml = `<div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px; margin-top:8px;">${proofNoteHtml}${proofPhotoHtml}</div>`;
+                }
+
                 return `
                     <div class="card" style="${isLockedByDependency ? 'opacity:0.85;' : ''}">
                         <div class="card-header">
@@ -2515,6 +2668,7 @@
                         </div>
                         ${datesHtml}
                         ${task.category === "Habit" ? `<div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">${t("streakPrefix")} <strong>${task.streak} ${t("streakDays")}</strong></div>` : ''}
+                        ${proofHtml}
                         <div class="card-footer">
                             ${actionHtml}
                         </div>
