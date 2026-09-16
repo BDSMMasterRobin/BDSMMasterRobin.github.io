@@ -244,7 +244,7 @@
             background: none;
             border: none;
             cursor: pointer;
-            width: 20%;
+            flex: 1;
             transition: color 0.2s;
         }
 
@@ -580,6 +580,7 @@
         .log-item.APPROVAL { border-left-color: var(--success); }
         .log-item.REWARD { border-left-color: var(--gold-accent); }
         .log-item.PENALTY { border-left-color: var(--red-accent); }
+        .log-item.PROPOSAL { border-left-color: var(--gold-accent); }
 
         .log-msg {
             font-size: 0.88rem;
@@ -634,574 +635,7 @@
             <button class="nav-btn active" onclick="switchTab('tasks')" data-i18n="navTasks">Tasks</button>
             <button class="nav-btn" onclick="switchTab('rewards')" data-i18n="navRewards">Rewards</button>
             <button class="nav-btn" onclick="switchTab('rules')" data-i18n="navRules">Rules & Penalties</button>
-            <button class="nav-btn" onclick="switchTab('logs')" data-i18n="navLogs">Logbook</button>
-            <button class="nav-btn" onclick="switchTab('setup')" data-i18n="navSetup">Setup & Sync</button>
-        </nav>
-    </header>
-
-    <!-- MAIN CONTENT -->
-    <main>
-
-        <!-- MODULE A: TASKS & HABITS -->
-        <section id="tab-tasks" class="tab-content active">
-            <div class="section-header">
-                <h2 class="section-title"><span>📋</span> <span data-i18n="titleTasks">Protocols & Tasks</span></h2>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn dom-only" onclick="openModal('modalManageTemplates')" data-i18n="btnTemplates">📁 Templates</button>
-                    <button class="btn btn-gold dom-only" onclick="openModal('modalAddTask')" data-i18n="btnNewTask">+ New Task</button>
-                </div>
-            </div>
-            <div id="tasksList" class="card-grid">
-                <!-- Dynamically populated -->
-            </div>
-        </section>
-
-        <!-- MODULE B: REWARDS -->
-        <section id="tab-rewards" class="tab-content">
-            <div class="section-header">
-                <h2 class="section-title"><span>🎁</span> <span data-i18n="titleRewards">Rewards Shop</span></h2>
-                <button class="btn btn-gold dom-only" onclick="openModal('modalAddReward')" data-i18n="btnNewReward">+ New Reward</button>
-            </div>
-            <div id="rewardsList" class="card-grid">
-                <!-- Dynamically populated -->
-            </div>
-        </section>
-
-        <!-- MODULE C: RULES & PUNISHMENTS -->
-        <section id="tab-rules" class="tab-content">
-            <div class="section-header">
-                <h2 class="section-title"><span>📜</span> <span data-i18n="titleRules">Rules & Code</span></h2>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn btn-danger" onclick="openModal('modalLogInfraction')" data-i18n="btnLogInfraction">⚠️ Report Infraction</button>
-                    <button class="btn btn-gold dom-only" on            -webkit-text-fill-color: transparent;
-        }
-
-        .role-badge {
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .role-badge.sub {
-            background: rgba(46, 196, 182, 0.15);
-            color: var(--success);
-            border: 1px solid rgba(46, 196, 182, 0.4);
-        }
-
-        .role-badge.dom {
-            background: rgba(230, 57, 70, 0.2);
-            color: var(--red-accent);
-            border: 1px solid var(--red-accent);
-            box-shadow: 0 0 10px var(--red-glow);
-        }
-
-        .points-pill {
-            background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(255, 183, 3, 0.1) 100%);
-            border: 1px solid var(--gold-primary);
-            color: var(--gold-accent);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 0 12px var(--gold-glow);
-        }
-
-        .lang-switch {
-            display: flex;
-            align-items: center;
-            background: var(--bg-surface);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 2px;
-            gap: 2px;
-        }
-
-        .lang-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 4px 8px;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .lang-btn.active {
-            background: var(--gold-primary);
-            color: #0d0d11;
-        }
-
-        /* DESKTOP NAV */
-        .desktop-nav {
-            display: none;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        @media (min-width: 768px) {
-            .desktop-nav {
-                display: flex;
-            }
-        }
-
-        .nav-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 8px 16px;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .nav-btn:hover {
-            color: var(--text-main);
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .nav-btn.active {
-            color: var(--gold-accent);
-            background: var(--bg-card);
-            border-bottom: 2px solid var(--gold-accent);
-        }
-
-        /* MOBILE BOTTOM NAV */
-        .mobile-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(22, 22, 30, 0.98);
-            backdrop-filter: blur(12px);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-around;
-            padding: 8px 0;
-            z-index: 100;
-        }
-
-        @media (min-width: 768px) {
-            .mobile-nav {
-                display: none;
-            }
-        }
-
-        .tab-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-            color: var(--text-muted);
-            font-size: 0.7rem;
-            font-weight: 500;
-            background: none;
-            border: none;
-            cursor: pointer;
-            width: 20%;
-            transition: color 0.2s;
-        }
-
-        .tab-item icon {
-            font-size: 1.2rem;
-        }
-
-        .tab-item.active {
-            color: var(--gold-accent);
-        }
-
-        /* MAIN CONTAINER */
-        main {
-            max-width: 1000px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 20px;
-            flex: 1;
-        }
-
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* SECTION STYLES */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .section-title {
-            font-family: var(--font-title);
-            font-size: 1.4rem;
-            color: var(--text-main);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* CARDS & LISTS */
-        .card-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 14px;
-        }
-
-        @media (min-width: 600px) {
-            .card-grid {
-                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            }
-        }
-
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            transition: transform 0.2s, border-color 0.2s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card:hover {
-            border-color: rgba(212, 175, 55, 0.4);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-
-        .card-title {
-            font-weight: 600;
-            font-size: 1rem;
-            color: var(--text-main);
-        }
-
-        .card-desc {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            line-height: 1.4;
-        }
-
-        .badge {
-            font-size: 0.7rem;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .badge-habit {
-            background: rgba(212, 175, 55, 0.15);
-            color: var(--gold-accent);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-        }
-
-        .badge-task {
-            background: rgba(46, 196, 182, 0.15);
-            color: var(--success);
-            border: 1px solid rgba(46, 196, 182, 0.3);
-        }
-
-        .badge-pending {
-            background: rgba(255, 159, 28, 0.15);
-            color: var(--warning);
-            border: 1px solid rgba(255, 159, 28, 0.4);
-        }
-
-        .badge-active {
-            background: rgba(46, 196, 182, 0.15);
-            color: var(--success);
-        }
-
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: auto;
-            padding-top: 8px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        /* BUTTONS */
-        .btn {
-            background: var(--bg-surface);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .btn:hover {
-            background: var(--bg-card-hover);
-            border-color: var(--text-muted);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--red-primary) 0%, #ba181b 100%);
-            border: none;
-            color: #fff;
-            box-shadow: 0 0 12px var(--red-glow);
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, var(--red-accent) 0%, #e63946 100%);
-        }
-
-        .btn-gold {
-            background: linear-gradient(135deg, var(--gold-primary) 0%, #b38b20 100%);
-            border: none;
-            color: #0d0d11;
-            font-weight: 700;
-        }
-
-        .btn-gold:hover {
-            background: linear-gradient(135deg, var(--gold-accent) 0%, var(--gold-primary) 100%);
-        }
-
-        .btn-sm {
-            padding: 5px 10px;
-            font-size: 0.78rem;
-        }
-
-        .btn-danger {
-            background: rgba(230, 57, 70, 0.2);
-            color: var(--red-accent);
-            border: 1px solid var(--red-accent);
-        }
-
-        .btn-danger:hover {
-            background: var(--red-accent);
-            color: #fff;
-        }
-
-        .btn-success {
-            background: rgba(46, 196, 182, 0.2);
-            color: var(--success);
-            border: 1px solid var(--success);
-        }
-
-        .btn-success:hover {
-            background: var(--success);
-            color: #0d0d11;
-        }
-
-        /* MODALS */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(6px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease;
-            padding: 20px;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .modal {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            width: 100%;
-            max-width: 450px;
-            padding: 24px;
-            box-shadow: var(--shadow-subtle);
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-title {
-            font-family: var(--font-title);
-            font-size: 1.2rem;
-            color: var(--gold-accent);
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .form-group label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .form-control {
-            background: var(--bg-base);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm);
-            padding: 10px 12px;
-            color: var(--text-main);
-            font-size: 0.9rem;
-            outline: none;
-        }
-
-        .form-control:focus {
-            border-color: var(--gold-primary);
-        }
-
-        textarea.form-control {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        /* PIN KEYPAD */
-        .pin-display {
-            font-size: 2rem;
-            letter-spacing: 12px;
-            text-align: center;
-            margin: 10px 0;
-            height: 40px;
-            color: var(--gold-accent);
-        }
-
-        .pin-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            max-width: 260px;
-            margin: 0 auto;
-        }
-
-        .pin-btn {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            font-size: 1.2rem;
-            padding: 14px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-
-        .pin-btn:active {
-            background: var(--red-primary);
-        }
-
-        /* LOG LIST */
-        .log-item {
-            background: var(--bg-card);
-            border-left: 3px solid var(--border-color);
-            padding: 12px 16px;
-            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .log-item.APPROVAL { border-left-color: var(--success); }
-        .log-item.REWARD { border-left-color: var(--gold-accent); }
-        .log-item.PENALTY { border-left-color: var(--red-accent); }
-
-        .log-msg {
-            font-size: 0.88rem;
-            color: var(--text-main);
-        }
-
-        .log-time {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        /* EMPTY STATES */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .empty-state span {
-            font-size: 2rem;
-        }
-    </style>
-</head>
-<body>
-
-    <!-- HEADER -->
-    <header>
-        <div class="header-content">
-            <div class="brand">
-                <span class="brand-title">HABITS</span>
-                <div id="roleBadge" class="role-badge sub" onclick="toggleRole()">
-                    <span id="roleText">SUB</span> 🔒
-                </div>
-            </div>
-
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div class="lang-switch">
-                    <button id="langBtnEn" class="lang-btn active" onclick="setLanguage('en')">EN</button>
-                    <button id="langBtnDe" class="lang-btn" onclick="setLanguage('de')">DE</button>
-                </div>
-                <div id="pointsDisplay" class="points-pill">
-                    <span>👑</span> <span id="pointsValue">0</span> PTS
-                </div>
-            </div>
-        </div>
-
-        <nav class="desktop-nav">
-            <button class="nav-btn active" onclick="switchTab('tasks')" data-i18n="navTasks">Tasks</button>
-            <button class="nav-btn" onclick="switchTab('rewards')" data-i18n="navRewards">Rewards</button>
-            <button class="nav-btn" onclick="switchTab('rules')" data-i18n="navRules">Rules & Penalties</button>
+            <button class="nav-btn" onclick="switchTab('proposals')" data-i18n="navProposals">Proposals</button>
             <button class="nav-btn" onclick="switchTab('logs')" data-i18n="navLogs">Logbook</button>
             <button class="nav-btn" onclick="switchTab('setup')" data-i18n="navSetup">Setup & Sync</button>
         </nav>
@@ -1254,6 +688,20 @@
             </div>
             <div id="punishmentsList" class="card-grid">
                 <!-- Dynamically populated punishments -->
+            </div>
+        </section>
+
+        <!-- MODULE E: PROPOSALS (Sub suggests, Dom confirms) -->
+        <section id="tab-proposals" class="tab-content">
+            <div class="section-header">
+                <h2 class="section-title"><span>💡</span> <span data-i18n="titleProposals">Suggestions</span></h2>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn sub-only" onclick="openModal('modalProposeTask')" data-i18n="btnProposeTask">+ Propose Task</button>
+                    <button class="btn btn-gold sub-only" onclick="openModal('modalProposeRule')" data-i18n="btnProposeRule">+ Propose Rule</button>
+                </div>
+            </div>
+            <div id="proposalsList" class="card-grid">
+                <!-- Dynamically populated -->
             </div>
         </section>
 
@@ -1341,6 +789,10 @@
         <button class="tab-item" onclick="switchTab('rules')">
             <span>📜</span>
             <span data-i18n="navRulesShort">Rules</span>
+        </button>
+        <button class="tab-item" onclick="switchTab('proposals')">
+            <span>💡</span>
+            <span data-i18n="navProposalsShort">Suggest</span>
         </button>
         <button class="tab-item" onclick="switchTab('logs')">
             <span>📜</span>
@@ -1525,6 +977,59 @@
         </div>
     </div>
 
+    <!-- Propose Task Modal (Sub suggests, Dom confirms) -->
+    <div id="modalProposeTask" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="modalProposeTaskTitle">Propose New Task</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalProposeTask')">✕</button>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelTitle">Title:</label>
+                <input type="text" id="proposalTaskTitle" class="form-control" placeholder="e.g. Morning Greeting" data-i18n-placeholder="phTaskTitle">
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelCategory">Category:</label>
+                <select id="proposalTaskCategory" class="form-control">
+                    <option value="Habit" data-i18n="optHabit">Daily Habit</option>
+                    <option value="Task" data-i18n="optTask">One-time Task</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelStartDate">Start Date / Time (Optional):</label>
+                <input type="datetime-local" id="proposalTaskStartDate" class="form-control">
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelEndDate">End Date / Time (Optional):</label>
+                <input type="datetime-local" id="proposalTaskEndDate" class="form-control">
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelPoints">Points Reward:</label>
+                <input type="number" id="proposalTaskPoints" class="form-control" value="10" min="1">
+            </div>
+            <button class="btn btn-gold" onclick="proposeTask()" data-i18n="btnSubmitProposal">Submit for Approval</button>
+        </div>
+    </div>
+
+    <!-- Propose Rule Modal (Sub suggests, Dom confirms) -->
+    <div id="modalProposeRule" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="modalProposeRuleTitle">Propose New Rule</h3>
+                <button class="btn btn-sm" onclick="closeModal('modalProposeRule')">✕</button>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelRuleTitle">Rule Title:</label>
+                <input type="text" id="proposalRuleTitle" class="form-control" placeholder="e.g. No phone after 10 PM" data-i18n-placeholder="phRuleTitle">
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelDescription">Description:</label>
+                <textarea id="proposalRuleDesc" class="form-control" placeholder="Details about rule..." data-i18n-placeholder="phRuleDesc"></textarea>
+            </div>
+            <button class="btn btn-gold" onclick="proposeRule()" data-i18n="btnSubmitProposal">Submit for Approval</button>
+        </div>
+    </div>
+
     <!-- Log Infraction Modal -->
     <div id="modalLogInfraction" class="modal-overlay">
         <div class="modal">
@@ -1645,6 +1150,8 @@
                 navRewards: "Rewards",
                 navRules: "Rules & Penalties",
                 navRulesShort: "Rules",
+                navProposals: "Proposals",
+                navProposalsShort: "Suggest",
                 navLogs: "Logbook",
                 navSetup: "Setup & Sync",
                 navSetupShort: "Setup",
@@ -1659,6 +1166,24 @@
                 btnNewRule: "+ New Rule",
                 titlePunishments: "Active Sanctions",
                 btnNewPunishment: "+ Issue Sanction",
+                titleProposals: "Suggestions",
+                btnProposeTask: "+ Propose Task",
+                btnProposeRule: "+ Propose Rule",
+                modalProposeTaskTitle: "Propose New Task",
+                modalProposeRuleTitle: "Propose New Rule",
+                btnSubmitProposal: "Submit for Approval",
+                btnWithdraw: "Withdraw",
+                badgeProposalTask: "Task Proposal",
+                badgeProposalRule: "Rule Proposal",
+                badgeProposalPending: "Pending Dom Review",
+                badgeProposalApproved: "Approved & Added",
+                badgeProposalRejected: "Rejected",
+                emptyProposals: "No suggestions yet.",
+                alertTitleProposalRequired: "Please enter a title for the proposal!",
+                logProposalCreatedTask: 'New task proposal submitted: "{title}"',
+                logProposalCreatedRule: 'New rule proposal submitted: "{title}"',
+                logProposalApproved: 'Proposal "{title}" approved and added',
+                logProposalRejected: 'Proposal "{title}" rejected',
                 titleLogs: "Logbook",
                 titleSetup: "Sync & Settings",
 
@@ -1849,6 +1374,8 @@
                 navRewards: "Belohnungen",
                 navRules: "Strafen & Regeln",
                 navRulesShort: "Strafen",
+                navProposals: "Vorschläge",
+                navProposalsShort: "Vorschl.",
                 navLogs: "Logbuch",
                 navSetup: "Setup & Sync",
                 navSetupShort: "Setup",
@@ -1863,6 +1390,24 @@
                 btnNewRule: "+ Neue Regel",
                 titlePunishments: "Aktive Sanktionen",
                 btnNewPunishment: "+ Sanktion erteilen",
+                titleProposals: "Vorschläge",
+                btnProposeTask: "+ Aufgabe vorschlagen",
+                btnProposeRule: "+ Regel vorschlagen",
+                modalProposeTaskTitle: "Neue Aufgabe vorschlagen",
+                modalProposeRuleTitle: "Neue Regel vorschlagen",
+                btnSubmitProposal: "Zur Bestätigung einreichen",
+                btnWithdraw: "Zurückziehen",
+                badgeProposalTask: "Aufgaben-Vorschlag",
+                badgeProposalRule: "Regel-Vorschlag",
+                badgeProposalPending: "Wartet auf Dom-Prüfung",
+                badgeProposalApproved: "Genehmigt & Hinzugefügt",
+                badgeProposalRejected: "Abgelehnt",
+                emptyProposals: "Noch keine Vorschläge vorhanden.",
+                alertTitleProposalRequired: "Bitte einen Titel für den Vorschlag eingeben!",
+                logProposalCreatedTask: 'Neuer Aufgaben-Vorschlag eingereicht: "{title}"',
+                logProposalCreatedRule: 'Neuer Regel-Vorschlag eingereicht: "{title}"',
+                logProposalApproved: 'Vorschlag "{title}" genehmigt und hinzugefügt',
+                logProposalRejected: 'Vorschlag "{title}" abgelehnt',
                 titleLogs: "Logbuch",
                 titleSetup: "Sync & Einstellungen",
 
@@ -2112,6 +1657,7 @@
             rewards: [],
             rules: [],
             punishments: [],
+            proposals: [],
             logs: []
         };
 
@@ -2135,6 +1681,7 @@
                 rewards: Array.isArray(data.rewards) ? data.rewards : [],
                 rules: Array.isArray(data.rules) ? data.rules : [],
                 punishments: Array.isArray(data.punishments) ? data.punishments : [],
+                proposals: Array.isArray(data.proposals) ? data.proposals : [],
                 logs: Array.isArray(data.logs) ? data.logs : []
             };
         }
@@ -2403,6 +1950,15 @@
                 }
             });
 
+            // Hide/Show Sub-only elements (e.g. proposal submission buttons)
+            document.querySelectorAll(".sub-only").forEach(el => {
+                if (currentRole === "Sub") {
+                    el.style.display = "";
+                } else {
+                    el.style.display = "none";
+                }
+            });
+
             // Update input fields in setup
             const pinInput = document.getElementById("inputDomPin");
             if (pinInput && document.activeElement !== pinInput) {
@@ -2418,6 +1974,7 @@
             if (typeof renderTasks === "function") renderTasks();
             if (typeof renderRewards === "function") renderRewards();
             if (typeof renderRulesAndPunishments === "function") renderRulesAndPunishments();
+            if (typeof renderProposals === "function") renderProposals();
             if (typeof renderLogs === "function") renderLogs();
         }
 
@@ -3010,6 +2567,174 @@
                     }).join("");
                 }
             }
+        }
+
+        // ==========================================
+        // MODULE E: PROPOSALS (Sub suggests, Dom confirms)
+        // ==========================================
+        function proposeTask() {
+            const titleInput = document.getElementById("proposalTaskTitle");
+            const catSelect = document.getElementById("proposalTaskCategory");
+            const ptsInput = document.getElementById("proposalTaskPoints");
+            const startDateInput = document.getElementById("proposalTaskStartDate");
+            const endDateInput = document.getElementById("proposalTaskEndDate");
+
+            const title = titleInput ? titleInput.value.trim() : "";
+            const category = catSelect ? catSelect.value : "Habit";
+            const points = ptsInput ? parseInt(ptsInput.value) || 10 : 10;
+            const startDate = startDateInput ? startDateInput.value : "";
+            const endDate = endDateInput ? endDateInput.value : "";
+
+            if (!title) {
+                alert(t("alertTitleProposalRequired"));
+                return;
+            }
+
+            state.proposals.unshift({
+                id: generateUUID(),
+                type: "task",
+                data: { title, category, points, startDate, endDate },
+                status: "pending",
+                timestamp: new Date().toISOString()
+            });
+
+            addLog("PROPOSAL", t("logProposalCreatedTask", { title }));
+            saveState();
+
+            if (titleInput) titleInput.value = "";
+            if (startDateInput) startDateInput.value = "";
+            if (endDateInput) endDateInput.value = "";
+            closeModal("modalProposeTask");
+        }
+
+        function proposeRule() {
+            const titleInput = document.getElementById("proposalRuleTitle");
+            const descInput = document.getElementById("proposalRuleDesc");
+
+            const title = titleInput ? titleInput.value.trim() : "";
+            const description = descInput ? descInput.value.trim() : "";
+
+            if (!title) {
+                alert(t("alertTitleProposalRequired"));
+                return;
+            }
+
+            state.proposals.unshift({
+                id: generateUUID(),
+                type: "rule",
+                data: { title, description },
+                status: "pending",
+                timestamp: new Date().toISOString()
+            });
+
+            addLog("PROPOSAL", t("logProposalCreatedRule", { title }));
+            saveState();
+
+            if (titleInput) titleInput.value = "";
+            if (descInput) descInput.value = "";
+            closeModal("modalProposeRule");
+        }
+
+        function approveProposal(proposalId) {
+            const proposal = state.proposals.find(p => p.id === proposalId);
+            if (!proposal || proposal.status !== "pending") return;
+
+            if (proposal.type === "task") {
+                state.tasks.push({
+                    id: generateUUID(),
+                    title: proposal.data.title,
+                    category: proposal.data.category,
+                    points: proposal.data.points,
+                    startDate: proposal.data.startDate || "",
+                    endDate: proposal.data.endDate || "",
+                    dependsOnTaskId: "",
+                    status: "active",
+                    streak: 0
+                });
+            } else if (proposal.type === "rule") {
+                state.rules.push({
+                    id: generateUUID(),
+                    title: proposal.data.title,
+                    description: proposal.data.description || ""
+                });
+            }
+
+            proposal.status = "approved";
+            addLog("PROPOSAL", t("logProposalApproved", { title: proposal.data.title }));
+            saveState();
+        }
+
+        function rejectProposal(proposalId) {
+            const proposal = state.proposals.find(p => p.id === proposalId);
+            if (!proposal || proposal.status !== "pending") return;
+
+            proposal.status = "rejected";
+            addLog("PROPOSAL", t("logProposalRejected", { title: proposal.data.title }));
+            saveState();
+        }
+
+        function deleteProposal(proposalId) {
+            state.proposals = state.proposals.filter(p => p.id !== proposalId);
+            saveState();
+        }
+
+        function renderProposals() {
+            const container = document.getElementById("proposalsList");
+            if (!container) return;
+
+            if (!state.proposals || state.proposals.length === 0) {
+                container.innerHTML = `<div class="empty-state"><span>💡</span><p>${t("emptyProposals")}</p></div>`;
+                return;
+            }
+
+            container.innerHTML = state.proposals.map(p => {
+                const typeLabel = p.type === "task" ? t("badgeProposalTask") : t("badgeProposalRule");
+                const typeBadgeClass = p.type === "task" ? "badge-task" : "badge-habit";
+
+                const bodyHtml = p.type === "task"
+                    ? `<div class="card-desc">+${p.data.points} PTS • ${p.data.category === "Habit" ? t("badgeHabit") : t("badgeTask")}</div>`
+                    : (p.data.description ? `<p class="card-desc">${escapeHtml(p.data.description)}</p>` : '');
+
+                let statusHtml = "";
+                if (p.status === "pending") {
+                    if (currentRole === "Dom") {
+                        statusHtml = `
+                            <div style="display:flex; gap:6px;">
+                                <button class="btn btn-sm btn-success" onclick="approveProposal('${p.id}')">${t("btnApprove")}</button>
+                                <button class="btn btn-sm btn-danger" onclick="rejectProposal('${p.id}')">${t("btnReject")}</button>
+                            </div>`;
+                    } else {
+                        statusHtml = `
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span class="badge badge-pending">${t("badgeProposalPending")}</span>
+                                <button class="btn btn-sm btn-danger" onclick="deleteProposal('${p.id}')">${t("btnWithdraw")}</button>
+                            </div>`;
+                    }
+                } else if (p.status === "approved") {
+                    statusHtml = `<span class="badge badge-active">${t("badgeProposalApproved")}</span>`;
+                } else {
+                    statusHtml = `<span class="badge" style="background:rgba(230,57,70,0.15); color:var(--red-accent); border:1px solid rgba(230,57,70,0.3);">${t("badgeProposalRejected")}</span>`;
+                }
+
+                const domDeleteBtn = (currentRole === "Dom" && p.status !== "pending")
+                    ? `<button class="btn btn-sm btn-danger" style="padding:2px 6px;" onclick="deleteProposal('${p.id}')">✕</button>`
+                    : '';
+
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <span class="badge ${typeBadgeClass}">${typeLabel}</span>
+                                <h3 class="card-title" style="margin-top:6px;">${escapeHtml(p.data.title)}</h3>
+                            </div>
+                            ${domDeleteBtn}
+                        </div>
+                        ${bodyHtml}
+                        <div class="card-footer">
+                            ${statusHtml}
+                        </div>
+                    </div>`;
+            }).join("");
         }
 
         // ==========================================
