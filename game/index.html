@@ -12,6 +12,134 @@
             padding: 20px;
             background-color: #1a1a1a;
             color: #e0e0e0;
+            transition: background-color 0.5s ease;
+        }
+
+        /* Locktober Theme */
+        body.locktober-mode {
+            background-color: #12081a;
+            color: #f3e8f8;
+        }
+
+        body.locktober-mode .game-container,
+        body.locktober-mode .tabcontent {
+            background-color: #1d0f2b;
+            border: 1px solid #ff6b00;
+            box-shadow: 0 4px 15px rgba(255, 107, 0, 0.2);
+        }
+
+        body.locktober-mode h1, body.locktober-mode h2 {
+            color: #ff9100;
+            text-shadow: 0 0 10px rgba(255, 145, 0, 0.3);
+        }
+
+        body.locktober-mode .button {
+            background-color: #d35400;
+            border: 1px solid #ff7700;
+        }
+
+        body.locktober-mode .button:hover {
+            background-color: #e67e22;
+        }
+
+        body.locktober-mode .tab button.active {
+            background-color: #d35400;
+            color: #fff;
+        }
+
+        body.locktober-mode .result-container {
+            background-color: #2a143d;
+            border: 1px solid #ff6b00;
+        }
+
+        body.locktober-mode .dice,
+        body.locktober-mode .single-dice {
+            background-color: #2a143d;
+            border-color: #ff6b00;
+            color: #ff9100;
+        }
+
+        .locktober-banner {
+            display: none;
+            background: linear-gradient(90deg, #d35400, #8e44ad, #d35400);
+            color: #ffffff;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(211, 84, 0, 0.4);
+            letter-spacing: 1px;
+        }
+
+        body.locktober-mode .locktober-banner {
+            display: block;
+        }
+
+        .button-locktober {
+            background-color: #d35400 !important;
+        }
+
+        .button-locktober:hover {
+            background-color: #e67e22 !important;
+        }
+
+        .toggle-container {
+            background-color: #333;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        body.locktober-mode .toggle-container {
+            background-color: #2a143d;
+            border: 1px solid #ff6b00;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #555;
+            transition: .4s;
+            border-radius: 26px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #ff6b00;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
         }
         
         h1, h2 {
@@ -232,6 +360,7 @@
     </style>
 </head>
 <body>
+    <div class="locktober-banner" id="locktoberBanner">🔒 LOCKTOBER SPECIAL MODUS AKTIV 🔒</div>
     <h1>Das Würfelspiel</h1>
     
     <div class="tab">
@@ -241,6 +370,14 @@
     </div>
     
     <div id="Game" class="tabcontent" style="display: block;">
+        <div class="toggle-container">
+            <span><strong>🔒 Locktober Modus</strong> (Sonderregeln für 11, 12 & Pasch)</span>
+            <label class="switch">
+                <input type="checkbox" id="locktoberToggle" onchange="toggleLocktoberMode(this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
+
         <div class="game-container">
             <h2>Würfeln</h2>
             
@@ -280,6 +417,7 @@
             </div>
             
             <div class="button-container">
+                <button class="button button-locktober" onclick="applyLocktoberPreset()">Locktober Preset laden 🔒</button>
                 <button class="button" onclick="saveItems()">Speichern</button>
                 <button class="button" onclick="resetItems()">Auf Standard zurücksetzen</button>
             </div>
@@ -299,6 +437,34 @@
             9: "Handschellen/Fesseln",
             10: "Buttplug/Dildo",
             "pasch": "Peitsche/Paddle/Flogger"
+        };
+
+        // Locktober Preset Gegenstände
+        var locktoberItems = {
+            2: "Nippelklemmen / Reizstrom",
+            3: "Fußfessel / Anklet",
+            4: "Keuschheitsvorrichtung",
+            5: "Knebel / Mouth Plug",
+            6: "Keyholder-Aufgabe",
+            7: "Tease & Denial Session",
+            8: "Halsband / Collar",
+            9: "Handschellen / Fesseln",
+            10: "Buttplug / Chastity Plug",
+            "pasch": "Straftage / Chastity Lockout"
+        };
+
+        // Locktober Preset Zeiteinheiten
+        var locktoberTimeUnits = {
+            2: "hours",
+            3: "days",
+            4: "days",
+            5: "hours",
+            6: "amount",
+            7: "amount",
+            8: "days",
+            9: "hours",
+            10: "hours",
+            "pasch": "days"
         };
         
         // Standardzeiteinheiten (Stunden oder Tage)
@@ -321,14 +487,53 @@
         // Einstellung für Auto-Tab-Wechsel
         var autoSwitchToTimers = true; // Standardmäßig aktiviert
         
+        // Locktober-Modus Status
+        var isLocktoberMode = false;
+
         // Spiel initialisieren
         window.onload = function() {
+            loadLocktoberModeFromLocalStorage();
             populateSettingsPage();
             updateTimersDisplay();
             
             // Intervall für Timer-Aktualisierung setzen
             setInterval(updateTimers, 1000);
         };
+
+        function toggleLocktoberMode(enabled) {
+            isLocktoberMode = enabled;
+            if (isLocktoberMode) {
+                document.body.classList.add('locktober-mode');
+            } else {
+                document.body.classList.remove('locktober-mode');
+            }
+            var toggleInput = document.getElementById('locktoberToggle');
+            if (toggleInput) toggleInput.checked = isLocktoberMode;
+            localStorage.setItem('diceGameLocktoberMode', JSON.stringify(isLocktoberMode));
+        }
+
+        function loadLocktoberModeFromLocalStorage() {
+            var saved = localStorage.getItem('diceGameLocktoberMode');
+            if (saved !== null) {
+                isLocktoberMode = JSON.parse(saved);
+            }
+            if (isLocktoberMode) {
+                document.body.classList.add('locktober-mode');
+            } else {
+                document.body.classList.remove('locktober-mode');
+            }
+            var toggleInput = document.getElementById('locktoberToggle');
+            if (toggleInput) toggleInput.checked = isLocktoberMode;
+        }
+
+        function applyLocktoberPreset() {
+            items = Object.assign({}, locktoberItems);
+            timeUnits = Object.assign({}, locktoberTimeUnits);
+            localStorage.setItem('diceGameItems', JSON.stringify(items));
+            localStorage.setItem('diceGameUnits', JSON.stringify(timeUnits));
+            populateItemEditor();
+            alert('Locktober Preset erfolgreich geladen!');
+        }
         
         // Button-Status verwalten
         function toggleRollButton(enable) {
@@ -506,14 +711,14 @@
                     var unitLabel = unitType === 'days' ? 'Tage' : (unitType === 'amount' ? 'Anzahl' : 'Stunden');
                     var promptLabel = unitType === 'amount' ? 'die Anzahl' : 'die Dauer';
                     
-                    // Wenn Pasch, dann zuerst für den Gegenstand und danach für die Schläge würfeln
+                    // Wenn Pasch, dann zuerst für den Gegenstand und danach für die Schläge/Sonderstrafe würfeln
                     if (isPasch) {
                         resultContent.innerHTML = `
-                            <h3>Ergebnis: ${sum} + Pasch!</h3>
+                            <h3>Ergebnis: ${sum} + Pasch! ${isLocktoberMode ? '🔒 (Chastity Lockout)' : ''}</h3>
                             <p>Zuerst Gegenstand: ${item}</p>
                             <p>Würfle nun mit einem Würfel für ${promptLabel}:</p>
                             <div class="single-dice" id="durationDice">?</div>
-                            <button class="button" onclick="rollDurationDieWithPasch(${sum}, '${item}')">Für ${unitLabel} würfeln</button>
+                            <button class="button" onclick="rollDurationDieWithPasch(${sum}, '${item.replace(/'/g, "\\'")}')">Für ${unitLabel} würfeln</button>
                         `;
                         currentRoll = { 
                             type: 'pasch-combo', 
@@ -528,7 +733,7 @@
                             <p>Gegenstand: ${item}</p>
                             <p>Würfle nun mit einem Würfel, um ${promptLabel} zu bestimmen:</p>
                             <div class="single-dice" id="durationDice">?</div>
-                            <button class="button" onclick="rollDurationDie(${sum}, '${item}')">Für ${unitLabel} würfeln</button>
+                            <button class="button" onclick="rollDurationDie(${sum}, '${item.replace(/'/g, "\\'")}')">Für ${unitLabel} würfeln</button>
                         `;
                         currentRoll = { 
                             type: 'standard', 
@@ -537,15 +742,42 @@
                             unit: unitType
                         };
                     }
-                } else {
-                    // Summe 11 oder 12 - erneut würfeln
-                    resultContent.innerHTML = `
-                        <h3>Ergebnis: ${sum}</h3>
-                        <p>Dieses Ergebnis hat keine spezielle Bedeutung. Würfle erneut.</p>
-                    `;
-                    currentRoll = null;
-                    // Würfelbutton wieder aktivieren
-                    toggleRollButton(true);
+                } else if (sum === 11) {
+                    if (isLocktoberMode) {
+                        // Summe 11 im Locktober-Modus: 1 Tag länger verschlossen
+                        resultContent.innerHTML = `
+                            <h3>Ergebnis: 11 - Locktober Event! 🔒</h3>
+                            <p><strong>+1 Tag länger verschlossen!</strong></p>
+                            <p>Deine Keuschheitsstrafe verlängert sich um genau 1 Tag.</p>
+                            <button class="button" onclick="addLocktoberBonusTimer(1, 'Tage', 'Keuschheitsvorrichtung (+1 Tag)')">1 Tag Strafe zum Timer hinzufügen</button>
+                        `;
+                        currentRoll = { type: 'locktober-event', value: 11, duration: 1, unit: 'days', item: 'Keuschheitsvorrichtung' };
+                    } else {
+                        resultContent.innerHTML = `
+                            <h3>Ergebnis: 11</h3>
+                            <p>Dieses Ergebnis hat keine spezielle Bedeutung. Würfle erneut.</p>
+                        `;
+                        currentRoll = null;
+                        toggleRollButton(true);
+                    }
+                } else if (sum === 12) {
+                    if (isLocktoberMode) {
+                        // Summe 12 im Locktober-Modus: 1 Monat länger verschlossen!
+                        resultContent.innerHTML = `
+                            <h3>Ergebnis: 12 - LOCKTOBER JACKPOT! 🔒🔒🔒</h3>
+                            <p><strong>+1 MONAT (30 Tage) länger verschlossen!</strong></p>
+                            <p>Volle Entsagung! Deine Keuschheitsstrafe verlängert sich um einen ganzen Monat (30 Tage).</p>
+                            <button class="button" onclick="addLocktoberBonusTimer(30, 'Tage', 'Keuschheitsvorrichtung (+1 Monat)')">30 Tage Strafe zum Timer hinzufügen</button>
+                        `;
+                        currentRoll = { type: 'locktober-event', value: 12, duration: 30, unit: 'days', item: 'Keuschheitsvorrichtung' };
+                    } else {
+                        resultContent.innerHTML = `
+                            <h3>Ergebnis: 12</h3>
+                            <p>Dieses Ergebnis hat keine spezielle Bedeutung. Würfle erneut.</p>
+                        `;
+                        currentRoll = null;
+                        toggleRollButton(true);
+                    }
                 }
                 
                 resultContainer.appendChild(resultContent);
@@ -657,6 +889,16 @@
         function addPaschTimer(duration) {
             currentRoll.duration = duration;
             addOrUpdateTimer(currentRoll);
+            finishPaschRoll();
+        }
+
+        function addLocktoberBonusTimer(days, label, itemName) {
+            var roll = {
+                item: itemName || 'Keuschheitsvorrichtung',
+                duration: days,
+                unit: 'days'
+            };
+            addOrUpdateTimer(roll);
             finishPaschRoll();
         }
 
