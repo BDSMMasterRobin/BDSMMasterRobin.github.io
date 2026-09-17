@@ -319,7 +319,7 @@
                 <span class="dot" id="peerDot"></span>
                 <span id="peerStatus">Verbinde mit Sitzung&hellip;</span>
             </div>
-            <p class="notice warn hidden" id="connectSlowNotice">Der Verbindungsaufbau läuft über öffentliche Vermittlungsserver und kann bis zu einer Minute dauern – das ist normal, bitte diese Seite offen lassen. Ihr könnt euer Bild schon jetzt auswählen und senden, es wird automatisch übertragen, sobald die Verbindung steht.</p>
+            <p class="notice warn hidden" id="connectSlowNotice">Der Verbindungsaufbau läuft parallel über mehrere öffentliche Vermittlungsserver und dauert normalerweise nur wenige Sekunden. Klappt es gerade nicht sofort, bitte diese Seite einfach offen lassen – es wird weiter über alle Kanäle versucht. Ihr könnt euer Bild schon jetzt auswählen und senden, es wird automatisch übertragen, sobald die Verbindung steht.</p>
 
             <div id="uploadArea">
                 <label class="dropzone" id="dropzone">
@@ -376,7 +376,15 @@
     </footer>
 
     <script type="module">
-        import { joinRoom } from 'https://esm.run/@trystero-p2p/torrent';
+        // Signalling runs over three independent relay networks at once and
+        // the first one that finds the partner wins. Nostr and MQTT relays
+        // usually pair the two browsers within a few seconds, while torrent
+        // trackers only re-announce roughly every half minute - racing them
+        // instead of relying on trackers alone is what makes the connection
+        // fast. The slower channels simply stay open as spare routes.
+        import { joinRoom as joinViaNostr } from 'https://esm.run/@trystero-p2p/nostr@0.25.4';
+        import { joinRoom as joinViaMqtt } from 'https://esm.run/@trystero-p2p/mqtt@0.25.4';
+        import { joinRoom as joinViaTorrent } from 'https://esm.run/@trystero-p2p/torrent@0.25.4';
 
         const APP_ID = 'bdsmmasterrobin-github-io-pictures-reveal-v1';
         const MIN_BLOCKS = 5;
@@ -405,9 +413,18 @@
             return { w: Math.max(1, Math.round(blocks * aspect)), h: blocks };
         }
 
+        const SIGNALLING_NETWORKS = [
+            { name: 'Nostr', join: joinViaNostr },
+            { name: 'MQTT', join: joinViaMqtt },
+            { name: 'WebTorrent', join: joinViaTorrent }
+        ];
+
         // Public STUN/TURN fallback so the P2P connection still succeeds behind
         // stricter NATs/firewalls, not just on trivial home networks.
         const RTC_CONFIG = {
+            // Pre-gathering a few candidates means ICE does not start from
+            // scratch once the signalling handshake lands.
+            iceCandidatePoolSize: 4,
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
@@ -472,9 +489,8 @@
         const fileErrorNotice = document.getElementById('fileErrorNotice');
 
         // ---- state ----
-        let room = null;
-        let imageAction, readyAction, stopAction;
-        let connectedPeerCount = 0;
+        let links = [];              // one entry per signalling network, all dialled in parallel
+        let primaryLink = null;      // the link we send over (first one that found the partner)
 
         let ownLevels = [];          // [{ percent, buffer, type }], resent from index 0 if partner reconnects
         let ownHighestSentLevel = -1;
@@ -552,89 +568,137 @@
 
             connectSlowNotice.classList.add('hidden');
             slowConnectTimer = setTimeout(() => {
-                if (connectedPeerCount === 0) connectSlowNotice.classList.remove('hidden');
+                if (!isPeerConnected()) connectSlowNotice.classList.remove('hidden');
             }, SLOW_CONNECT_NOTICE_MS);
 
-            try {
-                room = joinRoom({ appId: APP_ID, rtcConfig: RTC_CONFIG }, code);
-            } catch (err) {
+            // Dial every network simultaneously instead of waiting out one of
+            // them; a network that fails to load just drops out of the race.
+            links = [];
+            for (const network of SIGNALLING_NETWORKS) {
+                const link = openLink(network, code);
+                if (link) links.push(link);
+            }
+
+            if (!links.length) {
                 connErrorNotice.classList.remove('hidden');
                 return;
             }
 
-            imageAction = room.makeAction('img');
-            readyAction = room.makeAction('ready');
-            stopAction = room.makeAction('stop');
+            updatePeerStatus();
+        }
 
-            imageAction.onMessage = (data, meta) => {
-                const info = (meta && meta.metadata) || {};
-                const level = typeof info.level === 'number' ? info.level : 0;
-                if (level <= partnerHighestLevel) return; // stale/duplicate step, ignore
-                const type = info.type || 'image/jpeg';
-                const blob = new Blob([data], { type });
-                const url = URL.createObjectURL(blob);
-                const img = new Image();
-                img.onload = () => {
-                    if (level <= partnerHighestLevel) { URL.revokeObjectURL(url); return; }
-                    if (partnerImageUrl) URL.revokeObjectURL(partnerImageUrl);
-                    partnerImageUrl = url;
-                    partnerImage = img;
-                    partnerHighestLevel = level;
-                    const firstTime = !partnerImageReceived;
-                    partnerImageReceived = true;
-                    receivedDot.classList.add('ok');
-                    receivedStatus.textContent = firstTime
-                        ? 'Bild von Partner:in erhalten'
-                        : `Bild von Partner:in erhalten (${Math.round(info.percent || 0)}%)`;
-                    if (!revealArea.classList.contains('hidden')) drawPartnerImage();
-                    if (firstTime) checkBothSentAndReceived();
-                };
-                img.src = url;
+        function openLink(network, code) {
+            let room;
+            try {
+                room = network.join({ appId: APP_ID, rtcConfig: RTC_CONFIG }, code);
+            } catch (err) {
+                return null;
+            }
+
+            const link = {
+                name: network.name,
+                room,
+                peers: new Set(),
+                image: room.makeAction('img'),
+                ready: room.makeAction('ready'),
+                stop: room.makeAction('stop')
             };
 
-            readyAction.onMessage = () => {
+            // Messages are accepted from every channel (both sides may end up
+            // preferring a different one), sending goes over the primary only.
+            link.image.onMessage = handleImageMessage;
+
+            link.ready.onMessage = () => {
                 partnerReady = true;
                 maybeStartRevealSequence();
             };
 
-            stopAction.onMessage = (data) => {
+            link.stop.onMessage = (data) => {
                 freezeReveal(typeof data.percent === 'number' ? data.percent : currentPercent());
             };
 
-            room.onPeerJoin = () => {
-                connectedPeerCount++;
-                updatePeerStatus();
-                // Resend only the steps already legitimately reached so far -
-                // never jump a reconnecting peer straight to a later level.
-                for (let i = 0; i <= ownHighestSentLevel; i++) sendLevel(i);
-                if (selfReady) {
-                    readyAction.send({});
+            room.onPeerJoin = (peerId) => {
+                link.peers.add(peerId);
+                if (!primaryLink || primaryLink.peers.size === 0 || link === primaryLink) {
+                    usePrimaryLink(link);
                 }
+                updatePeerStatus();
             };
 
-            room.onPeerLeave = () => {
-                connectedPeerCount = Math.max(0, connectedPeerCount - 1);
-                updatePeerStatus();
-                if (!revealSequenceStarted) {
-                    partnerReady = false;
-                    partnerImageReceived = false;
-                    partnerHighestLevel = -1;
-                    receivedDot.classList.remove('ok');
-                    receivedStatus.textContent = 'Bild von Partner:in noch nicht erhalten';
-                } else if (!frozen) {
-                    freezeReveal(currentPercent());
-                    revealNotice.textContent = 'Verbindung zur Partnerin/zum Partner unterbrochen. Sitzung wurde eingefroren.';
+            room.onPeerLeave = (peerId) => {
+                link.peers.delete(peerId);
+                if (primaryLink === link && link.peers.size === 0) {
+                    const spare = links.find(l => l.peers.size > 0);
+                    primaryLink = null;
+                    if (spare) usePrimaryLink(spare);
                 }
+                updatePeerStatus();
+                if (!isPeerConnected()) handlePeerLoss();
             };
 
-            updatePeerStatus();
+            return link;
+        }
+
+        function isPeerConnected() {
+            return links.some(l => l.peers.size > 0);
+        }
+
+        // Makes a channel the one we send over and re-syncs everything the
+        // partner is already entitled to see. Resending only the steps
+        // legitimately reached so far means a channel switch or a reconnect
+        // never jumps them ahead to a later level.
+        function usePrimaryLink(link) {
+            primaryLink = link;
+            for (let i = 0; i <= ownHighestSentLevel; i++) sendLevel(i);
+            if (selfReady) link.ready.send({});
+        }
+
+        function handlePeerLoss() {
+            if (!revealSequenceStarted) {
+                partnerReady = false;
+                partnerImageReceived = false;
+                partnerHighestLevel = -1;
+                receivedDot.classList.remove('ok');
+                receivedStatus.textContent = 'Bild von Partner:in noch nicht erhalten';
+            } else if (!frozen) {
+                freezeReveal(currentPercent());
+                revealNotice.textContent = 'Verbindung zur Partnerin/zum Partner unterbrochen. Sitzung wurde eingefroren.';
+            }
+        }
+
+        function handleImageMessage(data, meta) {
+            const info = (meta && meta.metadata) || {};
+            const level = typeof info.level === 'number' ? info.level : 0;
+            if (level <= partnerHighestLevel) return; // stale/duplicate step, ignore
+            const type = info.type || 'image/jpeg';
+            const blob = new Blob([data], { type });
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = () => {
+                if (level <= partnerHighestLevel) { URL.revokeObjectURL(url); return; }
+                if (partnerImageUrl) URL.revokeObjectURL(partnerImageUrl);
+                partnerImageUrl = url;
+                partnerImage = img;
+                partnerHighestLevel = level;
+                const firstTime = !partnerImageReceived;
+                partnerImageReceived = true;
+                receivedDot.classList.add('ok');
+                receivedStatus.textContent = firstTime
+                    ? 'Bild von Partner:in erhalten'
+                    : `Bild von Partner:in erhalten (${Math.round(info.percent || 0)}%)`;
+                if (!revealArea.classList.contains('hidden')) drawPartnerImage();
+                if (firstTime) checkBothSentAndReceived();
+            };
+            img.src = url;
         }
 
         function updatePeerStatus() {
-            if (connectedPeerCount > 0) {
+            if (isPeerConnected()) {
                 peerDot.classList.add('ok');
                 peerDot.classList.remove('wait');
-                peerStatus.textContent = 'Partner:in verbunden';
+                peerStatus.textContent = primaryLink
+                    ? `Partner:in verbunden (über ${primaryLink.name})`
+                    : 'Partner:in verbunden';
                 connectSlowNotice.classList.add('hidden');
                 if (slowConnectTimer) { clearTimeout(slowConnectTimer); slowConnectTimer = null; }
             } else {
@@ -737,15 +801,18 @@
 
         function sendLevel(i) {
             const lvl = ownLevels[i];
-            if (!lvl || !imageAction) return;
-            imageAction.send(lvl.buffer, { metadata: { type: lvl.type, level: i, percent: lvl.percent } });
+            if (!lvl) return;
+            // Counted as reached even with nobody connected yet - the step is
+            // then delivered by the re-sync as soon as a channel comes up.
             ownHighestSentLevel = Math.max(ownHighestSentLevel, i);
+            if (!primaryLink) return;
+            primaryLink.image.send(lvl.buffer, { metadata: { type: lvl.type, level: i, percent: lvl.percent } });
         }
 
         function checkBothSentAndReceived() {
             if (ownImageSent && partnerImageReceived && !selfReady) {
                 selfReady = true;
-                if (readyAction) readyAction.send({});
+                if (primaryLink) primaryLink.ready.send({});
                 maybeStartRevealSequence();
             }
         }
@@ -840,7 +907,7 @@
         stopBtn.addEventListener('click', () => {
             if (frozen) return;
             const pct = currentPercent();
-            if (stopAction) stopAction.send({ percent: pct });
+            if (primaryLink) primaryLink.stop.send({ percent: pct });
             freezeReveal(pct);
         });
 
@@ -868,7 +935,6 @@
         });
 
         function resetSessionUi() {
-            connectedPeerCount = 0;
             ownLevels = [];
             ownHighestSentLevel = -1;
             ownImageSent = false;
@@ -903,10 +969,11 @@
         function cleanupRoom() {
             if (rafHandle) cancelAnimationFrame(rafHandle);
             if (slowConnectTimer) { clearTimeout(slowConnectTimer); slowConnectTimer = null; }
-            if (room) {
-                try { room.leave(); } catch {}
-                room = null;
+            for (const link of links) {
+                try { link.room.leave(); } catch {}
             }
+            links = [];
+            primaryLink = null;
             if (ownImageUrl) { URL.revokeObjectURL(ownImageUrl); ownImageUrl = null; }
             if (partnerImageUrl) { URL.revokeObjectURL(partnerImageUrl); partnerImageUrl = null; }
         }
