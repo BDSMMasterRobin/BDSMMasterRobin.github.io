@@ -386,6 +386,25 @@
         const JPEG_QUALITY = 0.82;
         const SLOW_CONNECT_NOTICE_MS = 6000;
 
+        // The image is never sent in one piece. It's cut into this many
+        // resolution steps up front, and each step is only transmitted once
+        // the synced reveal clock actually reaches it - so a peer (or anyone
+        // inspecting the network/memory on either side) never has more of the
+        // photo than what has genuinely been "unlocked" so far. Stopping the
+        // reveal early also stops any further steps from ever being sent.
+        const NUM_LEVELS = 11;
+
+        function blocksForPercent(percent) {
+            const p = Math.max(0, Math.min(100, percent)) / 100;
+            return Math.round(MIN_BLOCKS * Math.pow(MAX_BLOCKS / MIN_BLOCKS, p));
+        }
+
+        function levelDimensions(sourceWidth, sourceHeight, blocks) {
+            const aspect = sourceWidth / sourceHeight;
+            if (aspect >= 1) return { w: blocks, h: Math.max(1, Math.round(blocks / aspect)) };
+            return { w: Math.max(1, Math.round(blocks * aspect)), h: blocks };
+        }
+
         // Public STUN/TURN fallback so the P2P connection still succeeds behind
         // stricter NATs/firewalls, not just on trivial home networks.
         const RTC_CONFIG = {
@@ -452,19 +471,17 @@
         const connErrorNotice = document.getElementById('connErrorNotice');
         const fileErrorNotice = document.getElementById('fileErrorNotice');
 
-        const smallCanvas = document.createElement('canvas');
-        const smallCtx = smallCanvas.getContext('2d');
-
         // ---- state ----
         let room = null;
         let imageAction, readyAction, stopAction;
         let connectedPeerCount = 0;
 
-        let ownImageBuffer = null;   // cached ArrayBuffer, resent if partner reconnects
-        let ownImageType = 'image/jpeg';
+        let ownLevels = [];          // [{ percent, buffer, type }], resent from index 0 if partner reconnects
+        let ownHighestSentLevel = -1;
         let ownImageSent = false;
 
-        let partnerImage = null;     // loaded HTMLImageElement
+        let partnerImage = null;     // loaded HTMLImageElement, replaced as higher levels arrive
+        let partnerHighestLevel = -1;
         let partnerImageReceived = false;
 
         let selfReady = false;
@@ -478,7 +495,7 @@
         let frozenPercent = null;
         let ownImageUrl = null;
         let partnerImageUrl = null;
-        let stagedBlob = null;
+        let stagedLevels = null;     // [{ percent, blob }] for the currently staged own image
         let slowConnectTimer = null;
 
         function genRoomCode() {
@@ -550,19 +567,29 @@
             stopAction = room.makeAction('stop');
 
             imageAction.onMessage = (data, meta) => {
-                const type = (meta && meta.metadata && meta.metadata.type) || 'image/jpeg';
+                const info = (meta && meta.metadata) || {};
+                const level = typeof info.level === 'number' ? info.level : 0;
+                if (level <= partnerHighestLevel) return; // stale/duplicate step, ignore
+                const type = info.type || 'image/jpeg';
                 const blob = new Blob([data], { type });
-                if (partnerImageUrl) URL.revokeObjectURL(partnerImageUrl);
-                partnerImageUrl = URL.createObjectURL(blob);
+                const url = URL.createObjectURL(blob);
                 const img = new Image();
                 img.onload = () => {
+                    if (level <= partnerHighestLevel) { URL.revokeObjectURL(url); return; }
+                    if (partnerImageUrl) URL.revokeObjectURL(partnerImageUrl);
+                    partnerImageUrl = url;
                     partnerImage = img;
+                    partnerHighestLevel = level;
+                    const firstTime = !partnerImageReceived;
                     partnerImageReceived = true;
                     receivedDot.classList.add('ok');
-                    receivedStatus.textContent = 'Bild von Partner:in erhalten';
-                    checkBothSentAndReceived();
+                    receivedStatus.textContent = firstTime
+                        ? 'Bild von Partner:in erhalten'
+                        : `Bild von Partner:in erhalten (${Math.round(info.percent || 0)}%)`;
+                    if (!revealArea.classList.contains('hidden')) drawPartnerImage();
+                    if (firstTime) checkBothSentAndReceived();
                 };
-                img.src = partnerImageUrl;
+                img.src = url;
             };
 
             readyAction.onMessage = () => {
@@ -577,9 +604,9 @@
             room.onPeerJoin = () => {
                 connectedPeerCount++;
                 updatePeerStatus();
-                if (ownImageBuffer) {
-                    imageAction.send(ownImageBuffer, { metadata: { type: ownImageType } });
-                }
+                // Resend only the steps already legitimately reached so far -
+                // never jump a reconnecting peer straight to a later level.
+                for (let i = 0; i <= ownHighestSentLevel; i++) sendLevel(i);
                 if (selfReady) {
                     readyAction.send({});
                 }
@@ -591,6 +618,7 @@
                 if (!revealSequenceStarted) {
                     partnerReady = false;
                     partnerImageReceived = false;
+                    partnerHighestLevel = -1;
                     receivedDot.classList.remove('ok');
                     receivedStatus.textContent = 'Bild von Partner:in noch nicht erhalten';
                 } else if (!frozen) {
@@ -647,16 +675,34 @@
                 const c = document.createElement('canvas');
                 c.width = w; c.height = h;
                 c.getContext('2d').drawImage(img, 0, 0, w, h);
-                const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', JPEG_QUALITY));
-                if (!blob) throw new Error('toBlob failed');
-                stagedBlob = blob;
 
+                // Own local preview thumbnail (full quality, never transmitted).
+                const previewBlob = await new Promise(res => c.toBlob(res, 'image/jpeg', JPEG_QUALITY));
+                if (!previewBlob) throw new Error('toBlob failed');
                 if (ownImageUrl) URL.revokeObjectURL(ownImageUrl);
-                ownImageUrl = URL.createObjectURL(stagedBlob);
+                ownImageUrl = URL.createObjectURL(previewBlob);
                 ownThumb.src = ownImageUrl;
+
+                // Actual transmittable steps: only ever as detailed as the
+                // reveal has progressed to when each one is sent.
+                const levelBlobs = await Promise.all(
+                    Array.from({ length: NUM_LEVELS }, (_, i) => {
+                        const percent = (i * 100) / (NUM_LEVELS - 1);
+                        const blocks = blocksForPercent(percent);
+                        const { w: lw, h: lh } = levelDimensions(w, h, blocks);
+                        const lc = document.createElement('canvas');
+                        lc.width = lw; lc.height = lh;
+                        lc.getContext('2d').drawImage(c, 0, 0, lw, lh);
+                        return new Promise(res => lc.toBlob(b => res({ percent, blob: b }), 'image/jpeg', 0.85));
+                    })
+                );
+                if (levelBlobs.some(l => !l.blob)) throw new Error('toBlob failed');
+                stagedLevels = levelBlobs;
+
                 ownThumbRow.classList.remove('hidden');
                 dropzoneText.textContent = 'Anderes Bild wählen';
-                ownFileInfo.innerHTML = `<span class="dot"></span><span>${(stagedBlob.size / 1024).toFixed(0)} KB bereit zum Senden</span>`;
+                const totalKb = levelBlobs.reduce((sum, l) => sum + l.blob.size, 0) / 1024;
+                ownFileInfo.innerHTML = `<span class="dot"></span><span>${totalKb.toFixed(0)} KB bereit zum Senden</span>`;
                 sendImageBtn.disabled = false;
             } catch (err) {
                 fileErrorNotice.textContent = 'Dieses Bild konnte nicht gelesen werden. Bitte ein anderes Bild wählen.';
@@ -675,16 +721,26 @@
         }
 
         sendImageBtn.addEventListener('click', async () => {
-            if (!stagedBlob) return;
+            if (!stagedLevels) return;
             sendImageBtn.disabled = true;
-            ownImageBuffer = await stagedBlob.arrayBuffer();
-            ownImageType = stagedBlob.type || 'image/jpeg';
-            imageAction.send(ownImageBuffer, { metadata: { type: ownImageType } });
+            ownLevels = await Promise.all(stagedLevels.map(async (l) => ({
+                percent: l.percent,
+                buffer: await l.blob.arrayBuffer(),
+                type: l.blob.type || 'image/jpeg'
+            })));
+            sendLevel(0); // maximally-pixelated seed only, for now
             ownImageSent = true;
             sentDot.classList.add('ok');
             sentStatus.textContent = 'Eigenes Bild gesendet';
             checkBothSentAndReceived();
         });
+
+        function sendLevel(i) {
+            const lvl = ownLevels[i];
+            if (!lvl || !imageAction) return;
+            imageAction.send(lvl.buffer, { metadata: { type: lvl.type, level: i, percent: lvl.percent } });
+            ownHighestSentLevel = Math.max(ownHighestSentLevel, i);
+        }
 
         function checkBothSentAndReceived() {
             if (ownImageSent && partnerImageReceived && !selfReady) {
@@ -724,6 +780,7 @@
             revealStartTime = performance.now();
             frozen = false;
             frozenPercent = null;
+            drawPartnerImage(); // show whatever level (at least 0) already arrived
             tick();
         }
 
@@ -736,7 +793,7 @@
 
         function tick() {
             const pct = currentPercent();
-            renderPixelated(pct);
+            maybeSendNextOwnLevel(pct);
             percentLabel.textContent = `${Math.round(pct)}%`;
             progressFill.style.width = `${pct}%`;
 
@@ -755,23 +812,29 @@
             rafHandle = requestAnimationFrame(tick);
         }
 
-        function renderPixelated(percent) {
+        // Pushes the next not-yet-sent resolution step to the peer once our
+        // own synced clock has genuinely reached its threshold - this is what
+        // makes the reveal real rather than just a visual filter over data
+        // that was already fully delivered.
+        function maybeSendNextOwnLevel(pct) {
+            if (!ownImageSent) return;
+            while (ownHighestSentLevel < NUM_LEVELS - 1) {
+                const next = ownHighestSentLevel + 1;
+                const threshold = (next * 100) / (NUM_LEVELS - 1);
+                if (pct + 0.001 < threshold) break;
+                sendLevel(next);
+            }
+        }
+
+        // Draws whatever the highest-received level currently is. Its pixel
+        // dimensions already match the disclosed percent, so a plain
+        // nearest-neighbour scale-up is all that's needed - no client-side
+        // downsampling of "more" data than what was actually received.
+        function drawPartnerImage() {
             if (!partnerImage) return;
-            const p = Math.max(0, Math.min(100, percent)) / 100;
-            const blocks = Math.round(MIN_BLOCKS * Math.pow(MAX_BLOCKS / MIN_BLOCKS, p));
-            const aspect = partnerImage.width / partnerImage.height;
-            let sw, sh;
-            if (aspect >= 1) { sw = blocks; sh = Math.max(1, Math.round(blocks / aspect)); }
-            else { sh = blocks; sw = Math.max(1, Math.round(blocks * aspect)); }
-
-            smallCanvas.width = sw;
-            smallCanvas.height = sh;
-            smallCtx.imageSmoothingEnabled = true;
-            smallCtx.drawImage(partnerImage, 0, 0, sw, sh);
-
             revealCtx.imageSmoothingEnabled = false;
             revealCtx.clearRect(0, 0, revealCanvas.width, revealCanvas.height);
-            revealCtx.drawImage(smallCanvas, 0, 0, sw, sh, 0, 0, revealCanvas.width, revealCanvas.height);
+            revealCtx.drawImage(partnerImage, 0, 0, revealCanvas.width, revealCanvas.height);
         }
 
         stopBtn.addEventListener('click', () => {
@@ -786,7 +849,7 @@
             frozen = true;
             frozenPercent = pct;
             if (rafHandle) cancelAnimationFrame(rafHandle);
-            renderPixelated(pct);
+            drawPartnerImage();
             endNotice.textContent = `Eingefroren bei ${Math.round(pct)}%.`;
             revealArea.classList.add('hidden');
             endArea.classList.remove('hidden');
@@ -806,9 +869,11 @@
 
         function resetSessionUi() {
             connectedPeerCount = 0;
-            ownImageBuffer = null;
+            ownLevels = [];
+            ownHighestSentLevel = -1;
             ownImageSent = false;
             partnerImage = null;
+            partnerHighestLevel = -1;
             partnerImageReceived = false;
             selfReady = false;
             partnerReady = false;
@@ -816,7 +881,7 @@
             revealStartTime = null;
             frozen = false;
             frozenPercent = null;
-            stagedBlob = null;
+            stagedLevels = null;
 
             uploadArea.classList.remove('hidden');
             countdownArea.classList.add('hidden');
