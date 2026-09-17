@@ -319,6 +319,7 @@
                 <span class="dot" id="peerDot"></span>
                 <span id="peerStatus">Verbinde mit Sitzung&hellip;</span>
             </div>
+            <p class="notice warn hidden" id="connectSlowNotice">Der Verbindungsaufbau läuft über öffentliche Vermittlungsserver und kann bis zu einer Minute dauern – das ist normal, bitte diese Seite offen lassen. Ihr könnt euer Bild schon jetzt auswählen und senden, es wird automatisch übertragen, sobald die Verbindung steht.</p>
 
             <div id="uploadArea">
                 <label class="dropzone" id="dropzone">
@@ -383,6 +384,31 @@
         const COUNTDOWN_SECONDS = 3;
         const MAX_IMAGE_DIM = 1280;
         const JPEG_QUALITY = 0.82;
+        const SLOW_CONNECT_NOTICE_MS = 6000;
+
+        // Public STUN/TURN fallback so the P2P connection still succeeds behind
+        // stricter NATs/firewalls, not just on trivial home networks.
+        const RTC_CONFIG = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                {
+                    urls: 'turn:openrelay.metered.ca:80',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                }
+            ]
+        };
 
         // ---- DOM refs ----
         const panelStart = document.getElementById('panel-start');
@@ -394,6 +420,7 @@
         const copyLinkBtn = document.getElementById('copyLinkBtn');
         const peerDot = document.getElementById('peerDot');
         const peerStatus = document.getElementById('peerStatus');
+        const connectSlowNotice = document.getElementById('connectSlowNotice');
 
         const uploadArea = document.getElementById('uploadArea');
         const dropzone = document.getElementById('dropzone');
@@ -452,6 +479,7 @@
         let ownImageUrl = null;
         let partnerImageUrl = null;
         let stagedBlob = null;
+        let slowConnectTimer = null;
 
         function genRoomCode() {
             const bytes = new Uint8Array(6);
@@ -505,8 +533,13 @@
             shareLinkInput.value = buildUrl(code, seconds);
             resetSessionUi();
 
+            connectSlowNotice.classList.add('hidden');
+            slowConnectTimer = setTimeout(() => {
+                if (connectedPeerCount === 0) connectSlowNotice.classList.remove('hidden');
+            }, SLOW_CONNECT_NOTICE_MS);
+
             try {
-                room = joinRoom({ appId: APP_ID }, code);
+                room = joinRoom({ appId: APP_ID, rtcConfig: RTC_CONFIG }, code);
             } catch (err) {
                 connErrorNotice.classList.remove('hidden');
                 return;
@@ -574,6 +607,8 @@
                 peerDot.classList.add('ok');
                 peerDot.classList.remove('wait');
                 peerStatus.textContent = 'Partner:in verbunden';
+                connectSlowNotice.classList.add('hidden');
+                if (slowConnectTimer) { clearTimeout(slowConnectTimer); slowConnectTimer = null; }
             } else {
                 peerDot.classList.remove('ok');
                 peerDot.classList.add('wait');
@@ -802,6 +837,7 @@
 
         function cleanupRoom() {
             if (rafHandle) cancelAnimationFrame(rafHandle);
+            if (slowConnectTimer) { clearTimeout(slowConnectTimer); slowConnectTimer = null; }
             if (room) {
                 try { room.leave(); } catch {}
                 room = null;
