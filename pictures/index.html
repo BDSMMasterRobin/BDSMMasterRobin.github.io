@@ -9,6 +9,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Kick the signalling code and the tracker DNS lookups off before the
+         module script below even starts parsing. -->
+    <link rel="preconnect" href="https://esm.run" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="modulepreload" href="https://esm.run/@trystero-p2p/torrent">
+    <link rel="modulepreload" href="https://esm.run/@trystero-p2p/nostr">
+    <link rel="dns-prefetch" href="https://open.ftorrent.com">
+    <link rel="dns-prefetch" href="https://tracker.webtorrent.dev">
+    <link rel="dns-prefetch" href="https://tracker.openwebtorrent.com">
     <style>
         :root {
             --bg-base: #0d0d11;
@@ -319,7 +328,7 @@
                 <span class="dot" id="peerDot"></span>
                 <span id="peerStatus">Verbinde mit Sitzung&hellip;</span>
             </div>
-            <p class="notice warn hidden" id="connectSlowNotice">Der Verbindungsaufbau läuft über öffentliche Vermittlungsserver und kann bis zu einer Minute dauern – das ist normal, bitte diese Seite offen lassen. Ihr könnt euer Bild schon jetzt auswählen und senden, es wird automatisch übertragen, sobald die Verbindung steht.</p>
+            <p class="notice warn hidden" id="connectSlowNotice">Der Verbindungsaufbau läuft über öffentliche Vermittlungsserver. Meist steht die Verbindung in wenigen Sekunden, in ungünstigen Netzen kann es länger dauern – bitte diese Seite offen lassen. Ihr könnt euer Bild schon jetzt auswählen und senden, es wird automatisch übertragen, sobald die Verbindung steht.</p>
 
             <div id="uploadArea">
                 <label class="dropzone" id="dropzone">
@@ -376,7 +385,27 @@
     </footer>
 
     <script type="module">
-        import { joinRoom } from 'https://esm.run/@trystero-p2p/torrent';
+        // Signalling strategies race each other - whichever finds the partner
+        // first carries the session, rather than everyone waiting on the
+        // slowest one. Nostr is listed first because it is usually the quicker
+        // of the two: it trickles ICE, while the torrent tracker publishes an
+        // offer only once candidate gathering has fully finished, which costs
+        // seconds and caps out at 15.
+        //
+        // Deliberately just two: Trystero warms a pool of 20 peer connections
+        // per strategy, so every extra one is real work on the device - two is
+        // where the race still pays for itself.
+        //
+        // Both are imported dynamically and individually, so one unreachable
+        // CDN path degrades to the other strategy instead of taking down the
+        // whole page (which a failing static import would).
+        const strategies = [
+            { name: 'nostr', url: 'https://esm.run/@trystero-p2p/nostr' },
+            { name: 'torrent', url: 'https://esm.run/@trystero-p2p/torrent' }
+        ].map(s => ({
+            name: s.name,
+            joinRoom: import(s.url).then(m => m.joinRoom).catch(() => null)
+        }));
 
         const APP_ID = 'bdsmmasterrobin-github-io-pictures-reveal-v1';
         const MIN_BLOCKS = 5;
@@ -407,26 +436,30 @@
 
         // Public STUN/TURN fallback so the P2P connection still succeeds behind
         // stricter NATs/firewalls, not just on trivial home networks.
+        //
+        // Kept deliberately short: the torrent strategy signals without trickle
+        // ICE, so nothing is published until candidate gathering completes for
+        // every server in this list. A redundant or slow-to-answer entry is
+        // added latency on every single connection attempt, so this keeps one
+        // STUN server per operator and drops TURN over port 80 (which is
+        // practically never reachable where 443 is not).
         const RTC_CONFIG = {
             iceServers: [
+                { urls: 'stun:stun.cloudflare.com:3478' },
                 { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
                 {
-                    urls: 'turn:openrelay.metered.ca:80',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turn:openrelay.metered.ca:443',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                    urls: [
+                        'turn:openrelay.metered.ca:443',
+                        'turn:openrelay.metered.ca:443?transport=tcp'
+                    ],
                     username: 'openrelayproject',
                     credential: 'openrelayproject'
                 }
             ]
+            // No iceCandidatePoolSize on purpose: Trystero already keeps a pool
+            // of pre-built offers whose peer connections start gathering right
+            // away, so pre-allocating further candidate sets per connection
+            // would only multiply the gathering work.
         };
 
         // ---- DOM refs ----
@@ -472,9 +505,12 @@
         const fileErrorNotice = document.getElementById('fileErrorNotice');
 
         // ---- state ----
-        let room = null;
-        let imageAction, readyAction, stopAction;
-        let connectedPeerCount = 0;
+        // One entry per signalling strategy that came up. They all carry the
+        // same session, so the first one to find the partner wins and the
+        // others simply stay warm as instant failover.
+        let links = [];
+        let sessionToken = 0;
+        let linkSequence = 0;
 
         let ownLevels = [];          // [{ percent, buffer, type }], resent from index 0 if partner reconnects
         let ownHighestSentLevel = -1;
@@ -546,27 +582,64 @@
         }
 
         function startSession(code, seconds) {
+            cleanupRoom(); // drops any links left over from a previous session
             durationMs = seconds * 1000;
             shareLinkInput.value = buildUrl(code, seconds);
             resetSessionUi();
 
             connectSlowNotice.classList.add('hidden');
             slowConnectTimer = setTimeout(() => {
-                if (connectedPeerCount === 0) connectSlowNotice.classList.remove('hidden');
+                if (totalPeerCount() === 0) connectSlowNotice.classList.remove('hidden');
             }, SLOW_CONNECT_NOTICE_MS);
 
+            // Every strategy is started at once, as soon as its code lands.
+            const token = ++sessionToken;
+            strategies.forEach(strategy => {
+                strategy.joinRoom.then(fn => {
+                    if (!fn || token !== sessionToken) return;
+                    addLink(strategy.name, fn, code, token);
+                });
+            });
+
+            // Only a total failure is worth an error - a single dead strategy
+            // is exactly what the other one is there for.
+            Promise.all(strategies.map(s => s.joinRoom)).then(() => {
+                if (token !== sessionToken) return;
+                if (!links.length) connErrorNotice.classList.remove('hidden');
+            });
+
+            updatePeerStatus();
+        }
+
+        // Wires one signalling strategy into the session. Every link gets the
+        // same handlers, so a message is acted on no matter which one carried
+        // it; the send side picks a single live link (see primaryLink).
+        function addLink(name, joinRoomFn, code, token) {
+            let room;
             try {
-                room = joinRoom({ appId: APP_ID, rtcConfig: RTC_CONFIG }, code);
+                room = joinRoomFn({ appId: APP_ID, rtcConfig: RTC_CONFIG }, code);
             } catch (err) {
-                connErrorNotice.classList.remove('hidden');
-                return;
+                return null;
+            }
+            if (token !== sessionToken) {
+                try { room.leave(); } catch {}
+                return null;
             }
 
-            imageAction = room.makeAction('img');
-            readyAction = room.makeAction('ready');
-            stopAction = room.makeAction('stop');
+            const link = {
+                name,
+                room,
+                peers: new Set(),
+                // Order in which this link found the partner, so the strategy
+                // that actually won the race is the one that carries the
+                // session - not whichever happened to be created first.
+                connectedAt: Infinity,
+                img: room.makeAction('img'),
+                ready: room.makeAction('ready'),
+                stop: room.makeAction('stop')
+            };
 
-            imageAction.onMessage = (data, meta) => {
+            link.img.onMessage = (data, meta) => {
                 const info = (meta && meta.metadata) || {};
                 const level = typeof info.level === 'number' ? info.level : 0;
                 if (level <= partnerHighestLevel) return; // stale/duplicate step, ignore
@@ -592,29 +665,40 @@
                 img.src = url;
             };
 
-            readyAction.onMessage = () => {
+            link.ready.onMessage = () => {
                 partnerReady = true;
                 maybeStartRevealSequence();
             };
 
-            stopAction.onMessage = (data) => {
+            link.stop.onMessage = (data) => {
                 freezeReveal(typeof data.percent === 'number' ? data.percent : currentPercent());
             };
 
-            room.onPeerJoin = () => {
-                connectedPeerCount++;
+            room.onPeerJoin = (peerId) => {
+                if (link.peers.size === 0) link.connectedAt = ++linkSequence;
+                link.peers.add(peerId);
                 updatePeerStatus();
                 // Resend only the steps already legitimately reached so far -
                 // never jump a reconnecting peer straight to a later level.
-                for (let i = 0; i <= ownHighestSentLevel; i++) sendLevel(i);
-                if (selfReady) {
-                    readyAction.send({});
+                // Addressed at the new peer so a second strategy linking up
+                // late does not re-blast everyone.
+                for (let i = 0; i <= ownHighestSentLevel; i++) {
+                    const lvl = ownLevels[i];
+                    if (!lvl) continue;
+                    link.img.send(lvl.buffer, {
+                        target: peerId,
+                        metadata: { type: lvl.type, level: i, percent: lvl.percent }
+                    });
                 }
+                if (selfReady) link.ready.send({}, { target: peerId });
             };
 
-            room.onPeerLeave = () => {
-                connectedPeerCount = Math.max(0, connectedPeerCount - 1);
+            room.onPeerLeave = (peerId) => {
+                link.peers.delete(peerId);
+                if (link.peers.size === 0) link.connectedAt = Infinity;
                 updatePeerStatus();
+                // Another strategy may still be carrying the same partner.
+                if (totalPeerCount() > 0) return;
                 if (!revealSequenceStarted) {
                     partnerReady = false;
                     partnerImageReceived = false;
@@ -627,11 +711,36 @@
                 }
             };
 
+            links.push(link);
             updatePeerStatus();
+            return link;
+        }
+
+        function totalPeerCount() {
+            return links.reduce((n, link) => n + link.peers.size, 0);
+        }
+
+        // One live link is enough to carry everything, so pick the one that
+        // linked up first and stick to it. Re-picking on every send means a
+        // dropped strategy hands over to the next one without extra
+        // bookkeeping.
+        function primaryLink() {
+            let best = null;
+            links.forEach(link => {
+                if (!link.peers.size) return;
+                if (!best || link.connectedAt < best.connectedAt) best = link;
+            });
+            return best;
+        }
+
+        function sendOnPrimary(action, data, options) {
+            const link = primaryLink();
+            if (!link) return;
+            link[action].send(data, options);
         }
 
         function updatePeerStatus() {
-            if (connectedPeerCount > 0) {
+            if (totalPeerCount() > 0) {
                 peerDot.classList.add('ok');
                 peerDot.classList.remove('wait');
                 peerStatus.textContent = 'Partner:in verbunden';
@@ -737,15 +846,18 @@
 
         function sendLevel(i) {
             const lvl = ownLevels[i];
-            if (!lvl || !imageAction) return;
-            imageAction.send(lvl.buffer, { metadata: { type: lvl.type, level: i, percent: lvl.percent } });
+            if (!lvl) return;
+            // Mark the step as unlocked even if no link is live right now: the
+            // reveal clock has genuinely reached it, and onPeerJoin resends
+            // everything up to this point once the partner is back.
             ownHighestSentLevel = Math.max(ownHighestSentLevel, i);
+            sendOnPrimary('img', lvl.buffer, { metadata: { type: lvl.type, level: i, percent: lvl.percent } });
         }
 
         function checkBothSentAndReceived() {
             if (ownImageSent && partnerImageReceived && !selfReady) {
                 selfReady = true;
-                if (readyAction) readyAction.send({});
+                sendOnPrimary('ready', {});
                 maybeStartRevealSequence();
             }
         }
@@ -840,7 +952,7 @@
         stopBtn.addEventListener('click', () => {
             if (frozen) return;
             const pct = currentPercent();
-            if (stopAction) stopAction.send({ percent: pct });
+            sendOnPrimary('stop', { percent: pct });
             freezeReveal(pct);
         });
 
@@ -868,7 +980,6 @@
         });
 
         function resetSessionUi() {
-            connectedPeerCount = 0;
             ownLevels = [];
             ownHighestSentLevel = -1;
             ownImageSent = false;
@@ -903,10 +1014,9 @@
         function cleanupRoom() {
             if (rafHandle) cancelAnimationFrame(rafHandle);
             if (slowConnectTimer) { clearTimeout(slowConnectTimer); slowConnectTimer = null; }
-            if (room) {
-                try { room.leave(); } catch {}
-                room = null;
-            }
+            sessionToken++;
+            links.forEach(link => { try { link.room.leave(); } catch {} });
+            links = [];
             if (ownImageUrl) { URL.revokeObjectURL(ownImageUrl); ownImageUrl = null; }
             if (partnerImageUrl) { URL.revokeObjectURL(partnerImageUrl); partnerImageUrl = null; }
         }
