@@ -615,6 +615,33 @@
 
       .preference-dot { width:16px; }
     }
+
+    footer.site-footer {
+      margin-top: 40px;
+      padding: 20px 0;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    footer.site-footer .social-links {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    footer.site-footer .social-links a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    footer.site-footer .social-links a:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+    }
   </style>
 </head>
 
@@ -4316,6 +4343,14 @@ if (data) {
 updateLanguageUI();
 
 </script>
+
+<footer class="site-footer">
+  <div class="social-links">
+    <a href="https://www.instagram.com/dom_owl" target="_blank" rel="noopener noreferrer">Instagram</a>
+    <a href="https://x.com/youngchaindom" target="_blank" rel="noopener noreferrer">X</a>
+    <a href="https://bsky.app/profile/bdsmherr.bsky.social" target="_blank" rel="noopener noreferrer">Bluesky</a>
+  </div>
+</footer>
 
 </body>
 </html>

@@ -131,8 +131,31 @@
         footer {
             margin-top: 48px;
             color: var(--text-muted);
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .social-links a {
+            color: var(--gold-accent);
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .social-links a:hover {
+            opacity: 0.8;
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -163,7 +186,14 @@
 
     </nav>
 
-    <footer>&copy; <span id="year"></span></footer>
+    <footer>
+        <div class="social-links">
+            <a href="https://www.instagram.com/dom_owl" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href="https://x.com/youngchaindom" target="_blank" rel="noopener noreferrer">X</a>
+            <a href="https://bsky.app/profile/bdsmherr.bsky.social" target="_blank" rel="noopener noreferrer">Bluesky</a>
+        </div>
+        <div>&copy; <span id="year"></span></div>
+    </footer>
 
     <script>
         document.getElementById('year').textContent = new Date().getFullYear();

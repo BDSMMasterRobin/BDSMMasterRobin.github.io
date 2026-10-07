@@ -212,6 +212,32 @@
             border-bottom: 2px solid var(--gold-accent);
         }
 
+        footer.site-footer {
+            margin: 40px 0 80px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        footer.site-footer .social-links {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        footer.site-footer .social-links a {
+            color: var(--gold-accent);
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        footer.site-footer .social-links a:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
         /* MOBILE BOTTOM NAV */
         .mobile-nav {
             position: fixed;
@@ -837,6 +863,14 @@
                 <button class="btn btn-gold" style="margin-top: 10px;" onclick="importJoinCode()" data-i18n="btnJoinRoom">Join Room</button>
             </div>
         </section>
+
+        <footer class="site-footer">
+            <div class="social-links">
+                <a href="https://www.instagram.com/dom_owl" target="_blank" rel="noopener noreferrer">Instagram</a>
+                <a href="https://x.com/youngchaindom" target="_blank" rel="noopener noreferrer">X</a>
+                <a href="https://bsky.app/profile/bdsmherr.bsky.social" target="_blank" rel="noopener noreferrer">Bluesky</a>
+            </div>
+        </footer>
 
     </main>
 
